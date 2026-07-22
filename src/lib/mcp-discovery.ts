@@ -93,7 +93,7 @@ export function buildMcpServerCard() {
 		websiteUrl: absoluteUrl('/'),
 		remotes,
 		_meta: {
-			[`${siteConfig.mcp.packageIdentifier}/discovery`]: {
+			[siteConfig.mcp.discoveryMetaKey ?? `${siteConfig.mcp.packageIdentifier}/discovery`]: {
 				healthUrl: MCP_HEALTH_URL || undefined,
 				aboutUrl: absoluteUrl('/.well-known/about.json'),
 				openapiUrl: absoluteUrl('/openapi.json'),

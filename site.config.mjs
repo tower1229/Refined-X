@@ -75,6 +75,8 @@ const defaults = {
 		serverName: 'refined-x-public-ask',
 		packageIdentifier: 'com.example/refined-x-public-ask',
 		airIdentifier: 'urn:air:example.com:public-ask',
+		/** Optional override for Server Card `_meta` namespace; default `${packageIdentifier}/discovery`. */
+		discoveryMetaKey: undefined,
 	},
 };
 
