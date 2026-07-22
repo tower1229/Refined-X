@@ -1,0 +1,81 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "refined-x-public-ask",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-07-02",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"workers_dev": true,
+	"upload_source_maps": true,
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"SITE_URL": "https://example.com",
+		"ALLOWED_ORIGIN": "https://example.com",
+		"AI_GATEWAY_ACCOUNT_ID": "YOUR_CLOUDFLARE_ACCOUNT_ID",
+		"AI_GATEWAY_ID": "your-ai-gateway-id",
+		"DEEPSEEK_MODEL": "deepseek-v4-flash",
+		"DAILY_REQUEST_LIMIT": "1000",
+		"DAILY_GENERATION_LIMIT": "200"
+	},
+	"ai_search": [
+		{
+			"binding": "PUBLIC_CONTENT",
+			"instance_name": "your-public-content-index",
+			"remote": true
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "refined-x-public-ask",
+			"database_id": "YOUR_D1_DATABASE_ID",
+			"migrations_dir": "migrations"
+		}
+	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "LEARNING_QUEUE",
+				"queue": "refined-x-public-ask-learning"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "refined-x-public-ask-learning",
+				"max_batch_size": 20,
+				"max_batch_timeout": 30,
+				"max_retries": 5,
+				"dead_letter_queue": "refined-x-public-ask-learning-dlq"
+			}
+		]
+	},
+	"ratelimits": [
+		{
+			"name": "ASK_RATE_LIMITER",
+			"namespace_id": "100001",
+			"simple": {
+				"limit": 30,
+				"period": 60
+			}
+		},
+		{
+			"name": "BROWSER_RATE_LIMITER",
+			"namespace_id": "100002",
+			"simple": {
+				"limit": 3,
+				"period": 60
+			}
+		},
+		{
+			"name": "KEY_RATE_LIMITER",
+			"namespace_id": "100003",
+			"simple": {
+				"limit": 10,
+				"period": 60
+			}
+		}
+	]
+}

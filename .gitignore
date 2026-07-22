@@ -1,24 +1,22 @@
-# build output
-dist/
-# generated types
+
 .astro/
-
-# dependencies
-node_modules/
-
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-
-# environment variables
+.DS_Store
 .env
 .env.production
-
+# build output
+# dependencies
+# environment variables
+# generated types
 # local instance overlay (parent monorepo owns the real file)
-instance.config.mjs
-
+# logs
 # macOS-specific files
-.DS_Store
+dist/
+examples/**/.wrangler/
+examples/**/node_modules/
+examples/**/worker-configuration.d.ts
+instance.config.mjs
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

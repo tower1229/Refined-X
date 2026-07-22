@@ -1,0 +1,25 @@
+{
+  "name": "refined-x-public-ask-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cf-typegen": "npx wrangler types --env-interface GeneratedEnv",
+    "sync:persona": "node scripts/sync-persona.mjs",
+    "pretypecheck": "npm run sync:persona",
+    "typecheck": "npm run cf-typegen && tsc --noEmit",
+    "pretest": "npm run sync:persona",
+    "test": "node --test src/*.test.ts scripts/*.test.mjs",
+    "test:staging": "node scripts/staging-regression.mjs",
+    "test:staging:model": "node scripts/staging-model-smoke.mjs",
+    "check:search": "node scripts/check-ai-search.mjs",
+    "predeploy": "npm run sync:persona",
+    "deploy": "npx wrangler deploy",
+    "dev": "npx wrangler dev",
+    "key:manage": "node scripts/manage-api-keys.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.0",
+    "typescript": "5.9.3",
+    "wrangler": "4.106.0"
+  }
+}

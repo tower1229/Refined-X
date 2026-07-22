@@ -80,6 +80,24 @@ Relative paths resolve from the package root (this directory).
 
 Live reference implementation: [refined-x.com](https://refined-x.com).
 
+![Home](docs/screenshots/home.png)
+
+![Writing](docs/screenshots/writing.png)
+
+### Themes Portal short description
+
+> Agent-ready personal publish starter for Astro + Starlight: opinionated public content schema, editorial reading UI, `llms.txt` / OpenAPI / JSON APIs, MCP discovery, and an optional NLWeb Public Ask worker.
+
+### create-astro smoke
+
+```sh
+npm create astro@latest -- --template tower1229/Refined-X
+# expects default branch `main`
+cd <project> && npm install && npm run build && npm run verify
+```
+
+Optional live Ask backend example: [`examples/public-ask-worker`](examples/public-ask-worker).
+
 ## Consume as a submodule
 
 In a parent monorepo (e.g. a vault that owns `20_Publish/`):
