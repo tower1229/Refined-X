@@ -2,7 +2,7 @@ English | [简体中文](README.zh-CN.md)
 
 # Refined-X
 
-![Home](docs/screenshots/home.png)
+![Home](docs/screenshots/home.jpg)
 
 An **agent-friendly personal site** template built on [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/).
 

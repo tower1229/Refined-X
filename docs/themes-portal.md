@@ -8,7 +8,7 @@
 **License:** MIT  
 **Install:** `npm create astro@latest -- --template tower1229/Refined-X`
 
-**Screenshots:** Must be taken from **https://demo.refined-x.com** (sample content), not from the production personal site. Current files in `docs/screenshots/` still need a refresh after the demo is live.
+**Screenshots:** `docs/screenshots/home.jpg`, `docs/screenshots/writing.png` (from https://demo.refined-x.com sample content).
 
 **Blurb (EN):** Opinionated Astro + Starlight starter for personal sites with editorial UI and machine-readable surfaces (`llms.txt`, OpenAPI, JSON APIs, MCP discovery). Point `contentRoot` at your vault; optionally attach a Public Ask worker for NLWeb-compatible live Q&A.
 

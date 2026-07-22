@@ -2,7 +2,7 @@
 
 # Refined-X
 
-![首页](docs/screenshots/home.png)
+![首页](docs/screenshots/home.jpg)
 
 基于 [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/) 的 **Agent 友好的个人站点** 模板。
 
