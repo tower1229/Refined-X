@@ -6,7 +6,14 @@ import {
 	MCP_GUIDE_LEDE,
 	MCP_GUIDE_TITLE,
 	MCP_HEALTH_URL,
+	UI,
 } from '../lib/site-copy';
+
+const mcpUi = {
+	copyButton: UI.mcp.copyButton,
+	copied: UI.mcp.copied,
+	copyFailed: UI.mcp.copyFailed,
+};
 ---
 
 <dialog id="mcp-overlay" class="overlay mcp-overlay" aria-labelledby="mcp-guide-title">
@@ -14,7 +21,7 @@ import {
 		<div class="mcp-guide-head">
 			<Icon name="mcp" size={22} />
 			<h2 id="mcp-guide-title" class="mcp-guide-title">{MCP_GUIDE_TITLE}</h2>
-			<button class="dialog-close" type="button" data-close-mcp aria-label="关闭">
+			<button class="dialog-close" type="button" data-close-mcp aria-label={UI.mcp.closeAria}>
 				<Icon name="close" size={18} />
 			</button>
 		</div>
@@ -22,23 +29,23 @@ import {
 			<p class="mcp-guide-lede">{MCP_GUIDE_LEDE}</p>
 			<div class="mcp-prompt-block">
 				<p class="mcp-prompt-text">{MCP_AGENT_PROMPT}</p>
-				<button class="btn btn-solid mcp-copy-btn" type="button" data-copy-prompt>复制发给 Agent</button>
+				<button class="btn btn-solid mcp-copy-btn" type="button" data-copy-prompt>{UI.mcp.copyButton}</button>
 			</div>
 			<p class="mcp-guide-followup">{MCP_GUIDE_FOLLOWUP}</p>
 			<div class="mcp-guide-resources">
-				<p class="mcp-resources-label">其他机器可读资源</p>
+				<p class="mcp-resources-label">{UI.mcp.resourcesLabel}</p>
 				<ul class="mcp-resources-list">
 					<li>
 						<a href="/llms.txt" class="mono machine-link">/llms.txt</a>
-						<span>站点入口目录，供 Agent 发现文章、FAQ 与 API 链接</span>
+						<span>{UI.mcp.llmsBlurb}</span>
 					</li>
 					<li>
 						<a href="/openapi.json" class="mono machine-link">/openapi.json</a>
-						<span>接口字段与权限说明，适合程序化集成</span>
+						<span>{UI.mcp.openapiBlurb}</span>
 					</li>
 					<li>
-						<a href={MCP_HEALTH_URL} class="mono machine-link" target="_blank" rel="noopener noreferrer">健康检查</a>
-						<span>确认 Ask / MCP 服务在线</span>
+						<a href={MCP_HEALTH_URL} class="mono machine-link" target="_blank" rel="noopener noreferrer">{UI.mcp.healthLabel}</a>
+						<span>{UI.mcp.healthBlurb}</span>
 					</li>
 				</ul>
 			</div>
@@ -46,20 +53,20 @@ import {
 	</div>
 </dialog>
 
-<script define:vars={{ mcpPrompt: MCP_AGENT_PROMPT }}>
+<script define:vars={{ mcpPrompt: MCP_AGENT_PROMPT, mcpUi }}>
 	const dialog = document.getElementById('mcp-overlay');
 
 	const copyWithFeedback = async (text, button) => {
 		if (!(button instanceof HTMLButtonElement)) return;
-		const original = button.textContent ?? '';
+		const original = mcpUi.copyButton;
 		try {
 			await navigator.clipboard.writeText(text);
-			button.textContent = '已复制';
+			button.textContent = mcpUi.copied;
 			window.setTimeout(() => {
 				button.textContent = original;
 			}, 2000);
 		} catch {
-			button.textContent = '复制失败';
+			button.textContent = mcpUi.copyFailed;
 			window.setTimeout(() => {
 				button.textContent = original;
 			}, 2000);

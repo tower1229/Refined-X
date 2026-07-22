@@ -1,5 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { UI } from '../../lib/site-copy';
 import { getCollection } from 'astro:content';
 import ArticleFeed from '../../components/ArticleFeed.astro';
 import Icon from '../../components/Icon.astro';
@@ -53,8 +54,8 @@ const structuredData = [
     },
   },
   breadcrumbJsonLd([
-    { name: '首页', path: '/' },
-    { name: '写作', path: '/writing/' },
+    { name: UI.writing.homeCrumb, path: '/' },
+    { name: UI.writing.label, path: '/writing/' },
     { name: seriesData.title, path: seriesUrl },
   ]),
   ...(seriesData.faq?.length
@@ -88,14 +89,14 @@ const structuredData = [
   <div class="wrap page page-writing">
     <div class="crumbs">
       <a href="/">首页</a><span class="sep">/</span>
-      <a href="/writing/">写作</a><span class="sep">/</span><span>{seriesData.title}</span>
+      <a href="/writing/">{UI.writing.label}</a><span class="sep">/</span><span>{seriesData.title}</span>
     </div>
     <p class="eyebrow">专栏 {no}</p>
     <h1 id="_top" class="display pillar-heading">{seriesData.title}</h1>
     {seriesData.intro && <p class="lede pillar-lede">{seriesData.intro}</p>}
 
     <div class="section-head section-head-large" aria-labelledby="series-featured-heading">
-      <h2 id="series-featured-heading" class="section-title">精选</h2>
+      <h2 id="series-featured-heading" class="section-title">{UI.writing.featuredHeading}</h2>
       <span class="mono section-meta">{articles.length} 篇收录</span>
     </div>
     <div class="feat-grid">
@@ -115,7 +116,7 @@ const structuredData = [
     {seriesData.faq && seriesData.faq.length > 0 && (
       <>
         <div class="section-head section-head-large" aria-labelledby="series-faq-heading">
-          <h2 id="series-faq-heading" class="section-title">常见问题</h2>
+          <h2 id="series-faq-heading" class="section-title">{UI.writing.faqHeading}</h2>
           <span class="mono section-meta">策展问答</span>
         </div>
         <div class="faq-list">

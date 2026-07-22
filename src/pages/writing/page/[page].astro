@@ -5,7 +5,7 @@ import ArticleFeed from '../../../components/ArticleFeed.astro';
 import Icon from '../../../components/Icon.astro';
 import WritingPagination from '../../../components/WritingPagination.astro';
 import { ARTICLE_PAGE_SIZE, getArticlePageCount } from '../../../lib/articles';
-import { SITE_BRAND, WRITING_LEDE } from '../../../lib/site-copy';
+import { SITE_BRAND, UI, WRITING_LEDE } from '../../../lib/site-copy';
 
 interface Props {
 	articles: CollectionEntry<'docs'>[];
@@ -50,15 +50,15 @@ const { articles, pageNumber, pageCount, totalArticles } = Astro.props;
 	<div class="wrap page page-writing">
 		<div class="crumbs">
 			<a href="/">首页</a><span class="sep">/</span>
-			<a href="/writing/">写作</a><span class="sep">/</span><span>第 {pageNumber} 页</span>
+			<a href="/writing/">{UI.writing.label}</a><span class="sep">/</span><span>第 {pageNumber} 页</span>
 		</div>
-		<h1 id="_top" class="display page-heading">写作</h1>
+		<h1 id="_top" class="display page-heading">{UI.writing.label}</h1>
 		<p class="lede page-lede">
 			{WRITING_LEDE}共 {totalArticles} 篇 · 第 {pageNumber} / {pageCount} 页
 		</p>
 
 		<div class="section-head section-head-spaced" aria-labelledby="writing-archive-heading">
-			<h2 id="writing-archive-heading" class="section-title">全部归档</h2>
+			<h2 id="writing-archive-heading" class="section-title">{UI.writing.archiveHeading}</h2>
 			<a class="more-link" href="/topics/">按主题浏览 <Icon name="arrow-right" size={14} /></a>
 		</div>
 

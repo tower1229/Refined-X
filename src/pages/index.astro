@@ -16,6 +16,7 @@ import {
   SITE_HOME_LEDE,
   SITE_HOME_TITLE,
   SITE_PERSONA,
+  UI,
 } from '../lib/site-copy';
 
 const articles = (await getCollection('docs', ({ data }) => data.contentType === 'article'))
@@ -72,7 +73,7 @@ const homeStructuredData = {
 >
   <script is:inline type="application/ld+json" set:html={JSON.stringify(homeStructuredData)} />
 
-  <section class="heroB" aria-label="站点首页">
+  <section class="heroB" aria-label={UI.home.sectionAria}>
     <div class="heroB-theme-stack" aria-hidden="true">
       <div class="heroB-theme-layer heroB-theme-layer--light"></div>
       <div class="heroB-theme-layer heroB-theme-layer--dark"></div>
@@ -109,16 +110,16 @@ const homeStructuredData = {
 
   <section class="wrap section" aria-labelledby="home-series-heading">
     <div class="section-head">
-      <h2 id="home-series-heading" class="section-title">写作专栏</h2>
-      <a class="more-link" href="/writing/">全部写作 <Icon name="arrow-right" size={14} /></a>
+      <h2 id="home-series-heading" class="section-title">{UI.home.seriesHeading}</h2>
+      <a class="more-link" href="/writing/">{UI.home.allWriting} <Icon name="arrow-right" size={14} /></a>
     </div>
     <SeriesGrid />
   </section>
 
   <section class="wrap section section-compact-top section-home-end" aria-labelledby="home-writing-heading">
     <div class="section-head">
-      <h2 id="home-writing-heading" class="section-title">最新写作</h2>
-      <a class="more-link" href="/writing/">全部归档 <Icon name="arrow-right" size={14} /></a>
+      <h2 id="home-writing-heading" class="section-title">{UI.home.latestHeading}</h2>
+      <a class="more-link" href="/writing/">{UI.writing.archiveHeading} <Icon name="arrow-right" size={14} /></a>
     </div>
     <ArticleFeed articles={featuredArticles} />
   </section>

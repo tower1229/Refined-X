@@ -3,7 +3,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getCollection } from 'astro:content';
 import Icon from '../components/Icon.astro';
 import { breadcrumbJsonLd, collectionPageJsonLd, getPublicProfile } from '../lib/public-data';
-import { SITE_BRAND, SITE_PERSONA } from '../lib/site-copy';
+import { SITE_BRAND, SITE_PERSONA, UI } from '../lib/site-copy';
 import { siteConfig } from '../../site.config.mjs';
 
 const COURSE_CABINET_SIZE = 3;
@@ -78,7 +78,7 @@ const structuredData = [
           </div>
         </div>
         {heroStats.length > 0 && (
-          <dl class="projects-stats" aria-label="Highlights">
+          <dl class="projects-stats" aria-label={UI.projects.highlightsAria}>
             {heroStats.map((item) => (
               <div class="projects-stat">
                 <dt>{item.value}</dt>
@@ -94,7 +94,7 @@ const structuredData = [
       <div class="section-head section-head-large projects-section-head">
         <div>
           <p class="eyebrow">Featured</p>
-          <h2 id="featured-projects" class="section-title">精选作品</h2>
+          <h2 id="featured-projects" class="section-title">{UI.projects.featuredHeading}</h2>
         </div>
       </div>
       <div class="project-feature-grid">
@@ -119,13 +119,13 @@ const structuredData = [
                 <p class="project-feature-desc">{data.description}</p>
                 {data.impact && <p class="project-feature-impact">{data.impact}</p>}
                 {data.proofPoints.length > 0 && (
-                  <ul class="project-proof-list" aria-label={`${data.title} 关键证据`}>
+                  <ul class="project-proof-list" aria-label={UI.projects.proofAria(data.title)}>
                     {data.proofPoints.map((point) => <li>{point}</li>)}
                   </ul>
                 )}
                 <div class="project-feature-foot">
                   <span class="project-tags">{data.tags.slice(0, 3).join(' / ')}</span>
-                  <span class="project-open">查看作品 {isExternal && <Icon name="external" size={14} class="muted-icon" />}</span>
+                  <span class="project-open">{UI.projects.viewProject} {isExternal && <Icon name="external" size={14} class="muted-icon" />}</span>
                 </div>
               </div>
             </a>
@@ -138,15 +138,15 @@ const structuredData = [
       <section class="course-gallery" aria-labelledby="course-gallery-title">
         <div class="course-gallery-head">
           <p class="eyebrow">Open Courses</p>
-          <h2 id="course-gallery-title" class="section-title">我的公开课</h2>
+          <h2 id="course-gallery-title" class="section-title">{UI.projects.coursesHeading}</h2>
         </div>
-        <div class="course-cabinet" aria-label="公开课展柜">
+        <div class="course-cabinet" aria-label={UI.projects.coursesAria}>
           {courseSlots.map((course, index) => {
             if (!course) {
               return (
-                <div class="course-exhibit course-exhibit-empty" aria-label="尚未公开的公开课展位">
+                <div class="course-exhibit course-exhibit-empty" aria-label={UI.projects.courseEmptyAria}>
                   <div class="course-object course-object-full">
-                    <img src="/projects/courses/next-course-cover.png" alt="蒙布覆盖的下一门公开课展品" loading="lazy" />
+                    <img src="/projects/courses/next-course-cover.png" alt={UI.projects.courseCoverAlt} loading="lazy" />
                   </div>
                   <div class="course-plaque">
                     <span>第{index + 1}展位</span>
@@ -172,7 +172,7 @@ const structuredData = [
                   </div>
                 </div>
                 <div class="course-plaque">
-                  <span>{data.role ?? '公开课作者'}</span>
+                  <span>{data.role ?? UI.projects.courseAuthorFallback}</span>
                   <strong>{data.title}</strong>
                   <p>{data.description}</p>
                 </div>
@@ -187,7 +187,7 @@ const structuredData = [
       <div class="section-head section-head-large projects-section-head">
         <div>
           <p class="eyebrow">Archive</p>
-          <h2 id="project-index" class="section-title">更多开源与产品</h2>
+          <h2 id="project-index" class="section-title">{UI.projects.moreHeading}</h2>
         </div>
       </div>
       <div class="project-compact-list">
@@ -213,7 +213,7 @@ const structuredData = [
     {snippets.length > 0 && (
       <section class="projects-index" aria-labelledby="snippet-index">
         <div class="section-head section-head-large">
-          <h2 id="snippet-index" class="section-title section-title-small">代码实验与随笔</h2>
+          <h2 id="snippet-index" class="section-title section-title-small">{UI.projects.snippetsHeading}</h2>
         </div>
         <div class="project-compact-list">
           {snippets.map(({ data }) => {

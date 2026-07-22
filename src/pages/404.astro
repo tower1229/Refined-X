@@ -2,40 +2,41 @@
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import Icon from '../components/Icon.astro';
 import { askPageUrl } from '../lib/paths';
+import { ASK_OVERLAY_PLACEHOLDER, UI } from '../lib/site-copy';
 ---
 
 <StarlightPage
 	frontmatter={{
 		title: '404',
-		description: '页面未找到',
+		description: UI.common.notFoundDescription,
 		template: 'splash',
 		contentType: 'page',
 		slug: '404',
-		llmSummary: 'Refined-X 404 页面',
+		llmSummary: UI.common.notFoundDescription,
 	}}
 >
 	<div class="wrap not-found">
 		<p class="eyebrow">404</p>
-		<h1 id="_top" class="display not-found-title">页面未找到</h1>
-		<p class="lede not-found-lede">检查 URL 是否正确，或直接向站点提问。</p>
+		<h1 id="_top" class="display not-found-title">{UI.common.notFoundTitle}</h1>
+		<p class="lede not-found-lede">{UI.common.notFoundLede}</p>
 		<form class="ask not-found-ask" action={askPageUrl()} method="get" role="search">
 			<div class="ask-row">
 				<Icon name="spark" size={19} />
-				<label class="visually-hidden" for="not-found-query">向本站提问</label>
+				<label class="visually-hidden" for="not-found-query">{UI.ask.overlayHeading}</label>
 				<input
 					id="not-found-query"
 					name="q"
 					class="ask-input"
-					placeholder="向本站提问…"
+					placeholder={ASK_OVERLAY_PLACEHOLDER}
 					autocomplete="off"
 				/>
-				<button class="ask-send" type="submit">提问</button>
+				<button class="ask-send" type="submit">{UI.ask.button}</button>
 			</div>
 		</form>
 		<div class="not-found-links">
-			<a class="btn btn-ghost" href="/">返回首页</a>
-			<a class="btn btn-ghost" href="/writing/">浏览写作</a>
-			<a class="btn btn-ghost" href="/answers/">常见问题</a>
+			<a class="btn btn-ghost" href="/">{UI.common.backHome}</a>
+			<a class="btn btn-ghost" href="/writing/">{UI.common.browseWriting}</a>
+			<a class="btn btn-ghost" href="/answers/">{UI.answers.label}</a>
 		</div>
 	</div>
 </StarlightPage>

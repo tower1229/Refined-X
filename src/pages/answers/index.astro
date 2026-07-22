@@ -1,5 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { UI } from '../../lib/site-copy';
 import Icon from '../../components/Icon.astro';
 import { absoluteUrl, breadcrumbJsonLd, collectionPageJsonLd, getAnswers } from '../../lib/public-data';
 
@@ -8,13 +9,13 @@ const answersDescription = 'Refined-X 策展式常见问题与答案索引。';
 const structuredData = [
 	collectionPageJsonLd({
 		path: '/answers/',
-		name: '常见问题',
+		name: UI.answers.label,
 		description: answersDescription,
 		items: answers.map((entry) => ({ name: entry.data.question!, url: `/answers/${entry.data.slug}/` })),
 	}),
 	breadcrumbJsonLd([
-		{ name: '首页', path: '/' },
-		{ name: '常见问题', path: '/answers/' },
+		{ name: UI.answers.homeCrumb, path: '/' },
+		{ name: UI.answers.label, path: '/answers/' },
 	]),
 	{
 		'@context': 'https://schema.org',
@@ -31,7 +32,7 @@ const structuredData = [
 
 <StarlightPage
 	frontmatter={{
-		title: '常见问题',
+		title: UI.answers.label,
 		description: answersDescription,
 		template: 'splash',
 		contentType: 'page',
@@ -62,7 +63,7 @@ const structuredData = [
 		<div class="article-return">
 			<a class="btn btn-solid" href="/ask/">
 				<Icon name="spark" size={15} />
-				向本站提问
+				{UI.answers.askCta}
 			</a>
 		</div>
 	</div>

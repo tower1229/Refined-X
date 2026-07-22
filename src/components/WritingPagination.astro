@@ -1,4 +1,5 @@
 ---
+import { UI } from '../lib/site-copy';
 import { pageHref } from '../lib/articles';
 
 interface Props {
@@ -11,7 +12,7 @@ const { pageNumber, pageCount } = Astro.props;
 
 {
 	pageCount > 1 && (
-		<nav aria-label="文章分页" class="writing-pagination">
+		<nav aria-label={UI.common.paginationAria} class="writing-pagination">
 			{pageNumber > 1 && (
 				<a class="writing-pagination-nav" href={pageHref(pageNumber - 1)} rel="prev">
 					← 上一页

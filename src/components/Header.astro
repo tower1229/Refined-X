@@ -1,59 +1,64 @@
 ---
 import Icon from './Icon.astro';
-import { SITE_BRAND } from '../lib/site-copy';
-import { siteConfig } from '../../site.config.mjs';
+import { SITE_BRAND, UI } from '../lib/site-copy';
 
 const pathname = new URL(Astro.request.url).pathname;
 const currentPath = pathname.replace(/\/$/, '');
 const isHome = currentPath === '';
 const links = [
-	{ href: '/writing/', label: siteConfig.brand.nav.writing, active: currentPath.startsWith('/writing') },
-	{ href: '/projects/', label: siteConfig.brand.nav.projects, active: currentPath === '/projects' },
-	{ href: '/about/', label: siteConfig.brand.nav.about, active: currentPath === '/about' },
+	{ href: '/writing/', label: UI.nav.writing, active: currentPath.startsWith('/writing') },
+	{ href: '/projects/', label: UI.nav.projects, active: currentPath === '/projects' },
+	{ href: '/about/', label: UI.nav.about, active: currentPath === '/about' },
 ];
+const themeLabelsJson = JSON.stringify({
+	auto: UI.theme.auto,
+	light: UI.theme.light,
+	dark: UI.theme.dark,
+	triggerAriaTemplate: UI.theme.triggerAria('__PREF__', '__CUR__'),
+});
 ---
 
-<header class:list={['topbar', { 'topbar--home': isHome, 'topbar--anchored': !isHome }]}>
+<header class:list={['topbar', { 'topbar--home': isHome, 'topbar--anchored': !isHome }]} data-theme-labels={themeLabelsJson}>
 	<div class="topbar-hero-bg" aria-hidden="true"></div>
 	<div class="topbar-glass">
 		<div class="wrap topbar-in">
-			<a href="/" class="brand" aria-label={`${SITE_BRAND} home`}>
+			<a href="/" class="brand" aria-label={UI.nav.homeAria(SITE_BRAND)}>
 				<span class="brand-wordmark">{SITE_BRAND}</span>
 			</a>
-			<nav class="nav" aria-label="主导航">
+			<nav class="nav" aria-label={UI.nav.primaryAria}>
 				{links.map(({ href, label, active }) => <a href={href} aria-current={active ? 'page' : undefined}>{label}</a>)}
 			</nav>
 			<div class="header-actions">
-				<button class="icon-btn" type="button" data-open-ask aria-label="向本站提问" title="向本站提问（⌘K）">
+				<button class="icon-btn" type="button" data-open-ask aria-label={UI.ask.openAria} title={UI.ask.openTitle}>
 					<Icon name="spark" size={20} />
 				</button>
-				<button class="icon-btn" type="button" data-open-mcp aria-label="Agent 接入 MCP" title="Agent 接入 MCP">
+				<button class="icon-btn" type="button" data-open-mcp aria-label={UI.mcp.openAria} title={UI.mcp.openTitle}>
 					<Icon name="mcp" size={20} />
 				</button>
 				<div class="theme-menu">
-					<button class="icon-btn" type="button" id="theme-menu-trigger" aria-label="打开主题菜单" title="主题" aria-haspopup="true" aria-expanded="false" aria-controls="theme-menu-panel">
+					<button class="icon-btn" type="button" id="theme-menu-trigger" aria-label={UI.theme.openMenuAria} title={UI.theme.menuTitle} aria-haspopup="true" aria-expanded="false" aria-controls="theme-menu-panel">
 						<img src="/asset/auto_theme.png" alt="" class="theme-icon theme-icon-auto theme-icon-image" aria-hidden="true" />
 						<Icon name="sun" size={20} class="theme-icon theme-icon-sun" />
 						<Icon name="moon" size={20} class="theme-icon theme-icon-moon" />
 					</button>
-					<div class="theme-menu-panel" id="theme-menu-panel" role="group" aria-label="主题偏好" hidden>
+					<div class="theme-menu-panel" id="theme-menu-panel" role="group" aria-label={UI.theme.preferenceAria} hidden>
 						<button type="button" data-theme-preference-option="auto">
 							<img src="/asset/auto_theme.png" alt="" class="theme-menu-icon-image" aria-hidden="true" />
-							<span>自动</span>
+							<span>{UI.theme.auto}</span>
 						</button>
 						<button type="button" data-theme-preference-option="light">
 							<Icon name="sun" size={16} />
-							<span>浅色</span>
+							<span>{UI.theme.light}</span>
 						</button>
 						<button type="button" data-theme-preference-option="dark">
 							<Icon name="moon" size={16} />
-							<span>深色</span>
+							<span>{UI.theme.dark}</span>
 						</button>
 					</div>
 				</div>
 				<details class="mobile-nav">
-					<summary class="icon-btn" aria-label="打开主导航"><Icon name="menu" size={20} /></summary>
-					<nav class="mobile-nav-panel" aria-label="移动端主导航">
+					<summary class="icon-btn" aria-label={UI.nav.openMenuAria}><Icon name="menu" size={20} /></summary>
+					<nav class="mobile-nav-panel" aria-label={UI.nav.mobileAria}>
 						{links.map(({ href, label, active }) => <a href={href} aria-current={active ? 'page' : undefined}>{label}</a>)}
 					</nav>
 				</details>
@@ -73,7 +78,29 @@ const links = [
 	const topbar = document.querySelector('.topbar');
 	const hero = document.querySelector('.heroB');
 
-	initThemeControl({ documentElement: root, menu: themeMenu, trigger: themeTrigger, options: themeOptions });
+	const raw = topbar instanceof HTMLElement ? topbar.dataset.themeLabels : undefined;
+	const parsed = raw ? JSON.parse(raw) as {
+		auto: string;
+		light: string;
+		dark: string;
+		triggerAriaTemplate: string;
+	} : null;
+
+	initThemeControl({
+		documentElement: root,
+		menu: themeMenu,
+		trigger: themeTrigger,
+		options: themeOptions,
+		labels: {
+			auto: parsed?.auto ?? 'Auto',
+			light: parsed?.light ?? 'Light',
+			dark: parsed?.dark ?? 'Dark',
+			triggerAria: (preference, current) =>
+				(parsed?.triggerAriaTemplate ?? 'Theme: __PREF__ (now __CUR__). Open theme menu')
+					.replace('__PREF__', preference)
+					.replace('__CUR__', current),
+		},
+	});
 
 	if (hero) {
 		scheduleHeroThemeCrossfadeReady(root);

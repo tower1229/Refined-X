@@ -1,12 +1,3 @@
-export const THINKING_MESSAGES = [
-	'先从公开内容里找线索',
-	'正在匹配相关文章和 FAQ',
-	'整理可能的回答方向',
-	'检索策展答案与长文片段',
-	'核对站点里的公开资料',
-	'看看有没有直接相关的页面',
-] as const;
-
 export type AskPendingMode = 'verify' | 'think';
 
 export type AskPendingController = {
@@ -19,6 +10,7 @@ type PendingOptions = {
 	label: HTMLElement;
 	liveRegion?: HTMLElement;
 	messages?: readonly string[];
+	verifyingLive?: string;
 };
 
 function pickMessage(messages: readonly string[], previous: string | null) {
@@ -26,11 +18,22 @@ function pickMessage(messages: readonly string[], previous: string | null) {
 	return pool[Math.floor(Math.random() * pool.length)] ?? messages[0] ?? '';
 }
 
+/** Default thinking copy kept for unit tests; pages should pass locale messages. */
+export const THINKING_MESSAGES = [
+	'先从公开内容里找线索',
+	'正在匹配相关文章和 FAQ',
+	'整理可能的回答方向',
+	'检索策展答案与长文片段',
+	'核对站点里的公开资料',
+	'看看有没有直接相关的页面',
+] as const;
+
 export function createAskPendingController({
 	root,
 	label,
 	liveRegion,
 	messages = THINKING_MESSAGES,
+	verifyingLive = '正在完成安全检查',
 }: PendingOptions): AskPendingController {
 	let mode: AskPendingMode | null = null;
 	let messageTimer: number | undefined;
@@ -86,7 +89,7 @@ export function createAskPendingController({
 			root.setAttribute('aria-hidden', 'false');
 			if (nextMode === 'verify') {
 				label.textContent = '';
-				if (liveRegion) liveRegion.textContent = '正在完成安全检查';
+				if (liveRegion) liveRegion.textContent = verifyingLive;
 				return;
 			}
 			startThinking();

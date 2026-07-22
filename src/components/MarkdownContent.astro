@@ -1,4 +1,5 @@
 ---
+import { UI } from '../lib/site-copy';
 import { getCollection } from 'astro:content';
 import Icon from './Icon.astro';
 import ArticleToc from './ArticleToc.astro';
@@ -46,9 +47,9 @@ const showToc = shouldShowToc(tocItems);
   <slot />
 ) : (
   <article class="wrap page page-article">
-    <nav class="crumbs" aria-label="面包屑">
+    <nav class="crumbs" aria-label={UI.common.breadcrumbAria}>
       <a href="/">首页</a><span class="sep">/</span>
-      <a href="/writing/">写作</a>
+      <a href="/writing/">{UI.nav.writing}</a>
       {seriesMeta && series && (
         <>
           <span class="sep">/</span>
@@ -117,7 +118,7 @@ const showToc = shouldShowToc(tocItems);
       {rel.length > 0 && (
         <>
           <div class="section-head related-heading" aria-labelledby="related-reading-heading">
-            <h2 id="related-reading-heading" class="section-title">相关阅读</h2>
+            <h2 id="related-reading-heading" class="section-title">{UI.common.relatedReading}</h2>
             <span class="mono section-meta">同专栏优先，其次同标签</span>
           </div>
           <div class="related">

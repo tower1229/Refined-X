@@ -57,6 +57,7 @@ Edit [`site.config.mjs`](site.config.mjs), or place an overlay at `../instance.c
 
 | Field | Default | Purpose |
 |-------|---------|---------|
+| `locale` | `en` | UI chrome language pack (`en` \| `zh-CN`) |
 | `contentRoot` | `./content` | Public Markdown/YAML root |
 | `publicDir` | `./public` | Static assets (copied to dist) |
 | `outDir` | `./dist` | Build output |
@@ -64,7 +65,7 @@ Edit [`site.config.mjs`](site.config.mjs), or place an overlay at `../instance.c
 | `site` / `title` / `locale` | example.com / Refined-X / en | Site identity |
 | `ask.askUrl` / `mcpUrl` / `healthUrl` | empty | Optional Public Ask / NLWeb worker |
 | `redirects` | `{}` | Astro redirects map |
-| `brand.*` | Demo Author copy | Nav, home, projects, Ask chips |
+| `brand.*` | Demo Author copy | Identity & content (persona, headings, chips) — not UI chrome |
 
 Relative paths resolve from the package root (this directory).
 
