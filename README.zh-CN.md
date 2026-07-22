@@ -57,14 +57,15 @@ Schema **有明确约定**；内容树的**位置**可配置。
 
 | 字段 | 默认 | 作用 |
 |-------|---------|---------|
+| `locale` | `en` | 界面文案包（`en` \| `zh-CN`） |
 | `contentRoot` | `./content` | 公开 Markdown/YAML 根目录 |
 | `publicDir` | `./public` | 静态资源（复制到 dist） |
 | `outDir` | `./dist` | 构建输出 |
 | `assetSource` | 未设置 | 可选图片库，供 `collect-assets` 使用 |
-| `site` / `title` / `locale` | example.com / Refined-X / en | 站点身份 |
+| `site` / `title` | example.com / Refined-X | 站点身份 |
 | `ask.askUrl` / `mcpUrl` / `healthUrl` | 空 | 可选 Public Ask / NLWeb Worker |
 | `redirects` | `{}` | Astro redirects |
-| `brand.*` | Demo Author 文案 | 导航、首页、作品集、Ask 快捷提问 |
+| `brand.*` | Demo Author 文案 | 身份与内容（persona、标题、chips），不含界面 chrome |
 
 相对路径均相对本包根目录解析。
 
