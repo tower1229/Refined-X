@@ -1,3 +1,5 @@
+English | [简体中文](README.zh-CN.md)
+
 # Refined-X
 
 Agent-ready **personal publish** starter for [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/).
