@@ -1,0 +1,65 @@
+---
+import { getCollection } from 'astro:content';
+import { FOOTER_TAGLINE, SITE_BRAND, SITE_PERSONA } from '../lib/site-copy';
+import { SERIES_ORDER } from '../lib/articles';
+import { siteConfig } from '../../site.config.mjs';
+
+const allSeries = await getCollection('series');
+const seriesList = SERIES_ORDER.map((slug) => allSeries.find((entry) => entry.id === slug)).filter(Boolean);
+const siteHost = (() => {
+	try {
+		return new URL(siteConfig.site).host;
+	} catch {
+		return siteConfig.site;
+	}
+})();
+---
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <span class="brand-wordmark">{SITE_BRAND}</span>
+        </div>
+        <p class="footer-description">
+          {FOOTER_TAGLINE}
+        </p>
+      </div>
+      <div>
+        <h4>Content</h4>
+        <ul>
+          <li><a href="/writing/">Writing</a></li>
+          {seriesList.map((entry) => entry && (
+            <li><a href={`/writing/${entry.id}/`}>{entry.data.title}</a></li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h4>Site</h4>
+        <ul>
+          <li><a href="/projects/">Projects</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="/friends/">Friends</a></li>
+          <li><a href="/ask/">Ask</a></li>
+          <li><a href="/topics/">Topics</a></li>
+          <li><a href="/answers/">Answers</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Agent-friendly</h4>
+        <ul>
+          <li><a href="/llms.txt" class="mono machine-link">/llms.txt</a></li>
+          <li><a href="/openapi.json" class="mono machine-link">/openapi.json</a></li>
+          <li><a href="/api/search-index.json" class="mono machine-link">/api/search-index.json</a></li>
+          <li><a href="/.well-known/about.json" class="mono machine-link">/.well-known/about.json</a></li>
+          <li><a href="/.well-known/mcp/catalog.json" class="mono machine-link">/.well-known/mcp/catalog.json</a></li>
+          <li><a href="/.well-known/mcp.json" class="mono machine-link">/.well-known/mcp.json</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span class="mono">© {new Date().getFullYear()} {SITE_PERSONA} · {siteHost}</span>
+      <span class="mono">SEO · AEO · Agent-friendly</span>
+    </div>
+  </div>
+</footer>

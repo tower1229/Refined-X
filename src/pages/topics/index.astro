@@ -1,0 +1,48 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { breadcrumbJsonLd, collectionPageJsonLd, getTopics } from '../../lib/public-data';
+
+const topics = await getTopics();
+const topicsDescription = '按主题浏览 Refined-X 的公开文章。';
+const structuredData = [
+  collectionPageJsonLd({
+    path: '/topics/',
+    name: '全部主题',
+    description: topicsDescription,
+    items: topics.map((topic) => ({ name: topic.name, url: `/topics/${topic.slug}/` })),
+  }),
+  breadcrumbJsonLd([
+    { name: '首页', path: '/' },
+    { name: '主题目录', path: '/topics/' },
+  ]),
+];
+topics.sort((a, b) => b.articles.length - a.articles.length);
+---
+
+<StarlightPage
+  frontmatter={{
+    title: '主题',
+    description: topicsDescription,
+    template: 'splash',
+    contentType: 'page',
+    slug: 'topics',
+    llmSummary: 'Refined-X 公开文章的主题索引。',
+  }}
+>
+  {structuredData.map((value) => (
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
+  ))}
+  <div class="wrap page">
+    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>主题目录</span></div>
+    <h1 id="_top" class="display page-heading">全部主题</h1>
+    <p class="lede page-lede">按主题聚合的文章发现层。</p>
+    
+    <div class="tagrow topic-cloud">
+      {topics.map(topic => (
+        <a href={`/topics/${topic.slug}/`} class="tag topic-tag">
+          {topic.name} <span class="topic-count">{topic.articles.length}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</StarlightPage>

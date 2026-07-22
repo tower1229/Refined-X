@@ -1,0 +1,303 @@
+/* Homepage hero glass — CSS recreation of liquid-glass-react (static, no hydration)
+ *
+ * Library reference: https://github.com/rdev/liquid-glass-react
+ * HeroGlass props mapped here:
+ *   ask  — blurAmount 0.05 → blur(5.6px), saturation 125%, cornerRadius 14
+ *   chip — blurAmount 0.2  → blur(10.4px), saturation 130%, cornerRadius 100, padding 3px 13px
+ * Visual stack: .glass__warp (backdrop) + gradient edge mask + sharp content + drop shadow
+ */
+
+.heroB:has(.hero-glass-mount) {
+  align-items: stretch;
+}
+
+.heroB-inner:has(.hero-glass-mount) {
+  min-height: calc(100dvh - var(--topbar-h) - clamp(56px, 8vh, 96px));
+}
+
+.hero-glass-mount {
+  --hero-glass-ink: rgba(255, 255, 255, 0.96);
+  --hero-glass-muted: rgba(255, 255, 255, 0.9);
+  --hero-glass-faint: rgba(255, 255, 255, 0.78);
+  --hero-glass-text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.52),
+    0 10px 24px rgba(0, 0, 0, 0.36);
+  --hero-glass-drop-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  --hero-glass-edge-inset:
+    0 0 0 0.5px rgba(255, 255, 255, 0.5) inset,
+    0 1px 3px rgba(255, 255, 255, 0.25) inset, 0 1px 4px rgba(0, 0, 0, 0.35);
+  --hero-glass-edge-gradient: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.12) 33%,
+    rgba(255, 255, 255, 0.4) 66%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  --hero-glass-ask-blur: 0px;
+  --hero-glass-ask-sat: 125%;
+  --hero-glass-chip-blur: 0px;
+  --hero-glass-chip-sat: 130%;
+  --hero-glass-tint: rgba(255, 255, 255, 0.1);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  width: 100%;
+  min-height: 100%;
+}
+
+.hero-glass-mount .hero-glass-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 3.2vh, 32px);
+  width: 100%;
+}
+
+.hero-glass-mount .hero-glass-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: min(680px, 100%);
+  padding: clamp(24px, 3.5vh, 36px) clamp(24px, 4vw, 40px);
+}
+
+.hero-glass-mount .hero-glass-identity .hero-brand,
+.hero-glass-mount .hero-glass-identity .heroB-title {
+  text-shadow: var(--hero-glass-text-shadow);
+}
+
+.hero-glass-mount .hero-glass-identity .hero-brand {
+  color: var(--hero-glass-faint);
+  margin: 0 0 12px;
+}
+
+.hero-glass-mount .hero-glass-identity .heroB-title {
+  margin: 0;
+  color: var(--hero-glass-ink);
+}
+
+.hero-glass-mount .hero-glass-identity .hero-avatar {
+  display: block;
+  margin: 0 auto 14px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 8px 28px -10px rgba(0, 0, 0, 0.45);
+}
+
+.hero-glass-mount .hero-ask {
+  width: min(700px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* --- shared glass surface (.glass + .glass__warp + edge highlight) --- */
+
+.hero-glass-mount .hero-glass-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  box-shadow: var(--hero-glass-drop-shadow);
+}
+
+.hero-glass-mount .hero-glass-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--hero-glass-tint);
+  -webkit-backdrop-filter: blur(var(--hero-glass-blur))
+    saturate(var(--hero-glass-sat));
+  backdrop-filter: blur(var(--hero-glass-blur)) saturate(var(--hero-glass-sat));
+  pointer-events: none;
+}
+
+.hero-glass-mount .hero-glass-content {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-glass-mount .hero-glass-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1.5px;
+  pointer-events: none;
+  box-shadow: var(--hero-glass-edge-inset);
+  background: var(--hero-glass-edge-gradient);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* --- search bar (.glass cornerRadius 14, padding 0) --- */
+
+.hero-glass-mount .hero-ask .ask--glass {
+  --hero-glass-blur: var(--hero-glass-ask-blur);
+  --hero-glass-sat: var(--hero-glass-ask-sat);
+
+  display: flex;
+  width: 100%;
+  border-radius: 14px;
+  transition: box-shadow var(--duration-mid) var(--ease-out-expo);
+}
+
+.hero-glass-mount .hero-ask .ask--glass:hover,
+.hero-glass-mount .hero-ask .ask--glass:focus-within {
+  border-color: transparent;
+  box-shadow: var(--hero-glass-drop-shadow);
+}
+
+.hero-glass-mount .hero-ask .ask-row {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 18px 20px 18px 24px;
+  gap: 16px;
+}
+
+.hero-glass-mount .hero-ask .ask-spark-icon {
+  color: var(--hero-glass-muted);
+  opacity: 0.9;
+}
+
+.hero-glass-mount .hero-ask .ask-input {
+  font-size: clamp(16px, 1.8vw, 18px);
+  color: var(--hero-glass-ink);
+  text-shadow: var(--hero-glass-text-shadow);
+}
+
+.hero-glass-mount .hero-ask .ask-input::placeholder {
+  color: var(--hero-glass-muted);
+}
+
+.hero-glass-mount .hero-ask .ask-send {
+  min-height: 40px;
+  background: rgba(255, 255, 255, 0.94);
+  color: rgba(18, 18, 20, 0.92);
+  text-shadow: none;
+}
+.hero-glass-mount .hero-ask .ask-send--icon {
+  width: 40px;
+  padding-inline: 0;
+}
+
+.hero-glass-mount .hero-ask .ask-send:hover {
+  opacity: 1;
+  background: #fff;
+}
+
+/* --- chips (.glass cornerRadius 100, padding 3px 13px) --- */
+
+.hero-glass-mount .hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: clamp(14px, 2.2vh, 20px);
+}
+
+.hero-glass-mount .chip--glass {
+  --hero-glass-blur: var(--hero-glass-chip-blur);
+  --hero-glass-sat: var(--hero-glass-chip-sat);
+
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 3px 13px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color var(--duration-mid) var(--ease-out-quart);
+}
+
+.hero-glass-mount .chip--glass .hero-glass-content {
+  color: var(--hero-glass-ink);
+  text-shadow: var(--hero-glass-text-shadow);
+  opacity: 0.92;
+}
+
+.hero-glass-mount .chip--glass:hover .hero-glass-content,
+.hero-glass-mount .chip--glass:focus-visible .hero-glass-content {
+  color: #fff;
+  opacity: 1;
+}
+
+.hero-glass-mount .hero-glass-lede {
+  margin: 0;
+  padding-bottom: clamp(4px, 1.5vh, 12px);
+  max-width: min(520px, 100%);
+  text-align: center;
+  color: var(--hero-glass-ink);
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.58),
+    0 10px 24px rgba(0, 0, 0, 0.42);
+}
+
+@media (max-width: 680px) {
+  .hero-glass-mount .hero-ask .ask-row {
+    padding: 14px 14px 14px 16px;
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .hero-glass-mount {
+    --hero-glass-ink: var(--ink);
+    --hero-glass-muted: var(--muted);
+    --hero-glass-faint: var(--faint);
+    --hero-glass-text-shadow: none;
+    --hero-glass-drop-shadow: var(--shadow);
+  }
+
+  .hero-glass-mount .hero-glass-identity .hero-brand,
+  .hero-glass-mount .hero-glass-identity .heroB-title,
+  .hero-glass-mount .hero-glass-lede {
+    text-shadow: none;
+  }
+
+  .hero-glass-mount .hero-glass-surface::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+  }
+
+  .hero-glass-mount .hero-glass-surface::after {
+    background: none;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .hero-glass-mount .hero-ask .ask-input,
+  .hero-glass-mount .chip--glass .hero-glass-content {
+    color: var(--ink);
+    text-shadow: none;
+  }
+
+  .hero-glass-mount .hero-ask .ask-input::placeholder {
+    color: var(--muted);
+  }
+
+  .hero-glass-mount .hero-ask .ask-send {
+    background: var(--ink);
+    color: var(--bg);
+  }
+}

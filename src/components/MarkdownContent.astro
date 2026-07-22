@@ -1,0 +1,146 @@
+---
+import { getCollection } from 'astro:content';
+import Icon from './Icon.astro';
+import ArticleToc from './ArticleToc.astro';
+import {
+	estimateReadingMinutes,
+	formatArticleDate,
+	isSameCalendarDay,
+	seriesName,
+} from '../lib/articles';
+import { selectRelatedArticles } from '../lib/related-articles';
+import { extractTocFromMarkdown, shouldShowToc } from '../lib/article-toc';
+import { getPublicProfile, topicSlug } from '../lib/public-data';
+
+const entry = Astro.locals.starlightRoute.entry;
+const data = entry.data || {};
+const {
+	contentType = 'page',
+	title = 'Not Found',
+	tags = [],
+	series = undefined,
+	pubDate = undefined,
+	updatedDate = undefined,
+} = data;
+
+const allSeries = await getCollection('series');
+const seriesMeta = allSeries.find((x) => x.id === series)?.data;
+
+const allArticles = (await getCollection('docs', ({ data }) => data.contentType === 'article')).sort(
+	(a, b) => b.data.pubDate!.valueOf() - a.data.pubDate!.valueOf(),
+);
+const rel = selectRelatedArticles(entry, allArticles, 3);
+
+const publicProfile = await getPublicProfile();
+const readingMinutes = estimateReadingMinutes(entry.body?.length ?? 0);
+const effectiveUpdated = updatedDate ?? pubDate;
+const showUpdated =
+	pubDate && effectiveUpdated && !isSameCalendarDay(pubDate, effectiveUpdated);
+const pubDateIso = pubDate?.toISOString().slice(0, 10);
+const updatedIso = effectiveUpdated?.toISOString().slice(0, 10);
+
+const tocItems = contentType === 'article' ? extractTocFromMarkdown(entry.body ?? '') : [];
+const showToc = shouldShowToc(tocItems);
+---
+{contentType !== 'article' ? (
+  <slot />
+) : (
+  <article class="wrap page page-article">
+    <nav class="crumbs" aria-label="面包屑">
+      <a href="/">首页</a><span class="sep">/</span>
+      <a href="/writing/">写作</a>
+      {seriesMeta && series && (
+        <>
+          <span class="sep">/</span>
+          <a href={`/writing/${series}/`}>{seriesMeta.title}</a>
+        </>
+      )}
+    </nav>
+
+    <header class="article-heading">
+      {series && <p class="eyebrow">{seriesName(series)}</p>}
+      <h1 id="_top" class="display article-title">{title}</h1>
+      <div class="meta-bar article-meta">
+        <span class="who">{publicProfile.name}</span>
+        {pubDate && (
+          <>
+            <span class="dot" aria-hidden="true"></span>
+            <time datetime={pubDateIso}>发布 {formatArticleDate(pubDate)}</time>
+          </>
+        )}
+        {showUpdated && effectiveUpdated && (
+          <>
+            <span class="dot" aria-hidden="true"></span>
+            <time datetime={updatedIso}>更新 {formatArticleDate(effectiveUpdated)}</time>
+          </>
+        )}
+        <span class="dot" aria-hidden="true"></span>
+        <span>{readingMinutes} 分钟阅读</span>
+      </div>
+      {tags.length > 0 && (
+        <div class="tagrow article-tags">
+          {tags.map((t: string) => (
+            <a href={`/topics/${topicSlug(t)}/`} class="tag">{t}</a>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <hr class="rule-soft article-divider" />
+
+    <div class="article-layout" data-toc={showToc ? '' : undefined}>
+      <div class="article-layout-main">
+        {showToc && <ArticleToc part="mobile" items={tocItems} />}
+        <div class="prose article-body">
+          {data.llmSummary && (
+            <div class="article-llm-summary">
+              <strong class="summary-title">本文摘要</strong>
+              <div class="summary-content" set:html={data.llmSummary.replace(/\n/g, '<br/>')} />
+            </div>
+          )}
+          <slot />
+        </div>
+      </div>
+      {showToc && <ArticleToc part="rail" items={tocItems} />}
+    </div>
+
+    <footer class="article-foot">
+      {seriesMeta && series && (
+        <div class="article-return">
+          <a class="btn btn-ghost" href={`/writing/${series}/`}>
+            <Icon name="return" size={15} />
+            返回专栏 · {seriesMeta.title}
+          </a>
+        </div>
+      )}
+
+      {rel.length > 0 && (
+        <>
+          <div class="section-head related-heading" aria-labelledby="related-reading-heading">
+            <h2 id="related-reading-heading" class="section-title">相关阅读</h2>
+            <span class="mono section-meta">同专栏优先，其次同标签</span>
+          </div>
+          <div class="related">
+            {rel.map((r) => (
+              <a class="related-card" href={`/${r.id}/`}>
+                <div class="feat-meta">
+                  <span>{seriesName(r.data.series)}</span>
+                  <span>{formatArticleDate(r.data.pubDate!)}</span>
+                </div>
+                <div class="feat-title related-title">{r.data.title || r.id}</div>
+                <div class="pillar-foot related-link">阅读 <Icon name="arrow-right" size={14} /></div>
+              </a>
+            ))}
+          </div>
+        </>
+      )}
+    </footer>
+  </article>
+)}
+
+{showToc && (
+  <script>
+    import { initArticleToc } from '../scripts/article-toc';
+    initArticleToc();
+  </script>
+)}

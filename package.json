@@ -1,0 +1,53 @@
+{
+  "name": "refined-x",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Agent-ready personal publish starter for Astro + Starlight",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tower1229/Refined-X.git"
+  },
+  "homepage": "https://github.com/tower1229/Refined-X#readme",
+  "license": "MIT",
+  "keywords": [
+    "astro",
+    "starlight",
+    "withastro",
+    "llms.txt",
+    "mcp",
+    "nlweb",
+    "personal-site"
+  ],
+  "scripts": {
+    "collect-assets": "node scripts/collect-assets.mjs",
+    "verify": "node scripts/verify.mjs",
+    "test:public-ask": "node --test src/scripts/ask-agent.test.ts src/scripts/ask-pending.test.ts src/scripts/turnstile-client.test.ts src/scripts/theme-control.test.ts src/scripts/theme-preference.test.ts src/scripts/hero-theme-bg.test.ts src/scripts/typewriter.test.ts",
+    "test:related": "node --test src/lib/related-articles.test.ts",
+    "sync-content": "astro sync --force",
+    "predev": "npm run collect-assets",
+    "prebuild": "npm run collect-assets && npm run sync-content",
+    "precheck": "npm run collect-assets",
+    "check": "astro check",
+    "dev": "astro dev --host 127.0.0.1",
+    "start": "astro dev --host 127.0.0.1",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.2.1",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/starlight": "^0.41.3",
+    "astro": "^7.0.9",
+    "github-slugger": "^2.0.0",
+    "sharp": "^0.35.3",
+    "unist-util-visit": "^5.1.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^6.0.3",
+    "yaml": "^2.9.0"
+  }
+}

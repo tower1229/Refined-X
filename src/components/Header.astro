@@ -1,0 +1,94 @@
+---
+import Icon from './Icon.astro';
+import { SITE_BRAND } from '../lib/site-copy';
+import { siteConfig } from '../../site.config.mjs';
+
+const pathname = new URL(Astro.request.url).pathname;
+const currentPath = pathname.replace(/\/$/, '');
+const isHome = currentPath === '';
+const links = [
+	{ href: '/writing/', label: siteConfig.brand.nav.writing, active: currentPath.startsWith('/writing') },
+	{ href: '/projects/', label: siteConfig.brand.nav.projects, active: currentPath === '/projects' },
+	{ href: '/about/', label: siteConfig.brand.nav.about, active: currentPath === '/about' },
+];
+---
+
+<header class:list={['topbar', { 'topbar--home': isHome, 'topbar--anchored': !isHome }]}>
+	<div class="topbar-hero-bg" aria-hidden="true"></div>
+	<div class="topbar-glass">
+		<div class="wrap topbar-in">
+			<a href="/" class="brand" aria-label={`${SITE_BRAND} home`}>
+				<span class="brand-wordmark">{SITE_BRAND}</span>
+			</a>
+			<nav class="nav" aria-label="主导航">
+				{links.map(({ href, label, active }) => <a href={href} aria-current={active ? 'page' : undefined}>{label}</a>)}
+			</nav>
+			<div class="header-actions">
+				<button class="icon-btn" type="button" data-open-ask aria-label="向本站提问" title="向本站提问（⌘K）">
+					<Icon name="spark" size={20} />
+				</button>
+				<button class="icon-btn" type="button" data-open-mcp aria-label="Agent 接入 MCP" title="Agent 接入 MCP">
+					<Icon name="mcp" size={20} />
+				</button>
+				<div class="theme-menu">
+					<button class="icon-btn" type="button" id="theme-menu-trigger" aria-label="打开主题菜单" title="主题" aria-haspopup="true" aria-expanded="false" aria-controls="theme-menu-panel">
+						<img src="/asset/auto_theme.png" alt="" class="theme-icon theme-icon-auto theme-icon-image" aria-hidden="true" />
+						<Icon name="sun" size={20} class="theme-icon theme-icon-sun" />
+						<Icon name="moon" size={20} class="theme-icon theme-icon-moon" />
+					</button>
+					<div class="theme-menu-panel" id="theme-menu-panel" role="group" aria-label="主题偏好" hidden>
+						<button type="button" data-theme-preference-option="auto">
+							<img src="/asset/auto_theme.png" alt="" class="theme-menu-icon-image" aria-hidden="true" />
+							<span>自动</span>
+						</button>
+						<button type="button" data-theme-preference-option="light">
+							<Icon name="sun" size={16} />
+							<span>浅色</span>
+						</button>
+						<button type="button" data-theme-preference-option="dark">
+							<Icon name="moon" size={16} />
+							<span>深色</span>
+						</button>
+					</div>
+				</div>
+				<details class="mobile-nav">
+					<summary class="icon-btn" aria-label="打开主导航"><Icon name="menu" size={20} /></summary>
+					<nav class="mobile-nav-panel" aria-label="移动端主导航">
+						{links.map(({ href, label, active }) => <a href={href} aria-current={active ? 'page' : undefined}>{label}</a>)}
+					</nav>
+				</details>
+			</div>
+		</div>
+	</div>
+</header>
+
+<script>
+	import { initThemeControl } from '../scripts/theme-control';
+	import { scheduleHeroThemeCrossfadeReady } from '../scripts/hero-theme-bg';
+
+	const root = document.documentElement;
+	const themeMenu = document.getElementById('theme-menu-panel');
+	const themeTrigger = document.getElementById('theme-menu-trigger');
+	const themeOptions = document.querySelectorAll('[data-theme-preference-option]');
+	const topbar = document.querySelector('.topbar');
+	const hero = document.querySelector('.heroB');
+
+	initThemeControl({ documentElement: root, menu: themeMenu, trigger: themeTrigger, options: themeOptions });
+
+	if (hero) {
+		scheduleHeroThemeCrossfadeReady(root);
+	}
+
+	const syncHomeTopbar = () => {
+		if (!(topbar instanceof HTMLElement) || !(hero instanceof HTMLElement)) return;
+		const topbarHeight = topbar.offsetHeight;
+		const pastHero = hero.getBoundingClientRect().bottom <= topbarHeight + 1;
+		topbar.classList.toggle('topbar--past-hero', pastHero);
+	};
+
+	if (topbar?.classList.contains('topbar--home') && hero) {
+		syncHomeTopbar();
+		window.addEventListener('scroll', syncHomeTopbar, { passive: true });
+		window.addEventListener('resize', syncHomeTopbar, { passive: true });
+	}
+</script>

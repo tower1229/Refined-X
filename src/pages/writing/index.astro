@@ -1,0 +1,90 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getCollection } from 'astro:content';
+import ArticleFeed from '../../components/ArticleFeed.astro';
+import Icon from '../../components/Icon.astro';
+import SeriesGrid from '../../components/SeriesGrid.astro';
+import WritingPagination from '../../components/WritingPagination.astro';
+import { ARTICLE_PAGE_SIZE, getArticlePageCount } from '../../lib/articles';
+import { absoluteUrl, breadcrumbJsonLd } from '../../lib/public-data';
+import { SITE_BRAND, WRITING_LEDE } from '../../lib/site-copy';
+
+const articles = (await getCollection('docs', ({ data }) => data.contentType === 'article'))
+  .sort((a, b) => b.data.pubDate!.valueOf() - a.data.pubDate!.valueOf());
+
+const pageCount = getArticlePageCount(articles.length);
+const pageOneArticles = articles.slice(0, ARTICLE_PAGE_SIZE);
+
+const byYear: Record<string, typeof pageOneArticles> = {};
+pageOneArticles.forEach((a) => {
+  const y = String(a.data.pubDate!.getUTCFullYear());
+  if (!byYear[y]) byYear[y] = [];
+  byYear[y].push(a);
+});
+const years = Object.keys(byYear).sort((a, b) => Number(b) - Number(a));
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': absoluteUrl('/writing/#collection'),
+    url: absoluteUrl('/writing/'),
+    name: '写作',
+    description: WRITING_LEDE,
+    inLanguage: 'zh-CN',
+    isPartOf: { '@id': absoluteUrl('/#website') },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: articles.length,
+      itemListElement: pageOneArticles.map((article, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: absoluteUrl(`/${article.id}/`),
+        name: article.data.title,
+      })),
+    },
+  },
+  breadcrumbJsonLd([
+    { name: '首页', path: '/' },
+    { name: '写作', path: '/writing/' },
+  ]),
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title: `技术写作与职业思考归档：专注前端架构设计实战、复杂项目工程化落地与前沿 AI 协作模式深度剖析｜${SITE_BRAND}`,
+    description: `${WRITING_LEDE}共 ${articles.length} 篇。`,
+    template: 'splash',
+    contentType: 'page',
+    slug: 'writing',
+    llmSummary: `${WRITING_LEDE}共 ${articles.length} 篇。`,
+  }}
+>
+  {structuredData.map((value) => (
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
+  ))}
+  <div class="wrap page page-writing">
+    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>写作</span></div>
+    <h1 id="_top" class="display page-heading">写作</h1>
+    <p class="lede page-lede">{WRITING_LEDE}共 {articles.length} 篇。</p>
+
+    <div class="section-head section-head-spaced" aria-labelledby="writing-series-heading">
+      <h2 id="writing-series-heading" class="section-title">写作专栏</h2>
+    </div>
+    <SeriesGrid />
+
+    <div class="section-head section-head-large" aria-labelledby="writing-archive-heading">
+      <h2 id="writing-archive-heading" class="section-title">全部归档</h2>
+      <a class="more-link" href="/topics/">按主题浏览 <Icon name="arrow-right" size={14} /></a>
+    </div>
+
+    {years.map((y) => (
+      <section class="archive-year" aria-labelledby={`archive-year-${y}`}>
+        <h3 id={`archive-year-${y}`} class="mono archive-year-heading">{y}</h3>
+        <ArticleFeed articles={byYear[y]} />
+      </section>
+    ))}
+
+    <WritingPagination pageNumber={1} pageCount={pageCount} />
+  </div>
+</StarlightPage>

@@ -1,0 +1,125 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getCollection } from 'astro:content';
+import ArticleFeed from '../components/ArticleFeed.astro';
+import AskForm from '../components/AskForm.astro';
+import Icon from '../components/Icon.astro';
+import SeriesGrid from '../components/SeriesGrid.astro';
+import { absoluteUrl, getPublicProfile, personJsonLd } from '../lib/public-data';
+import { askPageUrl } from '../lib/paths';
+import {
+  ASK_PLACEHOLDER,
+  SITE_ALTERNATE_NAMES,
+  SITE_BRAND,
+  SITE_DESCRIPTION,
+  SITE_HOME_HEADING,
+  SITE_HOME_LEDE,
+  SITE_HOME_TITLE,
+} from '../lib/site-copy';
+
+const articles = (await getCollection('docs', ({ data }) => data.contentType === 'article'))
+  .sort((a, b) => b.data.pubDate!.valueOf() - a.data.pubDate!.valueOf());
+
+const featuredArticles = articles.slice(0, 6);
+
+const publicProfile = await getPublicProfile();
+const homeStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    personJsonLd(publicProfile),
+    {
+      '@type': 'WebSite',
+      '@id': absoluteUrl('/#website'),
+      url: absoluteUrl('/'),
+      name: SITE_BRAND,
+      alternateName: [...SITE_ALTERNATE_NAMES],
+      description: SITE_DESCRIPTION,
+	  inLanguage: 'zh-CN',
+      author: { '@id': publicProfile.id },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${absoluteUrl('/ask/')}?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'WebPage',
+      '@id': absoluteUrl('/#webpage'),
+      url: absoluteUrl('/'),
+      name: SITE_HOME_TITLE,
+      description: SITE_DESCRIPTION,
+      inLanguage: 'zh-CN',
+      isPartOf: { '@id': absoluteUrl('/#website') },
+      about: { '@id': publicProfile.id },
+    },
+  ],
+};
+---
+
+<StarlightPage
+  frontmatter={{
+    title: SITE_HOME_TITLE,
+    description: SITE_DESCRIPTION,
+    template: 'splash',
+    contentType: 'page',
+    slug: 'index',
+    llmSummary: `${SITE_BRAND} 是师兄的公开内容站点，提供文章、项目、个人资料与机器可读内容。`,
+  }}
+>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(homeStructuredData)} />
+
+  <section class="heroB" aria-label="站点首页">
+    <div class="heroB-theme-stack" aria-hidden="true">
+      <div class="heroB-theme-layer heroB-theme-layer--light"></div>
+      <div class="heroB-theme-layer heroB-theme-layer--dark"></div>
+    </div>
+    <div class="wrap heroB-inner">
+      <div class="hero-glass-mount">
+        <div class="hero-glass-body">
+          <div class="hero-glass-identity">
+            <img
+              class="portrait hero-avatar"
+              src="/asset/avatar.jpg"
+              alt={publicProfile.name}
+              width={130}
+              height={130}
+              decoding="sync"
+              fetchpriority="high"
+            />
+            <p class="hero-brand">{SITE_BRAND}</p>
+            <h1 id="_top" class="display heroB-title">
+              <span class="typewriter">{SITE_HOME_HEADING}</span>
+            </h1>
+          </div>
+          <AskForm
+            variant="hero"
+            placeholder={ASK_PLACEHOLDER}
+            inputId="hero-query"
+            action={askPageUrl()}
+          />
+        </div>
+        <p class="lede hero-description hero-glass-lede">{SITE_HOME_LEDE}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap section" aria-labelledby="home-series-heading">
+    <div class="section-head">
+      <h2 id="home-series-heading" class="section-title">写作专栏</h2>
+      <a class="more-link" href="/writing/">全部写作 <Icon name="arrow-right" size={14} /></a>
+    </div>
+    <SeriesGrid />
+  </section>
+
+  <section class="wrap section section-compact-top section-home-end" aria-labelledby="home-writing-heading">
+    <div class="section-head">
+      <h2 id="home-writing-heading" class="section-title">最新写作</h2>
+      <a class="more-link" href="/writing/">全部归档 <Icon name="arrow-right" size={14} /></a>
+    </div>
+    <ArticleFeed articles={featuredArticles} />
+  </section>
+
+</StarlightPage>

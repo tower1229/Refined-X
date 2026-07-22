@@ -1,0 +1,35 @@
+kind: person
+name: Demo Author
+aliases: [refined-x-demo]
+title: Personal publisher
+bio: Sample profile for the Refined-X starter. Replace with your public identity.
+stats:
+  - value: "1"
+    label: Sample site in this repo
+  - value: "2"
+    label: Demo articles
+  - value: "2"
+    label: Curated answers
+  - value: "∞"
+    label: Content roots you can point at
+knowsAbout:
+  - Frontend architecture
+  - Personal publishing
+  - Agent-friendly sites
+  - Astro
+  - Starlight
+capabilities:
+  - title: Publishing
+    description: Opinionated public content schema for articles, answers, projects, and series.
+  - title: Agents
+    description: llms.txt, OpenAPI, JSON APIs, and MCP discovery generated from the same corpus.
+timeline:
+  - period: "2026"
+    role: Starter release
+    description: Refined-X extracted as a reusable Astro template.
+education: Example University
+wechat: demo_wechat
+links:
+  website: https://example.com/
+  github: https://github.com/tower1229/Refined-X
+  email: mailto:demo@author.example

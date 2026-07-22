@@ -1,0 +1,5 @@
+---
+const { entry } = Astro.locals.starlightRoute;
+---
+
+{entry.data.contentType !== 'article' && entry.data.contentType !== 'answer' && entry.data.template !== 'splash' && <h1 id="_top" class="display page-title">{entry.data.title}</h1>}

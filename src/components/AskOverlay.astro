@@ -1,0 +1,74 @@
+---
+import Icon from './Icon.astro';
+import { ASK_OVERLAY_PLACEHOLDER } from '../lib/site-copy';
+---
+
+<dialog id="ask-overlay" class="overlay" aria-labelledby="ask-title">
+	<div class="overlay-panel">
+		<h2 id="ask-title" class="visually-hidden">向本站提问</h2>
+		<div class="overlay-search">
+			<Icon name="spark" size={20} />
+			<label class="visually-hidden" for="ask-input">向本站提问</label>
+			<input id="ask-input" placeholder={ASK_OVERLAY_PLACEHOLDER} autocomplete="off" />
+			<button class="dialog-close" type="button" data-close-ask aria-label="关闭提问">
+				<Icon name="close" size={18} />
+			</button>
+		</div>
+		<div id="ask-results" class="overlay-results" aria-live="polite"></div>
+		<div class="overlay-foot">
+			<span class="agent-note"><Icon name="spark" size={12} /> 策展式问答</span>
+			<span><span class="kbd">Esc</span> 关闭 · <a href="/ask/">提问页</a></span>
+		</div>
+	</div>
+</dialog>
+
+<script>
+	import { createAskSearch } from '../scripts/ask-search';
+
+	const dialog = document.getElementById('ask-overlay');
+	const input = document.getElementById('ask-input');
+	const results = document.getElementById('ask-results');
+
+	if (!(input instanceof HTMLInputElement) || !(results instanceof HTMLElement)) {
+		throw new Error('Ask overlay markup is missing required elements');
+	}
+
+	const search = createAskSearch(input, results, { showAskFallback: true });
+
+	const openAsk = async (query = '') => {
+		if (!(dialog instanceof HTMLDialogElement)) return;
+		search.setQuery(query);
+		if (!dialog.open) dialog.showModal();
+		input.focus();
+		await search.loadSearchData(true);
+		search.renderResults(input.value);
+	};
+
+	document.querySelectorAll<HTMLElement>('[data-open-ask]').forEach((trigger) => {
+		trigger.addEventListener('click', () => openAsk(trigger.dataset.query ?? ''));
+	});
+	document.querySelectorAll<HTMLFormElement>('[data-ask-form]').forEach((form) => {
+		form.addEventListener('submit', (event) => {
+			event.preventDefault();
+			const field = form.querySelector<HTMLInputElement>('input[name="query"]');
+			openAsk(field?.value ?? '');
+		});
+	});
+	document.querySelectorAll<HTMLElement>('[data-close-ask]').forEach((button) => {
+		button.addEventListener('click', () => dialog instanceof HTMLDialogElement && dialog.close());
+	});
+	dialog?.addEventListener('click', (event) => {
+		if (event.target === dialog && dialog instanceof HTMLDialogElement) dialog.close();
+	});
+	dialog?.addEventListener('close', () => {
+		input.value = '';
+		search.invalidate();
+	});
+	window.addEventListener('keydown', (event) => {
+		if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === 'k') {
+			event.preventDefault();
+			if (dialog instanceof HTMLDialogElement && dialog.open) dialog.close();
+			else openAsk();
+		}
+	});
+</script>

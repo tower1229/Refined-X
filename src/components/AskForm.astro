@@ -1,0 +1,86 @@
+---
+import Icon from './Icon.astro';
+import { ASK_BUTTON, ASK_CHIPS } from '../lib/site-copy';
+import { askPageUrl } from '../lib/paths';
+
+export type AskFormVariant = 'hero' | 'stage';
+
+interface Props {
+	variant: AskFormVariant;
+	placeholder: string;
+	inputId: string;
+	formId?: string;
+	/** Hero: navigates to /ask with ?q= */
+	action?: string;
+	inputName?: string;
+}
+
+const { variant, placeholder, inputId, formId, action, inputName } = Astro.props;
+const sparkSize = variant === 'hero' ? 19 : 24;
+const sendIconSize = variant === 'hero' ? 16 : 18;
+const chipsClass = variant === 'hero' ? 'chips hero-chips' : 'chips ask-stage-chips';
+const wrapperClass = variant === 'hero' ? 'hero-ask' : 'ask-form-block';
+const askPageMaxLength = 500;
+---
+
+<div class={wrapperClass}>
+	<form
+		class:list={['ask', { 'ask--stage': variant === 'stage', 'ask--glass hero-glass-surface': variant === 'hero' }]}
+		id={formId}
+		action={variant === 'hero' ? (action ?? askPageUrl()) : undefined}
+		method={variant === 'hero' ? 'get' : undefined}
+		role="search"
+	>
+		<div class="ask-row">
+			<span class="ask-spark-icon" aria-hidden="true">
+				<Icon name="spark" size={sparkSize} />
+			</span>
+			<label class="visually-hidden" for={inputId}>{placeholder}</label>
+			{
+				variant === 'stage' ? (
+					<textarea
+						id={inputId}
+						name={inputName ?? 'query'}
+						class="ask-input ask-input--multiline"
+						placeholder={placeholder}
+						autocomplete="off"
+						enterkeyhint="search"
+						spellcheck="false"
+						rows="1"
+						maxlength={askPageMaxLength}
+					/>
+				) : (
+					<input
+						id={inputId}
+						name={inputName ?? 'q'}
+						class="ask-input"
+						placeholder={placeholder}
+						autocomplete="off"
+					/>
+				)
+			}
+			<button class="ask-send ask-send--icon" type="submit" aria-label={ASK_BUTTON}>
+				<span class="ask-send-icon" aria-hidden="true">
+					<Icon name="enter" size={sendIconSize} />
+				</span>
+				<span class="ask-send-stop" hidden>停止</span>
+			</button>
+		</div>
+	</form>
+
+	<div class={chipsClass}>
+		{
+			ASK_CHIPS.map(({ label, query }) =>
+				variant === 'hero' ? (
+					<a class="chip chip--glass hero-glass-surface" href={askPageUrl(query)}>
+						<span class="hero-glass-content">{label}</span>
+					</a>
+				) : (
+					<button class="chip" type="button" data-ask-chip data-query={query}>
+						{label}
+					</button>
+				),
+			)
+		}
+	</div>
+</div>

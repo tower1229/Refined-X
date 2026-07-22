@@ -1,0 +1,94 @@
+/* Home hero theme-background crossfade (#63).
+   Overrides the hard-cut background-image on .heroB in refined-x.css. */
+
+:root {
+  /* Runtime duration is set from HERO_THEME_CROSSFADE_MS when crossfade is armed. */
+  --hero-theme-crossfade-duration: 2100ms;
+}
+
+.heroB,
+[data-theme="light"] .heroB,
+[data-theme="dark"] .heroB {
+  background-image: none;
+}
+
+.heroB::before,
+[data-theme="dark"] .heroB::before {
+  content: none;
+  background: none;
+}
+
+.heroB-theme-stack {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.heroB-theme-layer {
+  position: absolute;
+  inset: 0;
+  background-color: var(--bg);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 0;
+}
+
+.heroB-theme-layer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.heroB-theme-layer--light {
+  background-image: url("/asset/hero-light.png");
+}
+
+.heroB-theme-layer--light::before {
+  background:
+    radial-gradient(
+      ellipse at 50% 57%,
+      rgba(15, 17, 18, 0.3) 0%,
+      rgba(15, 17, 18, 0.18) 34%,
+      rgba(15, 17, 18, 0) 66%
+    ),
+    linear-gradient(
+      to bottom,
+      rgba(15, 17, 18, 0.12) 0%,
+      rgba(15, 17, 18, 0.04) 32%,
+      rgba(15, 17, 18, 0.2) 70%,
+      rgba(15, 17, 18, 0.34) 100%
+    );
+}
+
+.heroB-theme-layer--dark {
+  background-image: url("/asset/hero-dark.png");
+}
+
+.heroB-theme-layer--dark::before {
+  background:
+    radial-gradient(
+      ellipse at 50% 57%,
+      rgba(0, 0, 0, 0.16) 0%,
+      rgba(0, 0, 0, 0.08) 38%,
+      rgba(0, 0, 0, 0) 68%
+    ),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.2));
+}
+
+[data-theme="light"] .heroB-theme-layer--light,
+[data-theme="dark"] .heroB-theme-layer--dark {
+  opacity: 1;
+}
+
+[data-hero-theme-crossfade-ready="true"] .heroB-theme-layer {
+  transition: opacity var(--hero-theme-crossfade-duration) var(--ease-out-quart);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-hero-theme-crossfade-ready="true"] .heroB-theme-layer {
+    transition: none;
+  }
+}

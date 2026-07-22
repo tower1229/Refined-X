@@ -1,0 +1,69 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import Icon from '../../components/Icon.astro';
+import { absoluteUrl, breadcrumbJsonLd, collectionPageJsonLd, getAnswers } from '../../lib/public-data';
+
+const answers = await getAnswers();
+const answersDescription = 'Refined-X 策展式常见问题与答案索引。';
+const structuredData = [
+	collectionPageJsonLd({
+		path: '/answers/',
+		name: '常见问题',
+		description: answersDescription,
+		items: answers.map((entry) => ({ name: entry.data.question!, url: `/answers/${entry.data.slug}/` })),
+	}),
+	breadcrumbJsonLd([
+		{ name: '首页', path: '/' },
+		{ name: '常见问题', path: '/answers/' },
+	]),
+	{
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		'@id': absoluteUrl('/answers/#faq'),
+		mainEntity: answers.map((entry) => ({
+			'@type': 'Question',
+			name: entry.data.question,
+			acceptedAnswer: { '@type': 'Answer', text: entry.data.shortAnswer },
+		})),
+	},
+];
+---
+
+<StarlightPage
+	frontmatter={{
+		title: '常见问题',
+		description: answersDescription,
+		template: 'splash',
+		contentType: 'page',
+		slug: 'answers',
+		llmSummary: 'Refined-X 策展式常见问题索引，覆盖身份、联系、作品与数据源说明。',
+	}}
+>
+	{structuredData.map((value) => (
+		<script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
+	))}
+	<div class="wrap page">
+		<div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>常见问题</span></div>
+		<h1 id="_top" class="display page-heading">常见问题</h1>
+		<p class="lede page-lede">策展式答案，也可在首页或提问页直接向站点提问。</p>
+
+		<div class="faq-list answers-index">
+			{answers.map((entry) => (
+				<a class="answer-index-item" href={`/answers/${entry.data.slug}/`}>
+					<span class="answer-index-q">{entry.data.question}</span>
+					<span class="answer-index-a">{entry.data.shortAnswer}</span>
+					<span class="answer-index-arrow" aria-hidden="true">
+						<Icon name="arrow-right" size={15} />
+					</span>
+				</a>
+			))}
+		</div>
+
+		<div class="article-return">
+			<a class="btn btn-solid" href="/ask/">
+				<Icon name="spark" size={15} />
+				向本站提问
+			</a>
+		</div>
+	</div>
+</StarlightPage>

@@ -1,0 +1,38 @@
+---
+import { pageHref } from '../lib/articles';
+
+interface Props {
+	pageNumber: number;
+	pageCount: number;
+}
+
+const { pageNumber, pageCount } = Astro.props;
+---
+
+{
+	pageCount > 1 && (
+		<nav aria-label="文章分页" class="writing-pagination">
+			{pageNumber > 1 && (
+				<a class="writing-pagination-nav" href={pageHref(pageNumber - 1)} rel="prev">
+					← 上一页
+				</a>
+			)}
+			{Array.from({ length: pageCount }, (_, i) => i + 1).map((n) =>
+				n === pageNumber ? (
+					<span class="writing-pagination-current" aria-current="page">
+						{n}
+					</span>
+				) : (
+					<a class="writing-pagination-link" href={pageHref(n)}>
+						{n}
+					</a>
+				),
+			)}
+			{pageNumber < pageCount && (
+				<a class="writing-pagination-nav" href={pageHref(pageNumber + 1)} rel="next">
+					下一页 →
+				</a>
+			)}
+		</nav>
+	)
+}

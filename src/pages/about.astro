@@ -1,0 +1,135 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getCollection, render } from 'astro:content';
+import Icon from '../components/Icon.astro';
+import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
+import { siteConfig } from '../../site.config.mjs';
+
+const profile = await getCollection('profile');
+const personEntry = profile.find(({ data }) => data.kind === 'person');
+const [resume] = await getCollection('resume');
+
+if (!personEntry || personEntry.data.kind !== 'person' || !resume) {
+  throw new Error('About page requires person profile and resume content');
+}
+const person = personEntry.data;
+const publicProfile = await getPublicProfile();
+const aboutCopy = siteConfig.brand.about;
+const { Content } = await render(resume);
+const aboutStructuredData = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    personJsonLd(publicProfile),
+    {
+      '@type': 'ProfilePage',
+      '@id': absoluteUrl('/about/#profile'),
+      url: absoluteUrl('/about/'),
+      name: aboutCopy.pageName,
+      description: resume.data.description,
+      inLanguage: siteConfig.locale,
+      mainEntity: { '@id': publicProfile.id },
+      isPartOf: { '@id': absoluteUrl('/#website') },
+    },
+    breadcrumbJsonLd([
+      { name: 'Home', path: '/' },
+      { name: aboutCopy.crumb, path: '/about/' },
+    ]),
+  ],
+};
+
+---
+
+<StarlightPage
+  frontmatter={{
+    ...resume.data,
+    template: 'splash'
+  }}
+>
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(aboutStructuredData)} />
+
+  <div class="wrap page about-page">
+    <div class="crumbs"><a href="/">Home</a><span class="sep">/</span><span>{aboutCopy.crumb}</span></div>
+    <div class="about-grid">
+      <aside class="about-aside" aria-label="个人资料">
+        <img
+          class="portrait about-avatar"
+          src="/asset/avatar.jpg"
+          alt={person.name}
+          width="112"
+          height="112"
+          decoding="async"
+        />
+        <div class="about-identity">
+          <h1 id="_top" class="display about-name">{person.name}</h1>
+          <p class="mono about-role">{person.title}</p>
+        </div>
+        <nav class="about-links" aria-label="联系方式与作品">
+          {person.links?.github && (
+            <a class="about-link" href={person.links.github} target="_blank" rel="noreferrer">
+              <Icon name="external" size={16} />
+              GitHub
+            </a>
+          )}
+          {person.links?.email && (
+            <a class="about-link" href={person.links.email}>
+              <Icon name="mail" size={16} />
+              {person.links.email.replace('mailto:', '')}
+            </a>
+          )}
+          {person.wechat && (
+            <span class="about-link about-link-static">
+              <Icon name="message" size={16} />
+              微信 {person.wechat}
+            </span>
+          )}
+          <a class="about-link" href="/projects/">
+            <Icon name="grid" size={16} />
+            全部作品
+          </a>
+          {person.education && (
+            <span class="about-link about-link-static">
+              <Icon name="book" size={16} />
+              {person.education}
+            </span>
+          )}
+        </nav>
+      </aside>
+
+      <div class="about-main">
+        <div class="about-markdown">
+          <Content />
+        </div>
+
+        <section class="cooperation-panel" aria-labelledby="about-cooperation">
+          <h2 id="about-cooperation" class="section-title cooperation-title">
+            {publicProfile.cooperation?.title ?? '合作交流'}
+          </h2>
+          <p class="cooperation-description">{publicProfile.cooperation?.description}</p>
+          <div class="cooperation-actions">
+            {person.links?.email && (
+              <a class="btn btn-solid" href={person.links.email}>
+                <Icon name="mail" size={15} />
+                发邮件
+              </a>
+            )}
+            <button class="btn btn-ghost" type="button" data-open-ask data-query="如何与师兄合作？">问 AI 如何合作</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</StarlightPage>
+
+<style>
+  .about-link-static {
+    cursor: default;
+  }
+  .about-link-static:hover,
+  .about-link-static:focus-visible {
+    color: var(--muted);
+  }
+  .about-link-static:hover svg,
+  .about-link-static:focus-visible svg {
+    color: var(--faint);
+  }
+</style>

@@ -1,0 +1,86 @@
+---
+import Icon from './Icon.astro';
+import {
+	MCP_AGENT_PROMPT,
+	MCP_GUIDE_FOLLOWUP,
+	MCP_GUIDE_LEDE,
+	MCP_GUIDE_TITLE,
+	MCP_HEALTH_URL,
+} from '../lib/site-copy';
+---
+
+<dialog id="mcp-overlay" class="overlay mcp-overlay" aria-labelledby="mcp-guide-title">
+	<div class="overlay-panel mcp-guide-panel">
+		<div class="mcp-guide-head">
+			<Icon name="mcp" size={22} />
+			<h2 id="mcp-guide-title" class="mcp-guide-title">{MCP_GUIDE_TITLE}</h2>
+			<button class="dialog-close" type="button" data-close-mcp aria-label="关闭">
+				<Icon name="close" size={18} />
+			</button>
+		</div>
+		<div class="mcp-guide-body">
+			<p class="mcp-guide-lede">{MCP_GUIDE_LEDE}</p>
+			<div class="mcp-prompt-block">
+				<p class="mcp-prompt-text">{MCP_AGENT_PROMPT}</p>
+				<button class="btn btn-solid mcp-copy-btn" type="button" data-copy-prompt>复制发给 Agent</button>
+			</div>
+			<p class="mcp-guide-followup">{MCP_GUIDE_FOLLOWUP}</p>
+			<div class="mcp-guide-resources">
+				<p class="mcp-resources-label">其他机器可读资源</p>
+				<ul class="mcp-resources-list">
+					<li>
+						<a href="/llms.txt" class="mono machine-link">/llms.txt</a>
+						<span>站点入口目录，供 Agent 发现文章、FAQ 与 API 链接</span>
+					</li>
+					<li>
+						<a href="/openapi.json" class="mono machine-link">/openapi.json</a>
+						<span>接口字段与权限说明，适合程序化集成</span>
+					</li>
+					<li>
+						<a href={MCP_HEALTH_URL} class="mono machine-link" target="_blank" rel="noopener noreferrer">健康检查</a>
+						<span>确认 Ask / MCP 服务在线</span>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</dialog>
+
+<script define:vars={{ mcpPrompt: MCP_AGENT_PROMPT }}>
+	const dialog = document.getElementById('mcp-overlay');
+
+	const copyWithFeedback = async (text, button) => {
+		if (!(button instanceof HTMLButtonElement)) return;
+		const original = button.textContent ?? '';
+		try {
+			await navigator.clipboard.writeText(text);
+			button.textContent = '已复制';
+			window.setTimeout(() => {
+				button.textContent = original;
+			}, 2000);
+		} catch {
+			button.textContent = '复制失败';
+			window.setTimeout(() => {
+				button.textContent = original;
+			}, 2000);
+		}
+	};
+
+	const openMcp = () => {
+		if (!(dialog instanceof HTMLDialogElement)) return;
+		if (!dialog.open) dialog.showModal();
+	};
+
+	document.querySelectorAll('[data-open-mcp]').forEach((trigger) => {
+		trigger.addEventListener('click', openMcp);
+	});
+	document.querySelectorAll('[data-close-mcp]').forEach((button) => {
+		button.addEventListener('click', () => dialog instanceof HTMLDialogElement && dialog.close());
+	});
+	dialog?.addEventListener('click', (event) => {
+		if (event.target === dialog && dialog instanceof HTMLDialogElement) dialog.close();
+	});
+
+	const promptButton = document.querySelector('[data-copy-prompt]');
+	promptButton?.addEventListener('click', () => copyWithFeedback(mcpPrompt, promptButton));
+</script>

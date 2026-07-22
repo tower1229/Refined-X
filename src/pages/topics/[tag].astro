@@ -1,0 +1,76 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import ArticleFeed from '../../components/ArticleFeed.astro';
+import { absoluteUrl, breadcrumbJsonLd, getTopics, type PublicDocEntry } from '../../lib/public-data';
+
+interface Props {
+  name: string;
+  articles: PublicDocEntry[];
+}
+
+export async function getStaticPaths() {
+  return (await getTopics()).map((topic) => ({
+    params: { tag: topic.slug },
+    props: { name: topic.name, articles: topic.articles },
+  }));
+}
+
+const { name, articles } = Astro.props;
+const topicPath = `/topics/${Astro.params.tag}/`;
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': absoluteUrl(`${topicPath}#collection`),
+    url: absoluteUrl(topicPath),
+    name: `主题：${name}`,
+    description: `Refined-X 中关于“${name}”的公开文章。`,
+    inLanguage: 'zh-CN',
+    isPartOf: { '@id': absoluteUrl('/#website') },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: articles.length,
+      itemListElement: articles.map((article, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: absoluteUrl(`/${article.id}/`),
+        name: article.data.title,
+      })),
+    },
+  },
+  breadcrumbJsonLd([
+    { name: '首页', path: '/' },
+    { name: '主题目录', path: '/topics/' },
+    { name, path: topicPath },
+  ]),
+];
+---
+
+<StarlightPage
+  frontmatter={{
+    title: `主题：${name}`,
+    description: `Refined-X 中关于“${name}”的公开文章。`,
+    template: 'splash',
+    contentType: 'page',
+    slug: `topics/${Astro.params.tag}`,
+    llmSummary: `Refined-X 中关于“${name}”的公开文章索引。`,
+    head: articles.length < 3 ? [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex, follow' } }] : []
+  }}
+>
+  {structuredData.map((value) => (
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
+  ))}
+  <div class="wrap page">
+    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><a href="/topics/">主题目录</a><span class="sep">/</span><span>{name}</span></div>
+    
+    <div class="eyebrow">TAG</div>
+    <h1 id="_top" class="display page-heading page-heading-after-label">{name}</h1>
+    <p class="lede page-lede">
+      共收录 {articles.length} 篇文章。
+    </p>
+
+    <div class="content-list-spaced">
+      <ArticleFeed articles={articles} />
+    </div>
+  </div>
+</StarlightPage>

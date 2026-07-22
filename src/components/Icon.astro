@@ -1,0 +1,77 @@
+---
+interface Props {
+	name:
+		| 'arrow-right'
+		| 'book'
+		| 'chevron-down'
+		| 'close'
+		| 'enter'
+		| 'external'
+		| 'grid'
+		| 'mail'
+		| 'mcp'
+		| 'menu'
+		| 'message'
+		| 'moon'
+		| 'plus'
+		| 'return'
+		| 'search'
+		| 'spark'
+		| 'star'
+		| 'sun';
+	size?: number;
+	class?: string;
+}
+
+const { name, size = 16, class: className } = Astro.props;
+const isMcp = name === 'mcp';
+---
+
+{isMcp ? (
+	<svg
+		class={className}
+		width={size}
+		height={size}
+		viewBox="0 0 180 180"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="11"
+		stroke-linecap="round"
+		aria-hidden="true"
+	>
+		<path d="M23.5996 85.2532L86.2021 22.6507C94.8457 14.0071 108.86 14.0071 117.503 22.6507C126.147 31.2942 126.147 45.3083 117.503 53.9519L70.2254 101.23" />
+		<path d="M70.8789 100.578L117.504 53.952C126.148 45.3083 140.163 45.3083 148.806 53.952L149.132 54.278C157.776 62.9216 157.776 76.9357 149.132 85.5792L92.5139 142.198C89.6327 145.079 89.6327 149.75 92.5139 152.631L104.14 164.257" />
+		<path d="M101.853 38.3013L55.553 84.6011C46.9094 93.2447 46.9094 107.258 55.553 115.902C64.1966 124.546 78.2106 124.546 86.8543 115.902L133.154 69.6025" />
+	</svg>
+) : (
+<svg
+	class={className}
+	width={size}
+	height={size}
+	viewBox="0 0 24 24"
+	fill="none"
+	stroke="currentColor"
+	stroke-width="1.6"
+	stroke-linecap="round"
+	stroke-linejoin="round"
+	aria-hidden="true"
+>
+	{name === 'search' && <><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></>}
+	{name === 'sun' && <><circle cx="12" cy="12" r="4.2" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" /></>}
+	{name === 'moon' && <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8z" />}
+	{name === 'menu' && <><path d="M4 7h16M4 12h16M4 17h16" /></>}
+	{name === 'close' && <><path d="M6 6l12 12M18 6L6 18" /></>}
+	{name === 'plus' && <><path d="M12 5v14" /><path d="M5 12h14" /></>}
+	{name === 'spark' && <path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z" />}
+	{name === 'arrow-right' && <><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></>}
+	{name === 'book' && <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></>}
+	{name === 'chevron-down' && <path d="M6 9l6 6 6-6" />}
+	{name === 'external' && <><path d="M7 17L17 7" /><path d="M8 7h9v9" /></>}
+	{name === 'star' && <path d="M12 3l2.6 5.5 6 .7-4.4 4.1 1.2 5.9L12 16.9 6.6 19.2l1.2-5.9L3.4 9.2l6-.7z" />}
+	{name === 'mail' && <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></>}
+	{name === 'message' && <><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16H10l-4 3.2V16H6.5A2.5 2.5 0 0 1 4 13.5z" /></>}
+	{name === 'grid' && <><rect x="4" y="4" width="6.5" height="6.5" rx="1" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1" /></>}
+	{name === 'enter' && <><path d="M9 10 4 15l5 5" /><path d="M20 4v7a4 4 0 0 1-4 4H4" /></>}
+	{name === 'return' && <><path d="M9 14L4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></>}
+</svg>
+)}

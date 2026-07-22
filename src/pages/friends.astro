@@ -1,0 +1,42 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getEntry, render } from 'astro:content';
+
+const entry = await getEntry('docs', 'friends');
+if (!entry) {
+  throw new Error('friends.md not found in docs collection');
+}
+
+const { Content } = await render(entry);
+---
+
+<StarlightPage 
+  frontmatter={{
+    ...(entry.data as any),
+    title: entry.data.title,
+    template: 'splash'
+  }}
+>
+  <div class="wrap page friends-page">
+    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>{entry.data.title}</span></div>
+    
+    <div class="friends-header">
+      <h1 id="_top" class="display page-title">{entry.data.title}</h1>
+      <p class="mono page-description">{entry.data.description}</p>
+    </div>
+
+    <div class="friends-markdown">
+      <Content />
+    </div>
+  </div>
+  <script is:inline>
+    function setFriendsLinks() {
+      document.querySelectorAll('.friends-markdown a').forEach(a => {
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener noreferrer');
+      });
+    }
+    setFriendsLinks();
+    document.addEventListener('astro:page-load', setFriendsLinks);
+  </script>
+</StarlightPage>

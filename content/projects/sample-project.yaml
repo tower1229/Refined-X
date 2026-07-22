@@ -1,0 +1,16 @@
+title: Sample Project
+description: A featured sample project card for the projects page.
+slug: sample-project
+status: maintained
+url: https://github.com/tower1229/Refined-X
+repository: https://github.com/tower1229/Refined-X
+tags: [astro, template]
+category: project
+featured: true
+sortRank: 10
+role: Template author
+impact: Demonstrates featured project layout with proof points.
+proofPoints:
+  - Opinionated content schema
+  - Agent discovery endpoints
+  - Configurable contentRoot

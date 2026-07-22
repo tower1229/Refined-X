@@ -1,0 +1,144 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getCollection } from 'astro:content';
+import ArticleFeed from '../../components/ArticleFeed.astro';
+import Icon from '../../components/Icon.astro';
+import { SERIES_ORDER, formatArticleDate, seriesNumber } from '../../lib/articles';
+import { absoluteUrl, breadcrumbJsonLd } from '../../lib/public-data';
+
+export async function getStaticPaths() {
+  const allSeries = await getCollection('series');
+
+  return SERIES_ORDER.map((slug) => {
+    const s = allSeries.find(x => x.id === slug);
+    if (!s) throw new Error(`缺少专栏配置：${slug}`);
+    return {
+      params: { series: slug },
+      props: { seriesData: s.data, no: seriesNumber(slug) }
+    };
+  });
+}
+
+const { series } = Astro.params;
+const { seriesData, no } = Astro.props;
+
+const articles = (await getCollection('docs', ({ data }) => data.contentType === 'article' && data.series === series))
+  .sort((a, b) => b.data.pubDate!.valueOf() - a.data.pubDate!.valueOf());
+
+const featuredSlugs: string[] = seriesData.featured || [];
+let featuredArticles = articles.filter(a => featuredSlugs.includes(a.id));
+if (featuredArticles.length === 0) {
+  featuredArticles = articles.slice(0, 4);
+}
+const seriesUrl = `/writing/${series}/`;
+const structuredData = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    '@id': absoluteUrl(`${seriesUrl}#collection`),
+    url: absoluteUrl(seriesUrl),
+    name: seriesData.title,
+    description: seriesData.intro || seriesData.description,
+    inLanguage: 'zh-CN',
+    isPartOf: { '@id': absoluteUrl('/#website') },
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: articles.length,
+      itemListElement: featuredArticles.map((article, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: absoluteUrl(`/${article.id}/`),
+        name: article.data.title,
+      })),
+    },
+  },
+  breadcrumbJsonLd([
+    { name: '首页', path: '/' },
+    { name: '写作', path: '/writing/' },
+    { name: seriesData.title, path: seriesUrl },
+  ]),
+  ...(seriesData.faq?.length
+    ? [{
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: seriesData.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: { '@type': 'Answer', text: item.answer },
+        })),
+      }]
+    : []),
+];
+
+---
+
+<StarlightPage
+  frontmatter={{
+    title: seriesData.title,
+    description: seriesData.intro || '',
+    template: 'splash',
+    contentType: 'page',
+    slug: `writing/${series}`,
+    llmSummary: seriesData.intro || seriesData.title,
+  }}
+>
+  {structuredData.map((value) => (
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
+  ))}
+  <div class="wrap page page-writing">
+    <div class="crumbs">
+      <a href="/">首页</a><span class="sep">/</span>
+      <a href="/writing/">写作</a><span class="sep">/</span><span>{seriesData.title}</span>
+    </div>
+    <p class="eyebrow">专栏 {no}</p>
+    <h1 id="_top" class="display pillar-heading">{seriesData.title}</h1>
+    {seriesData.intro && <p class="lede pillar-lede">{seriesData.intro}</p>}
+
+    <div class="section-head section-head-large" aria-labelledby="series-featured-heading">
+      <h2 id="series-featured-heading" class="section-title">精选</h2>
+      <span class="mono section-meta">{articles.length} 篇收录</span>
+    </div>
+    <div class="feat-grid">
+      {featuredArticles.map(a => (
+        <a class="feat" href={`/${a.id}/`}>
+          <div class="feat-meta">
+            <span>{seriesData.title}</span>
+            <span>{formatArticleDate(a.data.pubDate!)}</span>
+          </div>
+          <div class="feat-title">{a.data.title || a.id}</div>
+          <div class="feat-excerpt">{a.data.llmSummary || a.data.description || ''}</div>
+          <div class="pillar-foot related-link">阅读 <Icon name="arrow-right" size={14} /></div>
+        </a>
+      ))}
+    </div>
+
+    {seriesData.faq && seriesData.faq.length > 0 && (
+      <>
+        <div class="section-head section-head-large" aria-labelledby="series-faq-heading">
+          <h2 id="series-faq-heading" class="section-title">常见问题</h2>
+          <span class="mono section-meta">策展问答</span>
+        </div>
+        <div class="faq-list">
+          {seriesData.faq.map((it) => (
+            <details class="faq-item">
+              <summary class="faq-q">
+                <span>{it.question}</span> 
+                <Icon name="plus" size={18} />
+              </summary>
+              <div class="faq-a">{it.answer}</div>
+            </details>
+          ))}
+        </div>
+      </>
+    )}
+
+    <details class="article-archive">
+      <summary class="btn btn-ghost archive-toggle">
+        <span class="archive-toggle-open">展开全部 {articles.length} 篇</span>
+        <span class="archive-toggle-close">收起全部文章</span>
+        <Icon name="chevron-down" size={15} />
+      </summary>
+      <ArticleFeed articles={articles} showSeries={false} />
+    </details>
+  </div>
+</StarlightPage>

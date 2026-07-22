@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import Icon from './Icon.astro';
+import { SERIES_ORDER, seriesNumber } from '../lib/articles';
+
+const allSeries = await getCollection('series');
+const seriesList = SERIES_ORDER.map((slug) => allSeries.find((entry) => entry.id === slug)).filter(Boolean);
+---
+
+<div class="pillars">
+	{seriesList.map((entry) => entry && (
+		<a class="pillar" href={`/writing/${entry.id}/`}>
+			<div class="pillar-no">{seriesNumber(entry.id)} / 专栏</div>
+			<div class="pillar-name">{entry.data.title}</div>
+			<div class="pillar-desc">{entry.data.description}</div>
+			<div class="pillar-foot">进入专栏 <Icon name="arrow-right" size={15} /></div>
+		</a>
+	))}
+</div>

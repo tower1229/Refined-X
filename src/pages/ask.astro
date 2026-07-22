@@ -1,0 +1,453 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import Icon from '../components/Icon.astro';
+import AskForm from '../components/AskForm.astro';
+import { breadcrumbJsonLd, webPageJsonLd } from '../lib/public-data';
+import { ASK_PAGE_PLACEHOLDER, ASK_PAGE_TITLE } from '../lib/site-copy';
+
+const askDescription = '向 Refined-X 提问：匹配常见问题与相关文章，逐步演进为可对话的智能站点。';
+const structuredData = [
+  webPageJsonLd({
+    path: '/ask/',
+    name: ASK_PAGE_TITLE,
+    description: askDescription,
+  }),
+  breadcrumbJsonLd([
+    { name: '首页', path: '/' },
+    { name: '提问', path: '/ask/' },
+  ]),
+];
+const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+---
+
+<StarlightPage
+  frontmatter={{
+    title: ASK_PAGE_TITLE,
+    description: askDescription,
+    template: 'splash',
+    contentType: 'page',
+    slug: 'ask',
+    llmSummary: 'Refined-X 提问页，向站点提问并匹配策展答案与相关文章。',
+  }}
+>
+  {structuredData.map((value) => (
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
+  ))}
+  <div class="wrap ask-page">
+    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>提问</span></div>
+
+    <section class="ask-stage" aria-labelledby="ask-page-heading">
+      <h1 id="ask-page-heading" class="visually-hidden">{ASK_PAGE_TITLE}</h1>
+
+      <div class="ask-stage-inner">
+        <AskForm
+          variant="stage"
+          formId="ask-page-form"
+          inputId="ask-page-input"
+          placeholder={ASK_PAGE_PLACEHOLDER}
+        />
+      </div>
+    </section>
+
+    <p class="ask-privacy">
+      快捷问题优先使用本站预生成的 AI 策展答案；其他问题由第三方模型基于本站公开内容生成。仅实时提问的问题、回答与引用来源会完整保存，用于改进本站问答。
+    </p>
+
+    <section class="ask-agent-panel" id="ask-agent-panel" aria-labelledby="ask-agent-heading" hidden>
+      <div class="ask-agent-head">
+        <span class="agent-note" id="ask-agent-heading"><Icon name="spark" size={13} /> <span id="ask-answer-source">AI 策展回答</span></span>
+        <span class="mono" id="ask-agent-status">准备回答</span>
+      </div>
+      {turnstileSiteKey && (
+        <div
+          id="ask-turnstile"
+          class="ask-turnstile-slot"
+          data-sitekey={turnstileSiteKey}
+          data-action="turnstile-spin-v1"
+          aria-label="人机验证"
+          hidden
+        >
+          <div class="ask-turnstile-loading" id="ask-turnstile-loading" hidden>
+            <div class="ask-agent-spinner" role="status">
+              <span class="visually-hidden">正在加载安全验证</span>
+            </div>
+          </div>
+        </div>
+      )}
+      <div class="ask-agent-answer">
+        <div id="ask-agent-pending" class="ask-agent-pending" hidden aria-hidden="true">
+          <div class="ask-agent-spinner" role="status">
+            <span class="visually-hidden">正在处理提问</span>
+          </div>
+          <p id="ask-agent-pending-text" class="ask-agent-pending-text"></p>
+        </div>
+        <div id="ask-agent-answer" aria-hidden="true"></div>
+        <div id="ask-agent-live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+      </div>
+      <div class="ask-agent-foot">
+        <span id="ask-answer-foot-primary">预生成策展答案 · 无需调用实时模型</span>
+        <span id="ask-answer-foot-secondary">AI 整理内容，请以链接的公开页面为准</span>
+      </div>
+    </section>
+
+    <div class="ask-page-panel" id="ask-page-panel" aria-busy="false">
+      <div id="ask-page-results" class="ask-page-results" aria-live="polite" aria-atomic="false"></div>
+
+      <div class="ask-page-foot">
+        <span class="agent-note"><Icon name="spark" size={12} /> 相关公开内容</span>
+        <span class="mono">数据源 <a href="/api/search-index.json" class="machine-link">/api/search-index.json</a></span>
+      </div>
+    </div>
+  </div>
+
+  {turnstileSiteKey && (
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  )}
+
+  <script>
+	import { askPublicAgent, PublicAskError } from '../scripts/ask-agent';
+	import { createAskPendingController } from '../scripts/ask-pending';
+	import { createAskSearch } from '../scripts/ask-search';
+	import type { AnswerResult } from '../scripts/ask-search';
+	import { createTypewriter } from '../scripts/typewriter';
+	import { createTurnstileChallenge, waitForTurnstile } from '../scripts/turnstile-client';
+
+	const input = document.getElementById('ask-page-input');
+	const results = document.getElementById('ask-page-results');
+	const form = document.getElementById('ask-page-form');
+	const panel = document.getElementById('ask-page-panel');
+	const agentPanel = document.getElementById('ask-agent-panel');
+	const agentAnswer = document.getElementById('ask-agent-answer');
+	const agentLive = document.getElementById('ask-agent-live');
+	const agentPending = document.getElementById('ask-agent-pending');
+	const agentPendingText = document.getElementById('ask-agent-pending-text');
+	const turnstileLoading = document.getElementById('ask-turnstile-loading');
+	const agentStatus = document.getElementById('ask-agent-status');
+	const answerSource = document.getElementById('ask-answer-source');
+	const answerFootPrimary = document.getElementById('ask-answer-foot-primary');
+	const answerFootSecondary = document.getElementById('ask-answer-foot-secondary');
+	const submitButton = form?.querySelector<HTMLButtonElement>('.ask-send');
+	const turnstileContainer = document.getElementById('ask-turnstile');
+	let turnstileChallenge: ReturnType<typeof createTurnstileChallenge> | null = null;
+	let activeRequest: AbortController | null = null;
+	let answerRun = 0;
+	const typewriter = agentAnswer instanceof HTMLElement
+		? createTypewriter(agentAnswer, agentLive instanceof HTMLElement ? agentLive : undefined)
+		: null;
+	const pending =
+		agentPending instanceof HTMLElement && agentPendingText instanceof HTMLElement
+			? createAskPendingController({
+					root: agentPending,
+					label: agentPendingText,
+					liveRegion: agentLive instanceof HTMLElement ? agentLive : undefined,
+				})
+			: null;
+
+	const resizeInput = () => {
+		if (!(input instanceof HTMLTextAreaElement)) return;
+		input.style.height = 'auto';
+		input.style.height = `${input.scrollHeight}px`;
+	};
+
+	const setTurnstileLoading = (loading: boolean) => {
+		if (!(turnstileLoading instanceof HTMLElement)) return;
+		turnstileLoading.hidden = !loading;
+	};
+
+	const syncQueryToUrl = (query: string) => {
+		const url = new URL(window.location.href);
+		if (query) url.searchParams.set('q', query);
+		else url.searchParams.delete('q');
+		history.replaceState(null, '', url);
+	};
+
+	const setActiveChip = (query: string) => {
+		document.querySelectorAll<HTMLElement>('[data-ask-chip]').forEach((chip) => {
+			const active = Boolean(query && chip.dataset.query === query);
+			chip.classList.toggle('is-active', active);
+			chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+		});
+	};
+
+	const pulseResults = () => {
+		if (!(results instanceof HTMLElement)) return;
+		results.classList.remove('ask-results-pulse');
+		void results.offsetWidth;
+		results.classList.add('ask-results-pulse');
+		panel?.classList.add('ask-panel-visible');
+	};
+
+	const renderAnswerLinks = (text: string) => {
+		if (!(agentAnswer instanceof HTMLElement)) return;
+		agentAnswer.replaceChildren();
+		
+		const processText = (str: string) => {
+			const boldMatcher = /\*\*(.*?)\*\*/g;
+			let last = 0;
+			for (const bMatch of str.matchAll(boldMatcher)) {
+				const bIndex = bMatch.index ?? 0;
+				if (bIndex > last) {
+					agentAnswer.append(document.createTextNode(str.slice(last, bIndex)));
+				}
+				const strong = document.createElement('strong');
+				strong.textContent = bMatch[1];
+				agentAnswer.append(strong);
+				last = bIndex + bMatch[0].length;
+			}
+			if (last < str.length) {
+				agentAnswer.append(document.createTextNode(str.slice(last)));
+			}
+		};
+
+		const matcher = /\[([^\]]+)\]\(([^)]+)\)|https:\/\/refined-x\.com\/[^\s)\]}>，。；！]+/g;
+		let offset = 0;
+		for (const match of text.matchAll(matcher)) {
+			const index = match.index ?? 0;
+			processText(text.slice(offset, index));
+			const link = document.createElement('a');
+			if (match[1] && match[2]) {
+				link.href = match[2];
+				link.textContent = match[1];
+			} else {
+				link.href = match[0];
+				link.textContent = match[0];
+			}
+			link.rel = 'noopener';
+			agentAnswer.append(link);
+			offset = index + match[0].length;
+		}
+		processText(text.slice(offset));
+	};
+
+	const setAnswerMode = (mode: 'curated' | 'live') => {
+		if (answerSource) answerSource.textContent = mode === 'curated' ? 'AI 策展回答' : '公开问答 Agent';
+		if (answerFootPrimary) {
+			answerFootPrimary.textContent = mode === 'curated'
+				? '预生成策展答案 · 无需调用实时模型'
+				: '单轮问答 · 完整记录用于站点学习';
+		}
+		if (answerFootSecondary) {
+			answerFootSecondary.textContent = mode === 'curated'
+				? 'AI 整理内容，请以链接的公开页面为准'
+				: '回答可能出错，请以引用的公开页面为准';
+		}
+	};
+
+	const errorMessage = (error: unknown) => {
+		if (error instanceof PublicAskError) {
+			if (error.code.includes('limit') || error.status === 429) return '当前公开问答额度已用完，请查看下方相关公开内容。';
+			if (error.status === 504 || error.code.includes('timeout')) return '回答生成超时，请稍后重试。';
+			return error.message;
+		}
+		return '公开问答服务暂时不可用，请查看下方相关公开内容。';
+	};
+
+	const setGenerating = (generating: boolean) => {
+		panel?.setAttribute('aria-busy', generating ? 'true' : 'false');
+		if (submitButton) {
+			submitButton.classList.toggle('ask-send--icon', !generating);
+			submitButton.setAttribute('aria-label', generating ? '停止' : '提问');
+			const icon = submitButton.querySelector<HTMLElement>('.ask-send-icon');
+			const stop = submitButton.querySelector<HTMLElement>('.ask-send-stop');
+			if (icon) icon.hidden = generating;
+			if (stop) stop.hidden = !generating;
+		}
+		if (input instanceof HTMLTextAreaElement) input.setAttribute('aria-disabled', generating ? 'true' : 'false');
+	};
+
+	const showCuratedAnswer = async (answer: AnswerResult) => {
+		if (!(agentPanel instanceof HTMLElement) || !typewriter) return;
+		activeRequest?.abort();
+		const run = ++answerRun;
+		setAnswerMode('curated');
+		agentPanel.hidden = false;
+		panel?.classList.add('hide-curated-answers');
+		if (agentStatus) agentStatus.textContent = '正在呈现策展答案…';
+		setGenerating(false);
+		const text = answer.full || answer.a;
+		await typewriter.show(text);
+		if (run !== answerRun) return;
+		renderAnswerLinks(text);
+		if (agentStatus) agentStatus.textContent = '策展回答完成';
+	};
+
+	const runAgent = async (query: string) => {
+		if (!(agentPanel instanceof HTMLElement) || !(agentAnswer instanceof HTMLElement) || !typewriter) return;
+		activeRequest?.abort();
+		const controller = new AbortController();
+		activeRequest = controller;
+		const run = ++answerRun;
+		setAnswerMode('live');
+		agentPanel.hidden = false;
+		panel?.classList.remove('hide-curated-answers');
+		typewriter.reset();
+		const needsTurnstile =
+			turnstileContainer instanceof HTMLElement && Boolean(turnstileContainer.dataset.sitekey);
+		pending?.show(needsTurnstile ? 'verify' : 'think');
+		if (agentStatus) {
+			agentStatus.textContent = needsTurnstile ? '正在完成安全检查…' : '正在查找相关内容…';
+		}
+		setGenerating(true);
+		let answer = '';
+		let receivedDelta = false;
+		try {
+			const getTurnstileToken = async () => {
+				if (!(turnstileContainer instanceof HTMLElement) || !turnstileContainer.dataset.sitekey) {
+					throw new PublicAskError('CHALLENGE_UNAVAILABLE', '人机验证暂不可用，请查看下方相关公开内容。');
+				}
+				pending?.show('verify');
+				turnstileContainer.hidden = false;
+				setTurnstileLoading(true);
+				if (agentStatus) agentStatus.textContent = '正在完成安全检查…';
+				if (!turnstileChallenge) {
+					let api;
+					try {
+						api = await waitForTurnstile();
+					} catch {
+						throw new PublicAskError(
+							'CHALLENGE_UNAVAILABLE',
+							'人机验证脚本加载失败，请检查网络或广告拦截后重试。',
+						);
+					}
+					turnstileChallenge = createTurnstileChallenge({
+						container: turnstileContainer,
+						siteKey: turnstileContainer.dataset.sitekey,
+						api,
+						size: 'compact',
+					});
+					setTurnstileLoading(false);
+				}
+				const token = await turnstileChallenge.getToken();
+				setTurnstileLoading(false);
+				turnstileContainer.hidden = true;
+				pending?.show('think');
+				if (agentStatus) agentStatus.textContent = '正在查找相关内容…';
+				return token;
+			};
+			await askPublicAgent(query, {
+				signal: controller.signal,
+				getTurnstileToken,
+				onDelta(delta) {
+					if (!receivedDelta) {
+						receivedDelta = true;
+						pending?.hide();
+					}
+					answer += delta;
+					typewriter.append(delta);
+					if (agentStatus) agentStatus.textContent = '正在整理回答…';
+				},
+			});
+			const emptyAnswer = '没有收到完整回答，请重试。';
+			if (!answer) await typewriter.show(emptyAnswer);
+			await typewriter.finish();
+			if (run !== answerRun) return;
+			renderAnswerLinks(answer || emptyAnswer);
+			if (agentStatus) agentStatus.textContent = '回答完成';
+		} catch (error) {
+			if (run !== answerRun) return;
+			pending?.hide();
+			setTurnstileLoading(false);
+			if (turnstileContainer instanceof HTMLElement) turnstileContainer.hidden = true;
+			if (controller.signal.aborted) {
+				await typewriter.show(answer || '已停止生成。');
+				if (agentStatus) agentStatus.textContent = '已停止';
+			} else {
+				await typewriter.show(errorMessage(error));
+				if (agentStatus) agentStatus.textContent = '暂时不可用';
+			}
+		} finally {
+			if (activeRequest === controller) activeRequest = null;
+			setGenerating(false);
+			if (!receivedDelta) pending?.hide();
+			setTurnstileLoading(false);
+		}
+	};
+
+	if (input instanceof HTMLTextAreaElement && results instanceof HTMLElement) {
+		const search = createAskSearch(input, results, {
+			answersEmpty: 8,
+			answersQuery: 8,
+			articlesEmpty: 8,
+			articlesQuery: 10,
+			onResultsRendered: pulseResults,
+			busyTarget: panel ?? undefined,
+		});
+
+		const renderCuratedFor = async (query: string) => {
+			await search.loadSearchData();
+			const answer = search.getExactAnswer(query);
+			if (!answer) return false;
+			await showCuratedAnswer(answer);
+			return true;
+		};
+
+		const params = new URLSearchParams(window.location.search);
+		const initial = Array.from(params.get('q') ?? '').slice(0, input.maxLength).join('');
+		if (initial) {
+			search.setQuery(initial);
+			resizeInput();
+			setActiveChip(initial);
+			syncQueryToUrl(initial);
+		}
+
+		void search.loadSearchData(true).then(() => {
+			if (initial) void renderCuratedFor(initial);
+		});
+		requestAnimationFrame(() => input.focus({ preventScroll: true }));
+
+		input.addEventListener('input', () => {
+			resizeInput();
+			const query = input.value.trim();
+			const matchesChip = Array.from(document.querySelectorAll<HTMLElement>('[data-ask-chip]')).some(
+				(chip) => chip.dataset.query === query,
+			);
+			if (!matchesChip) setActiveChip('');
+			syncQueryToUrl(query);
+			
+			// 如果有精确匹配的策展答案，则保持或渲染；否则隐藏策展内容框
+			const exactAnswer = search.getExactAnswer(query);
+			if (!exactAnswer) {
+				if (agentPanel) agentPanel.hidden = true;
+				panel?.classList.remove('hide-curated-answers');
+				if (activeRequest) {
+					activeRequest.abort();
+					activeRequest = null;
+				}
+			}
+		});
+		input.addEventListener('keydown', (event) => {
+			if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+			event.preventDefault();
+			if (form instanceof HTMLFormElement) form.requestSubmit();
+		});
+
+		form?.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			if (activeRequest) {
+				activeRequest.abort();
+				return;
+			}
+			const query = input.value.trim();
+			if (!query) return;
+			search.renderResults(query);
+			setActiveChip(query);
+			syncQueryToUrl(query);
+			if (!(await renderCuratedFor(query))) void runAgent(query);
+		});
+
+		document.querySelectorAll<HTMLElement>('[data-ask-chip]').forEach((chip) => {
+			chip.setAttribute('aria-pressed', 'false');
+			chip.addEventListener('click', () => {
+				const query = chip.dataset.query ?? '';
+				setActiveChip(query);
+				search.setQuery(query);
+				resizeInput();
+				search.renderResults(query);
+				input.focus();
+				syncQueryToUrl(query);
+				void renderCuratedFor(query);
+			});
+		});
+	}
+  </script>
+</StarlightPage>

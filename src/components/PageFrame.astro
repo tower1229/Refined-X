@@ -1,0 +1,12 @@
+---
+import Footer from './Footer.astro';
+import AskOverlay from './AskOverlay.astro';
+import McpGuideOverlay from './McpGuideOverlay.astro';
+---
+<div class="shell">
+  <slot name="header" />
+  <div class="main-frame"><slot /></div>
+  <Footer {...Astro.props} />
+  <AskOverlay />
+  <McpGuideOverlay />
+</div>

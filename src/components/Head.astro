@@ -1,0 +1,126 @@
+---
+import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
+import { sitePath } from '../lib/paths';
+import { seriesName } from '../lib/articles';
+import { DEFAULT_SEO_IMAGE, normalizeSeoHead, type SeoHeadTag } from '../lib/seo';
+
+const { entry, head } = Astro.locals.starlightRoute;
+const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '';
+const contentType = entry.data.contentType;
+const structuredData: Record<string, unknown>[] = [];
+const normalizedHead = normalizeSeoHead({ head, entry, pathname: Astro.url.pathname });
+
+if (contentType === 'article') {
+	const profile = await getPublicProfile();
+	const articleUrl = absoluteUrl(sitePath(`/${entry.id}`));
+	const breadcrumbItems = [
+		{ name: '首页', item: absoluteUrl('/') },
+		{ name: '写作', item: absoluteUrl('/writing/') },
+	];
+	if (entry.data.series) {
+		breadcrumbItems.push({
+			name: seriesName(entry.data.series),
+			item: absoluteUrl(`/writing/${entry.data.series}/`),
+		});
+	}
+	breadcrumbItems.push({ name: entry.data.title, item: articleUrl });
+
+	structuredData.push({
+		'@context': 'https://schema.org',
+		'@type': 'BlogPosting',
+		'@id': `${articleUrl}#article`,
+		mainEntityOfPage: articleUrl,
+		headline: entry.data.title,
+		description: entry.data.description,
+		image: absoluteUrl(entry.data.seoImage ?? DEFAULT_SEO_IMAGE),
+		datePublished: entry.data.pubDate?.toISOString(),
+		dateModified: entry.data.updatedDate?.toISOString() ?? entry.data.pubDate?.toISOString(),
+		author: personJsonLd(profile),
+		publisher: { '@id': profile.id },
+		keywords: entry.data.tags,
+		articleSection: entry.data.series,
+		inLanguage: 'zh-CN',
+		isPartOf: { '@id': absoluteUrl('/#website') },
+	});
+	structuredData.push({
+		'@context': 'https://schema.org',
+		'@type': 'BreadcrumbList',
+		itemListElement: breadcrumbItems.map((item, index) => ({
+			'@type': 'ListItem',
+			position: index + 1,
+			...item,
+		})),
+	});
+} else if (contentType === 'answer') {
+	const answerUrl = sitePath(`/${entry.id}`);
+	structuredData.push({
+		'@context': 'https://schema.org',
+		'@type': 'FAQPage',
+		'@id': absoluteUrl(`${answerUrl}#faq`),
+		mainEntity: [
+			{
+				'@type': 'Question',
+				name: entry.data.question,
+				acceptedAnswer: { '@type': 'Answer', text: entry.data.shortAnswer },
+			},
+		],
+	});
+	structuredData.push(
+		breadcrumbJsonLd([
+			{ name: '首页', path: '/' },
+			{ name: '常见问题', path: '/answers/' },
+			{ name: entry.data.question ?? entry.data.title, path: answerUrl },
+		]),
+	);
+}
+---
+
+<script is:inline>
+	(() => {
+		const preferenceKey = 'refined-x-theme-preference';
+		const starlightKey = 'starlight-theme';
+		const root = document.documentElement;
+		const getStored = (key) => {
+			try {
+				return localStorage.getItem(key);
+			} catch {
+				return null;
+			}
+		};
+		const setStored = (key, value) => {
+			try {
+				localStorage.setItem(key, value);
+			} catch {
+				// Storage can be unavailable; still apply the page theme.
+			}
+		};
+		const storedPreference = getStored(preferenceKey);
+		const legacyTheme = getStored(starlightKey);
+		const preference =
+			storedPreference === 'auto' || storedPreference === 'light' || storedPreference === 'dark'
+				? storedPreference
+				: storedPreference === null && (legacyTheme === 'light' || legacyTheme === 'dark')
+					? legacyTheme
+					: 'auto';
+		const hour = new Date().getHours();
+		const resolvedTheme = preference === 'light' || preference === 'dark' ? preference : hour >= 6 && hour < 18 ? 'light' : 'dark';
+		root.dataset.theme = resolvedTheme;
+		root.dataset.themePreference = preference;
+		root.style.colorScheme = resolvedTheme;
+		setStored(preferenceKey, preference);
+		setStored(starlightKey, resolvedTheme);
+	})();
+</script>
+{normalizedHead.map(({ tag: Tag, attrs, content }: SeoHeadTag) => <Tag {...attrs} set:html={content} />)}
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+{isHome && (
+	<>
+		<link rel="preload" as="image" href="/asset/hero-light.png" fetchpriority="high" />
+		<link rel="preload" as="image" href="/asset/hero-dark.png" fetchpriority="high" />
+	</>
+)}
+{structuredData.map((value) => (
+	<script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
+))}

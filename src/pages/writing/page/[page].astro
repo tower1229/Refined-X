@@ -1,0 +1,69 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import ArticleFeed from '../../../components/ArticleFeed.astro';
+import Icon from '../../../components/Icon.astro';
+import WritingPagination from '../../../components/WritingPagination.astro';
+import { ARTICLE_PAGE_SIZE, getArticlePageCount } from '../../../lib/articles';
+import { SITE_BRAND, WRITING_LEDE } from '../../../lib/site-copy';
+
+interface Props {
+	articles: CollectionEntry<'docs'>[];
+	pageNumber: number;
+	pageCount: number;
+	totalArticles: number;
+}
+
+export async function getStaticPaths() {
+	const articles = (await getCollection('docs', ({ data }) => data.contentType === 'article')).sort(
+		(a, b) => b.data.pubDate!.valueOf() - a.data.pubDate!.valueOf(),
+	);
+	const pageCount = getArticlePageCount(articles.length);
+	return Array.from({ length: Math.max(0, pageCount - 1) }, (_, index) => {
+		const pageNumber = index + 2;
+		return {
+			params: { page: String(pageNumber) },
+			props: {
+				articles: articles.slice((pageNumber - 1) * ARTICLE_PAGE_SIZE, pageNumber * ARTICLE_PAGE_SIZE),
+				pageNumber,
+				pageCount,
+				totalArticles: articles.length,
+			},
+		};
+	});
+}
+
+const { articles, pageNumber, pageCount, totalArticles } = Astro.props;
+---
+
+<StarlightPage
+	frontmatter={{
+		title: `技术写作与职业思考归档（第 ${pageNumber} 页）：专注前端架构、工程化与 AI 协作模式｜${SITE_BRAND}`,
+		description: `${WRITING_LEDE}共 ${totalArticles} 篇，第 ${pageNumber} / ${pageCount} 页。`,
+		template: 'splash',
+		contentType: 'page',
+		slug: `writing/page/${pageNumber}`,
+		tags: ['writing', 'pagination'],
+		llmSummary: `Refined-X 公开文章列表第 ${pageNumber} 页，共 ${totalArticles} 篇。`,
+	}}
+>
+	<div class="wrap page page-writing">
+		<div class="crumbs">
+			<a href="/">首页</a><span class="sep">/</span>
+			<a href="/writing/">写作</a><span class="sep">/</span><span>第 {pageNumber} 页</span>
+		</div>
+		<h1 id="_top" class="display page-heading">写作</h1>
+		<p class="lede page-lede">
+			{WRITING_LEDE}共 {totalArticles} 篇 · 第 {pageNumber} / {pageCount} 页
+		</p>
+
+		<div class="section-head section-head-spaced" aria-labelledby="writing-archive-heading">
+			<h2 id="writing-archive-heading" class="section-title">全部归档</h2>
+			<a class="more-link" href="/topics/">按主题浏览 <Icon name="arrow-right" size={14} /></a>
+		</div>
+
+		<ArticleFeed articles={articles} />
+
+		<WritingPagination pageNumber={pageNumber} pageCount={pageCount} />
+	</div>
+</StarlightPage>

@@ -1,0 +1,33 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getCollection } from 'astro:content';
+import AnswerPage from '../../components/AnswerPage.astro';
+
+export async function getStaticPaths() {
+	const answers = (await getCollection('docs', ({ data }) => data.contentType === 'answer')).filter(
+		(entry) => entry.data.slug !== 'who-is-zangtao',
+	);
+	return answers.map((entry) => ({
+		params: { slug: entry.data.slug },
+		props: { entry },
+	}));
+}
+
+const { entry } = Astro.props;
+---
+
+<StarlightPage
+	frontmatter={{
+		title: entry.data.question ?? entry.data.title,
+		description: entry.data.description,
+		template: 'splash',
+		contentType: 'answer',
+		slug: entry.data.slug,
+		llmSummary: entry.data.llmSummary,
+		tags: entry.data.tags,
+		question: entry.data.question,
+		shortAnswer: entry.data.shortAnswer,
+	}}
+>
+	<AnswerPage entry={entry} />
+</StarlightPage>

@@ -1,0 +1,43 @@
+---
+import Icon from './Icon.astro';
+import { render, type CollectionEntry } from 'astro:content';
+import { getPublicProfile } from '../lib/public-data';
+
+interface Props {
+	entry: CollectionEntry<'docs'>;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const publicProfile = await getPublicProfile();
+const { question, shortAnswer, title } = entry.data;
+---
+
+<div class="wrap page page-article">
+	<div class="crumbs">
+		<a href="/">首页</a><span class="sep">/</span>
+		<a href="/answers/">常见问题</a><span class="sep">/</span>
+		<span>答案</span>
+	</div>
+
+	<div class="prose article-heading">
+		<h1 id="_top" class="display article-title">{question ?? title}</h1>
+		{shortAnswer && <p class="lede answer-lede">{shortAnswer}</p>}
+	</div>
+
+	<hr class="rule-soft article-divider" />
+
+	<div class="prose">
+		<Content />
+	</div>
+
+	<div class="article-return answer-return">
+		<a class="btn btn-ghost" href="/ask/">
+			<Icon name="return" size={15} />
+			继续提问
+		</a>
+		<a class="btn btn-ghost" href="/about/">
+			关于{publicProfile.name}
+		</a>
+	</div>
+</div>
