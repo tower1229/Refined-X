@@ -90,13 +90,16 @@ Schema **有明确约定**；内容树的**位置**可配置。
 | `/.well-known/mcp/*` 发现                 | 是       | 配置 `ask.*` 前 URL 可为空            |
 | NLWeb `POST /ask` + MCP tool              | 可选     | 部署 Public Ask Worker 并设置 `ask.*` |
 
-线上参考实现：[refined-x.com](https://refined-x.com)。
+样例 Demo（Themes Portal）：[demo.refined-x.com](https://demo.refined-x.com)。  
+线上实例参考：[refined-x.com](https://refined-x.com)。
 
 ![写作](docs/screenshots/writing.png)
 
 ### Themes Portal 短描述
 
 > Agent 友好的个人站点起步模板（Astro + Starlight）：opinionated 公开内容 schema、编辑向阅读体验、`llms.txt` / OpenAPI / JSON API、MCP 发现，以及可选的 NLWeb Public Ask Worker。
+
+Demo 托管：GitHub Pages + `demo.refined-x.com`，见 [`deploy/README.md`](deploy/README.md)。
 
 ### create-astro 冒烟
 

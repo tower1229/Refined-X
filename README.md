@@ -90,13 +90,16 @@ Relative paths resolve from this package root.
 | `/.well-known/mcp/*` discovery | Yes | URLs may be empty until `ask.*` is configured |
 | NLWeb `POST /ask` + MCP tool | Optional | Deploy a Public Ask worker and set `ask.*` |
 
-Live reference: [refined-x.com](https://refined-x.com).
+Sample demo (Themes Portal): [demo.refined-x.com](https://demo.refined-x.com).  
+Example in the wild: [refined-x.com](https://refined-x.com).
 
 ![Writing](docs/screenshots/writing.png)
 
 ### Themes Portal short description
 
 > Agent-friendly personal site starter (Astro + Starlight): opinionated public content schema, editorial reading experience, `llms.txt` / OpenAPI / JSON APIs, MCP discovery, and an optional NLWeb Public Ask worker.
+
+Demo hosting: GitHub Pages + `demo.refined-x.com` — see [`deploy/README.md`](deploy/README.md).
 
 ### create-astro smoke
 
