@@ -2,6 +2,8 @@
 
 # Refined-X
 
+![首页](docs/screenshots/home.png)
+
 面向 [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/) 的 **Agent 友好的个人站点** 起步模板。
 
 给人看的是编辑向阅读体验；给 Agent 用的是同一套内容约定自动生成的 `llms.txt`、OpenAPI、JSON API、Markdown 镜像和 MCP 发现入口。
@@ -55,35 +57,33 @@ Schema **有明确约定**；内容树的**位置**可配置。
 
 编辑 [`site.config.mjs`](site.config.mjs)，或在旁路放置 `../instance.config.mjs`（本包作为 git submodule 时）/ 设置环境变量 `REFINED_X_INSTANCE_CONFIG`。
 
-| 字段 | 默认 | 作用 |
-|-------|---------|---------|
-| `locale` | `en` | 界面文案包（`en` \| `zh-CN`） |
-| `contentRoot` | `./content` | 公开 Markdown/YAML 根目录 |
-| `publicDir` | `./public` | 静态资源（复制到 dist） |
-| `outDir` | `./dist` | 构建输出 |
-| `assetSource` | 未设置 | 可选图片库，供 `collect-assets` 使用 |
-| `site` / `title` | example.com / Refined-X | 站点身份 |
-| `ask.askUrl` / `mcpUrl` / `healthUrl` | 空 | 可选 Public Ask / NLWeb Worker |
-| `redirects` | `{}` | Astro redirects |
-| `brand.*` | Demo Author 文案 | 身份与内容（persona、标题、chips），不含界面 chrome |
+| 字段                                  | 默认                    | 作用                                                |
+| ------------------------------------- | ----------------------- | --------------------------------------------------- |
+| `locale`                              | `en`                    | 界面文案包（`en` \| `zh-CN`）                       |
+| `contentRoot`                         | `./content`             | 公开 Markdown/YAML 根目录                           |
+| `publicDir`                           | `./public`              | 静态资源（复制到 dist）                             |
+| `outDir`                              | `./dist`                | 构建输出                                            |
+| `assetSource`                         | 未设置                  | 可选图片库，供 `collect-assets` 使用                |
+| `site` / `title`                      | example.com / Refined-X | 站点身份                                            |
+| `ask.askUrl` / `mcpUrl` / `healthUrl` | 空                      | 可选 Public Ask / NLWeb Worker                      |
+| `redirects`                           | `{}`                    | Astro redirects                                     |
+| `brand.*`                             | Demo Author 文案        | 身份与内容（persona、标题、chips），不含界面 chrome |
 
 相对路径均相对本包根目录解析。
 
 ## 能力矩阵
 
-| 能力 | 是否包含 | 说明 |
-|------------|----------|-------|
-| 编辑向 UI + 主题切换 | 是 | 见 `DESIGN.md` |
-| 文章 / 专栏 / 作品 / 关于 | 是 | 来自 `contentRoot` |
-| 精选 Answers + 静态 Ask 搜索 | 是 | `/ask`、`/answers` |
-| `llms.txt` / `llms-full.txt` / `.md` 镜像 | 是 | 构建时生成 |
-| `/api/*.json` + `/openapi.json` | 是 | 构建时生成 |
-| `/.well-known/mcp/*` 发现 | 是 | 配置 `ask.*` 前 URL 可为空 |
-| NLWeb `POST /ask` + MCP tool | 可选 | 部署 Public Ask Worker 并设置 `ask.*` |
+| 能力                                      | 是否包含 | 说明                                  |
+| ----------------------------------------- | -------- | ------------------------------------- |
+| 编辑向 UI + 主题切换                      | 是       | 见 `DESIGN.md`                        |
+| 文章 / 专栏 / 作品 / 关于                 | 是       | 来自 `contentRoot`                    |
+| 精选 Answers + 静态 Ask 搜索              | 是       | `/ask`、`/answers`                    |
+| `llms.txt` / `llms-full.txt` / `.md` 镜像 | 是       | 构建时生成                            |
+| `/api/*.json` + `/openapi.json`           | 是       | 构建时生成                            |
+| `/.well-known/mcp/*` 发现                 | 是       | 配置 `ask.*` 前 URL 可为空            |
+| NLWeb `POST /ask` + MCP tool              | 可选     | 部署 Public Ask Worker 并设置 `ask.*` |
 
 线上参考实现：[refined-x.com](https://refined-x.com)。
-
-![首页](docs/screenshots/home.png)
 
 ![写作](docs/screenshots/writing.png)
 
