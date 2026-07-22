@@ -1,6 +1,6 @@
 ---
 name: Refined-X
-description: 师兄的黑白编辑风个人站；AI 入口带适度科技动感
+description: Refined-X black-and-white editorial personal site; Ask entry with restrained tech motion
 colors:
   bg: "#ffffff"
   bg-sunken: "#f5f5f3"
@@ -130,7 +130,7 @@ Flat elsewhere. No nested cards. Ask stage uses full-width sunken band + lifted 
 | `.answer-index-item` | Full-width FAQ rows, no side stripes |
 | `.prose` | Article body, editorial measure |
 
-Header wordmark: Spectral **Refined-X**. User-facing persona: **师兄** (not legal name).
+Header wordmark: Spectral **Refined-X**. User-facing persona comes from `site.config.mjs` `brand.persona` (sample default: **Demo Author**).
 
 ## Do's and Don'ts
 

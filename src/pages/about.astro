@@ -3,6 +3,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getCollection, render } from 'astro:content';
 import Icon from '../components/Icon.astro';
 import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
+import { SITE_PERSONA } from '../lib/site-copy';
 import { siteConfig } from '../../site.config.mjs';
 
 const profile = await getCollection('profile');
@@ -112,7 +113,7 @@ const aboutStructuredData = {
                 发邮件
               </a>
             )}
-            <button class="btn btn-ghost" type="button" data-open-ask data-query="如何与师兄合作？">问 AI 如何合作</button>
+            <button class="btn btn-ghost" type="button" data-open-ask data-query={`如何与${SITE_PERSONA}合作？`}>问 AI 如何合作</button>
           </div>
         </section>
       </div>

@@ -15,6 +15,7 @@ import {
   SITE_HOME_HEADING,
   SITE_HOME_LEDE,
   SITE_HOME_TITLE,
+  SITE_PERSONA,
 } from '../lib/site-copy';
 
 const articles = (await getCollection('docs', ({ data }) => data.contentType === 'article'))
@@ -66,7 +67,7 @@ const homeStructuredData = {
     template: 'splash',
     contentType: 'page',
     slug: 'index',
-    llmSummary: `${SITE_BRAND} 是师兄的公开内容站点，提供文章、项目、个人资料与机器可读内容。`,
+    llmSummary: `${SITE_BRAND} is ${SITE_PERSONA}'s public content site for articles, projects, profile, and machine-readable surfaces.`,
   }}
 >
   <script is:inline type="application/ld+json" set:html={JSON.stringify(homeStructuredData)} />
