@@ -3,7 +3,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getCollection, render } from 'astro:content';
 import Icon from '../components/Icon.astro';
 import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
-import { SITE_PERSONA } from '../lib/site-copy';
+import { SITE_PERSONA, UI } from '../lib/site-copy';
 import { siteConfig } from '../../site.config.mjs';
 
 const profile = await getCollection('profile');
@@ -32,7 +32,7 @@ const aboutStructuredData = {
       isPartOf: { '@id': absoluteUrl('/#website') },
     },
     breadcrumbJsonLd([
-      { name: 'Home', path: '/' },
+      { name: UI.common.home, path: '/' },
       { name: aboutCopy.crumb, path: '/about/' },
     ]),
   ],
@@ -49,9 +49,9 @@ const aboutStructuredData = {
   <script is:inline type="application/ld+json" set:html={JSON.stringify(aboutStructuredData)} />
 
   <div class="wrap page about-page">
-    <div class="crumbs"><a href="/">Home</a><span class="sep">/</span><span>{aboutCopy.crumb}</span></div>
+    <div class="crumbs"><a href="/">{UI.common.home}</a><span class="sep">/</span><span>{aboutCopy.crumb}</span></div>
     <div class="about-grid">
-      <aside class="about-aside" aria-label="个人资料">
+      <aside class="about-aside" aria-label={UI.about.profileAria}>
         <img
           class="portrait about-avatar"
           src="/asset/avatar.jpg"
@@ -64,7 +64,7 @@ const aboutStructuredData = {
           <h1 id="_top" class="display about-name">{person.name}</h1>
           <p class="mono about-role">{person.title}</p>
         </div>
-        <nav class="about-links" aria-label="联系方式与作品">
+        <nav class="about-links" aria-label={UI.about.linksAria}>
           {person.links?.github && (
             <a class="about-link" href={person.links.github} target="_blank" rel="noreferrer">
               <Icon name="external" size={16} />
@@ -80,12 +80,12 @@ const aboutStructuredData = {
           {person.wechat && (
             <span class="about-link about-link-static">
               <Icon name="message" size={16} />
-              微信 {person.wechat}
+              {UI.about.wechat(person.wechat)}
             </span>
           )}
           <a class="about-link" href="/projects/">
             <Icon name="grid" size={16} />
-            全部作品
+            {UI.about.allProjects}
           </a>
           {person.education && (
             <span class="about-link about-link-static">
@@ -103,17 +103,17 @@ const aboutStructuredData = {
 
         <section class="cooperation-panel" aria-labelledby="about-cooperation">
           <h2 id="about-cooperation" class="section-title cooperation-title">
-            {publicProfile.cooperation?.title ?? '合作交流'}
+            {publicProfile.cooperation?.title ?? UI.about.cooperationFallback}
           </h2>
           <p class="cooperation-description">{publicProfile.cooperation?.description}</p>
           <div class="cooperation-actions">
             {person.links?.email && (
               <a class="btn btn-solid" href={person.links.email}>
                 <Icon name="mail" size={15} />
-                发邮件
+                {UI.about.sendEmail}
               </a>
             )}
-            <button class="btn btn-ghost" type="button" data-open-ask data-query={`如何与${SITE_PERSONA}合作？`}>问 AI 如何合作</button>
+            <button class="btn btn-ghost" type="button" data-open-ask data-query={UI.about.askCollaborate(SITE_PERSONA)}>{UI.about.askCollaborateButton}</button>
           </div>
         </section>
       </div>

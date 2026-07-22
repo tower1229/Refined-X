@@ -1,20 +1,21 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { UI } from '../../lib/site-copy';
 import Icon from '../../components/Icon.astro';
 import { absoluteUrl, breadcrumbJsonLd, collectionPageJsonLd, getAnswers } from '../../lib/public-data';
 
 const answers = await getAnswers();
-const answersDescription = 'Refined-X 策展式常见问题与答案索引。';
+const answersDescription = UI.answers.indexLede;
 const structuredData = [
 	collectionPageJsonLd({
 		path: '/answers/',
-		name: '常见问题',
+		name: UI.answers.label,
 		description: answersDescription,
 		items: answers.map((entry) => ({ name: entry.data.question!, url: `/answers/${entry.data.slug}/` })),
 	}),
 	breadcrumbJsonLd([
-		{ name: '首页', path: '/' },
-		{ name: '常见问题', path: '/answers/' },
+		{ name: UI.answers.homeCrumb, path: '/' },
+		{ name: UI.answers.label, path: '/answers/' },
 	]),
 	{
 		'@context': 'https://schema.org',
@@ -31,21 +32,21 @@ const structuredData = [
 
 <StarlightPage
 	frontmatter={{
-		title: '常见问题',
+		title: UI.answers.label,
 		description: answersDescription,
 		template: 'splash',
 		contentType: 'page',
 		slug: 'answers',
-		llmSummary: 'Refined-X 策展式常见问题索引，覆盖身份、联系、作品与数据源说明。',
+		llmSummary: UI.answers.indexLede,
 	}}
 >
 	{structuredData.map((value) => (
 		<script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
 	))}
 	<div class="wrap page">
-		<div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>常见问题</span></div>
-		<h1 id="_top" class="display page-heading">常见问题</h1>
-		<p class="lede page-lede">策展式答案，也可在首页或提问页直接向站点提问。</p>
+		<div class="crumbs"><a href="/">{UI.answers.homeCrumb}</a><span class="sep">/</span><span>{UI.answers.label}</span></div>
+		<h1 id="_top" class="display page-heading">{UI.answers.label}</h1>
+		<p class="lede page-lede">{UI.answers.indexLede}</p>
 
 		<div class="faq-list answers-index">
 			{answers.map((entry) => (
@@ -62,7 +63,7 @@ const structuredData = [
 		<div class="article-return">
 			<a class="btn btn-solid" href="/ask/">
 				<Icon name="spark" size={15} />
-				向本站提问
+				{UI.answers.askCta}
 			</a>
 		</div>
 	</div>

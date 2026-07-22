@@ -60,6 +60,12 @@ test('theme control chooses light, chooses dark, and returns to automatic', () =
 		menu,
 		trigger,
 		options: [auto, light, dark],
+		labels: {
+			auto: '自动',
+			light: '浅色',
+			dark: '深色',
+			triggerAria: (preference, current) => `主题：${preference}（当前${current}）。打开主题菜单`,
+		},
 		document: { addEventListener() {} },
 		storage,
 		now: new Date(2026, 0, 1, 21),

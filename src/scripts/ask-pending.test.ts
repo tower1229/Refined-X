@@ -39,7 +39,7 @@ test('ask pending controller rotates thinking copy and exposes verify mode', asy
 	assert.equal(root.hidden, false);
 	assert.equal((root as { dataset: DOMStringMap }).dataset.mode, 'verify');
 	assert.equal(label.textContent, '');
-	assert.equal(live.textContent, '正在完成安全检查');
+	assert.equal(live.textContent, 'Completing security check');
 
 	pending.show('think');
 	assert.equal((root as { dataset: DOMStringMap }).dataset.mode, 'think');

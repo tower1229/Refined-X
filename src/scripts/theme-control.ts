@@ -6,20 +6,28 @@ import {
 	type ThemePreference,
 } from './theme-preference.ts';
 
+export type ThemeControlLabels = {
+	auto: string;
+	light: string;
+	dark: string;
+	triggerAria: (preferenceLabel: string, currentLabel: string) => string;
+};
+
 interface ThemeControlOptions {
 	documentElement: HTMLElement;
 	menu: HTMLElement | null;
 	trigger: HTMLElement | null;
 	options: NodeListOf<Element> | Element[];
+	labels: ThemeControlLabels;
 	document?: Pick<Document, 'addEventListener'>;
 	storage?: Storage | null;
 	now?: Date;
 }
 
-function preferenceLabel(preference: ThemePreference) {
-	if (preference === 'light') return '浅色';
-	if (preference === 'dark') return '深色';
-	return '自动';
+function preferenceLabel(preference: ThemePreference, labels: ThemeControlLabels) {
+	if (preference === 'light') return labels.light;
+	if (preference === 'dark') return labels.dark;
+	return labels.auto;
 }
 
 function isThemePreference(value: string | undefined): value is ThemePreference {
@@ -35,6 +43,7 @@ export function initThemeControl({
 	menu,
 	trigger,
 	options,
+	labels,
 	document = globalThis.document,
 	storage = globalThis.localStorage,
 	now,
@@ -49,7 +58,10 @@ export function initThemeControl({
 	const updateControl = (preference: ThemePreference) => {
 		const resolvedTheme = resolveThemePreference(preference, now);
 		if (trigger) {
-			const label = `主题：${preferenceLabel(preference)}（当前${resolvedTheme === 'light' ? '浅色' : '深色'}）。打开主题菜单`;
+			const label = labels.triggerAria(
+				preferenceLabel(preference, labels),
+				resolvedTheme === 'light' ? labels.light : labels.dark,
+			);
 			trigger.setAttribute('aria-label', label);
 			trigger.setAttribute('title', label);
 		}
@@ -79,14 +91,16 @@ export function initThemeControl({
 	optionList.forEach((option) => {
 		option.addEventListener('click', () => {
 			if (!isThemeOption(option)) return;
-			const preference = option.dataset.themePreferenceOption;
-			if (isThemePreference(preference)) setThemePreference(preference);
+			const next = option.dataset.themePreferenceOption;
+			if (!isThemePreference(next)) return;
+			setThemePreference(next);
 		});
 	});
 
 	document.addEventListener('click', (event) => {
 		const target = event.target;
-		if (!menu || !trigger || !target) return;
-		if (!menu.contains(target as Node) && !trigger.contains(target as Node)) setMenuOpen(false);
+		if (!(target instanceof Node)) return;
+		if (menu?.contains(target) || trigger?.contains(target)) return;
+		setMenuOpen(false);
 	});
 }
