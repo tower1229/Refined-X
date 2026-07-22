@@ -2,9 +2,16 @@ English | [简体中文](README.zh-CN.md)
 
 # Refined-X
 
-Agent-ready **personal publish** starter for [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/).
+![Home](docs/screenshots/home.png)
 
-Humans get an editorial reading experience. Agents get `llms.txt`, OpenAPI, JSON APIs, Markdown mirrors, and MCP discovery — generated from the same opinionated public content schema.
+An **agent-friendly personal site** template built on [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/).
+
+- Clean reading experience;
+- Fully data-driven content stack;
+- Configurable content, output, and config directories — ready for personal data vault integration;
+- Auto-generates `llms.txt`, OpenAPI, JSON APIs, and Markdown mirrors;
+- Agent-friendly MCP discovery endpoints;
+- `/ask` page compatible with the NLWeb protocol.
 
 ## Quick start
 
@@ -24,7 +31,7 @@ npm install
 npm run dev
 ```
 
-Then open the printed local URL. Sample content lives in `content/`; static assets in `public/`.
+Open the local URL printed in the terminal. Sample content lives in `content/`; static assets in `public/`.
 
 ```sh
 npm run build && npm run verify
@@ -32,7 +39,7 @@ npm run build && npm run verify
 
 ## Content schema
 
-Point `contentRoot` at any directory that follows this shape (default `./content`):
+Point `contentRoot` at a directory that follows this shape (default `./content`):
 
 ```text
 content/
@@ -49,25 +56,25 @@ content/
     *.yaml
 ```
 
-The schema is **opinionated**. The **location** of the tree is configurable.
+The schema is **opinionated**; the **location** of the content tree is configurable.
 
 ## Config reference
 
-Edit [`site.config.mjs`](site.config.mjs), or place an overlay at `../instance.config.mjs` (used when this package is a git submodule) / set `REFINED_X_INSTANCE_CONFIG`.
+Edit [`site.config.mjs`](site.config.mjs), or place an overlay at `../instance.config.mjs` (when this package is used as a git submodule) / set the `REFINED_X_INSTANCE_CONFIG` environment variable.
 
 | Field | Default | Purpose |
 |-------|---------|---------|
-| `locale` | `en` | UI chrome language pack (`en` \| `zh-CN`) |
+| `locale` | `en` | UI language pack (`en` \| `zh-CN`) |
 | `contentRoot` | `./content` | Public Markdown/YAML root |
 | `publicDir` | `./public` | Static assets (copied to dist) |
 | `outDir` | `./dist` | Build output |
 | `assetSource` | unset | Optional image library for `collect-assets` |
-| `site` / `title` / `locale` | example.com / Refined-X / en | Site identity |
+| `site` / `title` | example.com / Refined-X | Site identity |
 | `ask.askUrl` / `mcpUrl` / `healthUrl` | empty | Optional Public Ask / NLWeb worker |
-| `redirects` | `{}` | Astro redirects map |
+| `redirects` | `{}` | Astro redirects |
 | `brand.*` | Demo Author copy | Identity & content (persona, headings, chips) — not UI chrome |
 
-Relative paths resolve from the package root (this directory).
+Relative paths resolve from this package root.
 
 ## Capability matrix
 
@@ -76,20 +83,18 @@ Relative paths resolve from the package root (this directory).
 | Editorial UI + theme toggle | Yes | See `DESIGN.md` |
 | Articles / series / projects / about | Yes | From `contentRoot` |
 | Curated Answers + static Ask search | Yes | `/ask`, `/answers` |
-| `llms.txt` / `llms-full.txt` / `.md` mirrors | Yes | Build-time |
-| `/api/*.json` + `/openapi.json` | Yes | Build-time |
-| `/.well-known/mcp/*` discovery | Yes | URLs empty until `ask.*` configured |
-| NLWeb `POST /ask` + MCP tool | Optional | Deploy a Public Ask worker; set `ask.*` |
+| `llms.txt` / `llms-full.txt` / `.md` mirrors | Yes | Generated at build time |
+| `/api/*.json` + `/openapi.json` | Yes | Generated at build time |
+| `/.well-known/mcp/*` discovery | Yes | URLs may be empty until `ask.*` is configured |
+| NLWeb `POST /ask` + MCP tool | Optional | Deploy a Public Ask worker and set `ask.*` |
 
-Live reference implementation: [refined-x.com](https://refined-x.com).
-
-![Home](docs/screenshots/home.png)
+Live reference: [refined-x.com](https://refined-x.com).
 
 ![Writing](docs/screenshots/writing.png)
 
 ### Themes Portal short description
 
-> Agent-ready personal publish starter for Astro + Starlight: opinionated public content schema, editorial reading UI, `llms.txt` / OpenAPI / JSON APIs, MCP discovery, and an optional NLWeb Public Ask worker.
+> Agent-friendly personal site starter (Astro + Starlight): opinionated public content schema, editorial reading experience, `llms.txt` / OpenAPI / JSON APIs, MCP discovery, and an optional NLWeb Public Ask worker.
 
 ### create-astro smoke
 
@@ -101,7 +106,7 @@ cd <project> && npm install && npm run build && npm run verify
 
 Optional live Ask backend example: [`examples/public-ask-worker`](examples/public-ask-worker).
 
-## Consume as a submodule
+## Use as a submodule
 
 In a parent monorepo (e.g. a vault that owns `20_Publish/`):
 
@@ -109,7 +114,7 @@ In a parent monorepo (e.g. a vault that owns `20_Publish/`):
 git submodule add git@github.com:tower1229/Refined-X.git 90_Website/Template
 ```
 
-Add `90_Website/instance.config.mjs` next to the submodule to set `contentRoot` / `publicDir` / `outDir` / brand / ask URLs. Do not edit files inside the submodule for instance-specific settings.
+Add `90_Website/instance.config.mjs` next to the submodule to set `contentRoot` / `publicDir` / `outDir` / brand / ask URLs. Do not change files inside the submodule working tree for instance-specific settings.
 
 ## License
 

@@ -4,9 +4,14 @@
 
 ![首页](docs/screenshots/home.png)
 
-面向 [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/) 的 **Agent 友好的个人站点** 起步模板。
+基于 [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/) 的 **Agent 友好的个人站点** 模板。
 
-给人看的是编辑向阅读体验；给 Agent 用的是同一套内容约定自动生成的 `llms.txt`、OpenAPI、JSON API、Markdown 镜像和 MCP 发现入口。
+- 清爽的阅读体验；
+- 全栈内容数据驱动；
+- 灵活自定义数据源目录、产物目录、配置目录，为个人数据仓库集成做好准备；
+- 自动生成 `llms.txt`、OpenAPI、JSON API、Markdown 镜像；
+- Agent 友好的 MCP 端口；
+- 符合 NLWeb 协议的 /ask 页面。
 
 ## 快速开始
 
