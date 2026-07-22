@@ -42,7 +42,7 @@ const structuredData = [
     })),
   }),
   breadcrumbJsonLd([
-    { name: 'Home', path: '/' },
+    { name: UI.common.home, path: '/' },
     { name: copy.heading, path: '/projects/' },
   ]),
 ];
@@ -64,14 +64,14 @@ const structuredData = [
   <div class="wrap page projects-wrap">
     <div class="projects-page">
       <section class="projects-hero" aria-labelledby="_top">
-        <div class="crumbs projects-crumbs"><a href="/">Home</a><span class="sep">/</span><span>{copy.heading}</span></div>
+        <div class="crumbs projects-crumbs"><a href="/">{UI.common.home}</a><span class="sep">/</span><span>{copy.heading}</span></div>
         <div class="projects-hero-copy">
           <h1 id="_top" class="display projects-heading">{copy.heading}</h1>
           <p class="lede projects-lede">
             {copy.lede}
           </p>
           <div class="projects-hero-actions">
-            <a class="btn btn-solid" href="/about/">About</a>
+            <a class="btn btn-solid" href="/about/">{UI.nav.about}</a>
             {publicProfile.github && (
               <a class="btn btn-ghost" href={publicProfile.github} target="_blank" rel="noreferrer">GitHub</a>
             )}
@@ -105,7 +105,7 @@ const structuredData = [
             <a class={`project-feature-card project-feature-card-${index % 3}`} href={link} target={isExternal ? "_blank" : undefined} rel={isExternal ? 'noreferrer' : undefined}>
               <div class="project-feature-media">
                 {data.image ? (
-                  <img src={data.image} alt={data.imageAlt ?? `${data.title} 项目截图`} loading={index < 2 ? 'eager' : 'lazy'} />
+                  <img src={data.image} alt={data.imageAlt ?? UI.projects.projectShotAlt(data.title)} loading={index < 2 ? 'eager' : 'lazy'} />
                 ) : (
                   <div class="project-feature-placeholder">{data.title.slice(0, 2)}</div>
                 )}
@@ -149,9 +149,9 @@ const structuredData = [
                     <img src="/projects/courses/next-course-cover.png" alt={UI.projects.courseCoverAlt} loading="lazy" />
                   </div>
                   <div class="course-plaque">
-                    <span>第{index + 1}展位</span>
-                    <strong>下一门公开课</strong>
-                    <p>尚未公开</p>
+                    <span>{UI.projects.slot(index + 1)}</span>
+                    <strong>{UI.projects.nextCourse}</strong>
+                    <p>{UI.projects.notYetPublic}</p>
                   </div>
                 </div>
               );
@@ -165,7 +165,7 @@ const structuredData = [
                 <div class="course-object course-object-case">
                   <div class="course-display-content">
                     {data.image ? (
-                      <img src={data.image} alt={data.imageAlt ?? `${data.title} 课程封面`} loading={index === 0 ? 'eager' : 'lazy'} />
+                      <img src={data.image} alt={data.imageAlt ?? UI.projects.courseCoverAltTitle(data.title)} loading={index === 0 ? 'eager' : 'lazy'} />
                     ) : (
                       <div class="course-object-title">{data.title}</div>
                     )}
@@ -200,7 +200,7 @@ const structuredData = [
             <div class="proj-desc">{data.description}</div>
             <div class="proj-star">
               {data.status === 'active' || data.status === 'maintained' ? (
-                <span class="project-status"><Icon name="star" size={13} /> 维护中</span>
+                <span class="project-status"><Icon name="star" size={13} /> {UI.projects.maintaining}</span>
               ) : ''}
             </div>
             {isExternal && <Icon name="external" size={16} class="muted-icon" />}
@@ -225,7 +225,7 @@ const structuredData = [
                 <div class="proj-desc">{data.description}</div>
                 <div class="proj-star">
                   {data.status === 'active' || data.status === 'maintained' ? (
-                    <span class="project-status"><Icon name="star" size={13} /> 维护中</span>
+                    <span class="project-status"><Icon name="star" size={13} /> {UI.projects.maintaining}</span>
                   ) : ''}
                 </div>
                 {isExternal && <Icon name="external" size={16} class="muted-icon" />}

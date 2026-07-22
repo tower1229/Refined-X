@@ -5,7 +5,7 @@ import Icon from '../../components/Icon.astro';
 import { absoluteUrl, breadcrumbJsonLd, collectionPageJsonLd, getAnswers } from '../../lib/public-data';
 
 const answers = await getAnswers();
-const answersDescription = 'Refined-X 策展式常见问题与答案索引。';
+const answersDescription = UI.answers.indexLede;
 const structuredData = [
 	collectionPageJsonLd({
 		path: '/answers/',
@@ -37,16 +37,16 @@ const structuredData = [
 		template: 'splash',
 		contentType: 'page',
 		slug: 'answers',
-		llmSummary: 'Refined-X 策展式常见问题索引，覆盖身份、联系、作品与数据源说明。',
+		llmSummary: UI.answers.indexLede,
 	}}
 >
 	{structuredData.map((value) => (
 		<script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
 	))}
 	<div class="wrap page">
-		<div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>常见问题</span></div>
-		<h1 id="_top" class="display page-heading">常见问题</h1>
-		<p class="lede page-lede">策展式答案，也可在首页或提问页直接向站点提问。</p>
+		<div class="crumbs"><a href="/">{UI.answers.homeCrumb}</a><span class="sep">/</span><span>{UI.answers.label}</span></div>
+		<h1 id="_top" class="display page-heading">{UI.answers.label}</h1>
+		<p class="lede page-lede">{UI.answers.indexLede}</p>
 
 		<div class="faq-list answers-index">
 			{answers.map((entry) => (

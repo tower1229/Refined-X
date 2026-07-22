@@ -66,7 +66,7 @@ const structuredData = [
   <div class="wrap page page-writing">
     <div class="crumbs"><a href="/">{UI.writing.homeCrumb}</a><span class="sep">/</span><span>{UI.writing.label}</span></div>
     <h1 id="_top" class="display page-heading">{UI.writing.label}</h1>
-    <p class="lede page-lede">{WRITING_LEDE}共 {articles.length} 篇。</p>
+    <p class="lede page-lede">{WRITING_LEDE} {UI.writing.articleCountSuffix(articles.length)}</p>
 
     <div class="section-head section-head-spaced" aria-labelledby="writing-series-heading">
       <h2 id="writing-series-heading" class="section-title">{UI.writing.seriesHeading}</h2>
@@ -75,7 +75,7 @@ const structuredData = [
 
     <div class="section-head section-head-large" aria-labelledby="writing-archive-heading">
       <h2 id="writing-archive-heading" class="section-title">{UI.writing.archiveHeading}</h2>
-      <a class="more-link" href="/topics/">按主题浏览 <Icon name="arrow-right" size={14} /></a>
+      <a class="more-link" href="/topics/">{UI.writing.browseByTopic} <Icon name="arrow-right" size={14} /></a>
     </div>
 
     {years.map((y) => (

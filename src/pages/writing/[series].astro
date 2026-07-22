@@ -88,16 +88,16 @@ const structuredData = [
   ))}
   <div class="wrap page page-writing">
     <div class="crumbs">
-      <a href="/">首页</a><span class="sep">/</span>
+      <a href="/">{UI.writing.homeCrumb}</a><span class="sep">/</span>
       <a href="/writing/">{UI.writing.label}</a><span class="sep">/</span><span>{seriesData.title}</span>
     </div>
-    <p class="eyebrow">专栏 {no}</p>
+    <p class="eyebrow">{UI.writing.seriesEyebrow(no)}</p>
     <h1 id="_top" class="display pillar-heading">{seriesData.title}</h1>
     {seriesData.intro && <p class="lede pillar-lede">{seriesData.intro}</p>}
 
     <div class="section-head section-head-large" aria-labelledby="series-featured-heading">
       <h2 id="series-featured-heading" class="section-title">{UI.writing.featuredHeading}</h2>
-      <span class="mono section-meta">{articles.length} 篇收录</span>
+      <span class="mono section-meta">{UI.writing.articlesCount(articles.length)}</span>
     </div>
     <div class="feat-grid">
       {featuredArticles.map(a => (
@@ -108,7 +108,7 @@ const structuredData = [
           </div>
           <div class="feat-title">{a.data.title || a.id}</div>
           <div class="feat-excerpt">{a.data.llmSummary || a.data.description || ''}</div>
-          <div class="pillar-foot related-link">阅读 <Icon name="arrow-right" size={14} /></div>
+          <div class="pillar-foot related-link">{UI.common.read} <Icon name="arrow-right" size={14} /></div>
         </a>
       ))}
     </div>
@@ -117,7 +117,7 @@ const structuredData = [
       <>
         <div class="section-head section-head-large" aria-labelledby="series-faq-heading">
           <h2 id="series-faq-heading" class="section-title">{UI.writing.faqHeading}</h2>
-          <span class="mono section-meta">策展问答</span>
+          <span class="mono section-meta">{UI.writing.curatedQa}</span>
         </div>
         <div class="faq-list">
           {seriesData.faq.map((it) => (
@@ -135,8 +135,8 @@ const structuredData = [
 
     <details class="article-archive">
       <summary class="btn btn-ghost archive-toggle">
-        <span class="archive-toggle-open">展开全部 {articles.length} 篇</span>
-        <span class="archive-toggle-close">收起全部文章</span>
+        <span class="archive-toggle-open">{UI.writing.expandAll(articles.length)}</span>
+        <span class="archive-toggle-close">{UI.writing.collapseAll}</span>
         <Icon name="chevron-down" size={15} />
       </summary>
       <ArticleFeed articles={articles} showSeries={false} />

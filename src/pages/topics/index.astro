@@ -27,16 +27,16 @@ topics.sort((a, b) => b.articles.length - a.articles.length);
     template: 'splash',
     contentType: 'page',
     slug: 'topics',
-    llmSummary: 'Refined-X 公开文章的主题索引。',
+    llmSummary: topicsDescription,
   }}
 >
   {structuredData.map((value) => (
     <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
   ))}
   <div class="wrap page">
-    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>主题目录</span></div>
-    <h1 id="_top" class="display page-heading">全部主题</h1>
-    <p class="lede page-lede">按主题聚合的文章发现层。</p>
+    <div class="crumbs"><a href="/">{UI.topics.homeCrumb}</a><span class="sep">/</span><span>{UI.topics.directory}</span></div>
+    <h1 id="_top" class="display page-heading">{UI.topics.allHeading}</h1>
+    <p class="lede page-lede">{UI.topics.indexLede}</p>
     
     <div class="tagrow topic-cloud">
       {topics.map(topic => (

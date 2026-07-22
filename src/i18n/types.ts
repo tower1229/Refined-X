@@ -57,6 +57,20 @@ export type UiCopy = {
 		featuredHeading: string;
 		faqHeading: string;
 		homeCrumb: string;
+		browseByTopic: string;
+		pageCrumb: (n: number) => string;
+		seriesEyebrow: (no: string) => string;
+		seriesLabel: string;
+		enterSeries: string;
+		articlesCount: (n: number) => string;
+		curatedQa: string;
+		expandAll: (n: number) => string;
+		collapseAll: string;
+		backToSeries: string;
+		relatedMeta: string;
+		summaryTitle: string;
+		articleCountSuffix: (n: number) => string;
+		pageProgress: (page: number, total: number) => string;
 	};
 	projects: {
 		featuredHeading: string;
@@ -70,6 +84,12 @@ export type UiCopy = {
 		viewProject: string;
 		highlightsAria: string;
 		proofAria: (title: string) => string;
+		nextCourse: string;
+		notYetPublic: string;
+		slot: (n: number) => string;
+		maintaining: string;
+		projectShotAlt: (title: string) => string;
+		courseCoverAltTitle: (title: string) => string;
 	};
 	topics: {
 		label: string;
@@ -77,11 +97,19 @@ export type UiCopy = {
 		directory: string;
 		homeCrumb: string;
 		indexDescription: string;
+		indexLede: string;
+		topicTitle: (name: string) => string;
+		topicDescription: (name: string) => string;
+		articlesCollected: (n: number) => string;
 	};
 	answers: {
 		label: string;
 		homeCrumb: string;
 		askCta: string;
+		indexLede: string;
+		answerCrumb: string;
+		askAgain: string;
+		aboutPerson: (name: string) => string;
 	};
 	about: {
 		profileAria: string;
@@ -90,6 +118,8 @@ export type UiCopy = {
 		allProjects: string;
 		askCollaborate: (persona: string) => string;
 		askCollaborateButton: string;
+		wechat: (id: string) => string;
+		sendEmail: string;
 	};
 	common: {
 		home: string;
@@ -104,6 +134,14 @@ export type UiCopy = {
 		notFoundLede: string;
 		backHome: string;
 		browseWriting: string;
+		prevPage: string;
+		nextPage: string;
+		toc: string;
+		tocSections: (n: number) => string;
+		read: string;
+		published: string;
+		updated: string;
+		readingMinutes: (n: number) => string;
 	};
 	footer: {
 		content: string;
@@ -149,6 +187,9 @@ export type UiCopy = {
 		loadingVerify: string;
 		processingAsk: string;
 		turnstileAria: string;
+		invalidStream: string;
+		invalidStreamEmpty: string;
+		serviceUnavailable: string;
 	};
 	askSearch: {
 		retry: string;

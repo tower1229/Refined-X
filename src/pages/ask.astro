@@ -140,6 +140,9 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 		stoppedText: string;
 		stoppedStatus: string;
 		temporarilyUnavailable: string;
+		invalidStream: string;
+		invalidStreamEmpty: string;
+		serviceUnavailable: string;
 	};
 	const searchLabels = JSON.parse((pageRoot instanceof HTMLElement && pageRoot.dataset.askSearchLabels) || '{}');
 
@@ -360,6 +363,11 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 			await askPublicAgent(query, {
 				signal: controller.signal,
 				getTurnstileToken,
+				messages: {
+					invalidStream: rt.invalidStream,
+					invalidStreamEmpty: rt.invalidStreamEmpty,
+					serviceUnavailable: rt.serviceUnavailable,
+				},
 				onDelta(delta) {
 					if (!receivedDelta) {
 						receivedDelta = true;

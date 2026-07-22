@@ -10,12 +10,25 @@ export class PublicAskError extends Error {
 	}
 }
 
+export type AskErrorMessages = {
+	invalidStream: string;
+	invalidStreamEmpty: string;
+	serviceUnavailable: string;
+};
+
+const DEFAULT_MESSAGES: AskErrorMessages = {
+	invalidStream: 'The service returned an unparseable NLWeb stream.',
+	invalidStreamEmpty: 'The service did not return a valid NLWeb stream.',
+	serviceUnavailable: 'Public Ask is temporarily unavailable.',
+};
+
 type AskOptions = {
 	signal?: AbortSignal;
 	onDelta: (text: string) => void;
 	fetchImpl?: typeof fetch;
 	endpoint?: string;
 	getTurnstileToken?: () => Promise<string>;
+	messages?: Partial<AskErrorMessages>;
 };
 
 /** Injected at build time via astro.config vite.define from siteConfig.ask.askUrl. */
@@ -23,7 +36,11 @@ const DEFAULT_ENDPOINT =
 	(typeof import.meta !== 'undefined' && (import.meta as ImportMeta & { env?: Record<string, string> }).env?.PUBLIC_ASK_URL) ||
 	'';
 
-function eventPayload(event: string): { name: string; data: unknown } | null {
+function resolveMessages(partial?: Partial<AskErrorMessages>): AskErrorMessages {
+	return { ...DEFAULT_MESSAGES, ...partial };
+}
+
+function eventPayload(event: string, messages: AskErrorMessages): { name: string; data: unknown } | null {
 	let name = 'message';
 	const data: string[] = [];
 	for (const line of event.split('\n')) {
@@ -34,18 +51,18 @@ function eventPayload(event: string): { name: string; data: unknown } | null {
 	try {
 		return { name, data: JSON.parse(data.join('\n')) };
 	} catch {
-		throw new PublicAskError('invalid_stream', '服务返回了无法解析的 NLWeb 流。');
+		throw new PublicAskError('invalid_stream', messages.invalidStream);
 	}
 }
 
-function consumeEvent(event: string, onDelta: (text: string) => void) {
-	const payload = eventPayload(event);
+function consumeEvent(event: string, onDelta: (text: string) => void, messages: AskErrorMessages) {
+	const payload = eventPayload(event, messages);
 	if (!payload) return false;
 	if (payload.name === 'error') {
 		const failure = payload.data as { error?: { code?: string; message?: string } };
 		throw new PublicAskError(
 			failure.error?.code ?? 'stream_error',
-			failure.error?.message ?? '公开问答服务暂时不可用。',
+			failure.error?.message ?? messages.serviceUnavailable,
 		);
 	}
 	if (payload.name === 'result') {
@@ -60,6 +77,7 @@ function consumeEvent(event: string, onDelta: (text: string) => void) {
 export async function consumeNlWebSse(
 	stream: ReadableStream<Uint8Array>,
 	onDelta: (text: string) => void,
+	messages: AskErrorMessages = DEFAULT_MESSAGES,
 ) {
 	const reader = stream.getReader();
 	const decoder = new TextDecoder();
@@ -73,17 +91,18 @@ export async function consumeNlWebSse(
 		while (boundary >= 0) {
 			const event = buffer.slice(0, boundary);
 			buffer = buffer.slice(boundary + 2);
-			complete = consumeEvent(event, onDelta);
+			complete = consumeEvent(event, onDelta, messages);
 			if (complete) break;
 			boundary = buffer.indexOf('\n\n');
 		}
 		if (done) break;
 	}
-	if (!complete && buffer.trim()) consumeEvent(buffer, onDelta);
+	if (!complete && buffer.trim()) consumeEvent(buffer, onDelta, messages);
 }
 
 export async function askPublicAgent(question: string, options: AskOptions) {
 	const fetchImpl = options.fetchImpl ?? fetch;
+	const messages = resolveMessages(options.messages);
 	let attempt = 0;
 	while (true) {
 		const token = await options.getTurnstileToken?.();
@@ -122,14 +141,14 @@ export async function askPublicAgent(question: string, options: AskOptions) {
 			}
 			throw new PublicAskError(
 				code,
-				failure.error?.message ?? '公开问答服务暂时不可用。',
+				failure.error?.message ?? messages.serviceUnavailable,
 				response.status,
 			);
 		}
 		if (!response.body || !response.headers.get('content-type')?.includes('text/event-stream')) {
-			throw new PublicAskError('invalid_stream', '服务没有返回有效的 NLWeb 流。', response.status);
+			throw new PublicAskError('invalid_stream', messages.invalidStreamEmpty, response.status);
 		}
-		await consumeNlWebSse(response.body, options.onDelta);
+		await consumeNlWebSse(response.body, options.onDelta, messages);
 		return { requestId: response.headers.get('x-request-id') };
 	}
 }

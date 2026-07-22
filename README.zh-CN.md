@@ -15,6 +15,8 @@
 
 ## 快速开始
 
+本仓库已设为 [GitHub template](https://github.com/tower1229/Refined-X)，可在仓库页点击 **Use this template**，或：
+
 ```sh
 npm create astro@latest -- --template tower1229/Refined-X
 cd <project>

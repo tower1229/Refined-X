@@ -18,14 +18,14 @@ function pickMessage(messages: readonly string[], previous: string | null) {
 	return pool[Math.floor(Math.random() * pool.length)] ?? messages[0] ?? '';
 }
 
-/** Default thinking copy kept for unit tests; pages should pass locale messages. */
+/** Default thinking copy (English, matches template locale). Pages should pass locale messages. */
 export const THINKING_MESSAGES = [
-	'先从公开内容里找线索',
-	'正在匹配相关文章和 FAQ',
-	'整理可能的回答方向',
-	'检索策展答案与长文片段',
-	'核对站点里的公开资料',
-	'看看有没有直接相关的页面',
+	'Searching public pages for clues',
+	'Matching related articles and FAQ',
+	'Shaping possible answer directions',
+	'Retrieving curated answers and long-form excerpts',
+	'Checking public materials on this site',
+	'Looking for directly related pages',
 ] as const;
 
 export function createAskPendingController({
@@ -33,7 +33,7 @@ export function createAskPendingController({
 	label,
 	liveRegion,
 	messages = THINKING_MESSAGES,
-	verifyingLive = '正在完成安全检查',
+	verifyingLive = 'Completing security check',
 }: PendingOptions): AskPendingController {
 	let mode: AskPendingMode | null = null;
 	let messageTimer: number | undefined;

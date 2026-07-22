@@ -1,6 +1,7 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getEntry, render } from 'astro:content';
+import { UI } from '../lib/site-copy';
 
 const entry = await getEntry('docs', 'friends');
 if (!entry) {
@@ -18,7 +19,7 @@ const { Content } = await render(entry);
   }}
 >
   <div class="wrap page friends-page">
-    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>{entry.data.title}</span></div>
+    <div class="crumbs"><a href="/">{UI.common.home}</a><span class="sep">/</span><span>{entry.data.title}</span></div>
     
     <div class="friends-header">
       <h1 id="_top" class="display page-title">{entry.data.title}</h1>

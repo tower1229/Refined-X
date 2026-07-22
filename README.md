@@ -15,6 +15,8 @@ An **agent-friendly personal site** template built on [Astro](https://astro.buil
 
 ## Quick start
 
+This repo is a [GitHub template](https://github.com/tower1229/Refined-X) — use **Use this template** on GitHub, or:
+
 ```sh
 npm create astro@latest -- --template tower1229/Refined-X
 cd <project>
