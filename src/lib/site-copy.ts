@@ -1,6 +1,9 @@
 import { siteConfig } from '../../site.config.mjs';
+import { getUi } from '../i18n/index';
 
-/** Shared user-facing copy for Refined-X (driven by site.config / instance overlay). */
+const ui = getUi(siteConfig.locale);
+
+/** Shared brand / content identity (site.config / instance overlay). */
 export const SITE_BRAND = siteConfig.title;
 
 export const SITE_PERSONA = siteConfig.brand.persona;
@@ -19,19 +22,23 @@ export const WRITING_LEDE = siteConfig.brand.writingLede;
 
 export const ASK_CHIPS = siteConfig.brand.askChips;
 
-export const ASK_PLACEHOLDER = 'Ask this site';
+export const FOOTER_TAGLINE = siteConfig.brand.footerTagline;
 
-export const ASK_OVERLAY_PLACEHOLDER = 'Ask this site…';
+/** Locale UI pack for chrome strings. */
+export const UI = ui;
+
+export const ASK_PLACEHOLDER = ui.ask.placeholder;
+
+export const ASK_OVERLAY_PLACEHOLDER = ui.ask.overlayPlaceholder;
 
 /** Placeholder on the dedicated /ask page (the input is the page headline). */
-export const ASK_PAGE_PLACEHOLDER = 'Ask this site';
+export const ASK_PAGE_PLACEHOLDER = ui.ask.pagePlaceholder;
 
-export const ASK_BUTTON = 'Ask';
+export const ASK_BUTTON = ui.ask.button;
 
-export const ASK_PAGE_TITLE = 'Ask this site';
+export const ASK_PAGE_TITLE = ui.ask.pageTitle;
 
-export const ASK_PAGE_LEDE =
-	'Ask this site to match curated answers and related articles. The surface can evolve into a conversational entry point.';
+export const ASK_PAGE_LEDE = ui.ask.pageLede;
 
 export const MCP_ENDPOINT_URL = siteConfig.ask.mcpUrl || '';
 
@@ -61,14 +68,11 @@ export const PUBLIC_ASK_UNSUPPORTED_ITEMS = [
 ] as const;
 
 export const MCP_AGENT_PROMPT = MCP_ENDPOINT_URL
-	? `Please connect this MCP server: ${MCP_ENDPOINT_URL}`
-	: 'Configure ask.mcpUrl in site.config / instance.config to enable MCP.';
+	? ui.mcp.agentPrompt(MCP_ENDPOINT_URL)
+	: ui.mcp.agentPromptMissing;
 
-export const MCP_GUIDE_TITLE = 'Connect an agent';
+export const MCP_GUIDE_TITLE = ui.mcp.guideTitle;
 
-export const MCP_GUIDE_LEDE =
-	'Copy the prompt below into your agent. This site exposes an NLWeb v0.55-compatible restricted /ask subset when a Public Ask worker is configured.';
+export const MCP_GUIDE_LEDE = ui.mcp.guideLede;
 
-export const MCP_GUIDE_FOLLOWUP = `After connecting, ask in natural language. ${PUBLIC_ASK_UNSUPPORTED}`;
-
-export const FOOTER_TAGLINE = siteConfig.brand.footerTagline;
+export const MCP_GUIDE_FOLLOWUP = ui.mcp.guideFollowup(PUBLIC_ASK_UNSUPPORTED);

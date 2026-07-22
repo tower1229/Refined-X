@@ -1,4 +1,5 @@
 ---
+import { UI } from '../lib/site-copy';
 import type { TocItem } from '../lib/article-toc';
 
 interface Props {
@@ -14,10 +15,10 @@ const count = items.length;
 	part === 'mobile' ? (
 		<details class="article-toc article-toc-mobile">
 			<summary class="article-toc-summary">
-				<span class="article-toc-summary-label">目录</span>
-				<span class="mono article-toc-count">· {count} 节</span>
+				<span class="article-toc-summary-label">{UI.common.toc}</span>
+				<span class="mono article-toc-count">{UI.common.tocSections(count)}</span>
 			</summary>
-			<nav class="article-toc-nav" aria-label="文章目录">
+			<nav class="article-toc-nav" aria-label={UI.common.articleTocAria}>
 				<ol class="article-toc-list">
 					{
 						items.map((item) => (
@@ -32,8 +33,8 @@ const count = items.length;
 			</nav>
 		</details>
 	) : (
-		<aside class="article-toc-rail" aria-label="文章目录">
-			<p class="eyebrow article-toc-label">目录</p>
+		<aside class="article-toc-rail" aria-label={UI.common.articleTocAria}>
+			<p class="eyebrow article-toc-label">{UI.common.toc}</p>
 			<nav class="article-toc-nav">
 				<ol class="article-toc-list">
 					{

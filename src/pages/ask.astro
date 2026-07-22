@@ -3,9 +3,9 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import Icon from '../components/Icon.astro';
 import AskForm from '../components/AskForm.astro';
 import { breadcrumbJsonLd, webPageJsonLd } from '../lib/public-data';
-import { ASK_PAGE_PLACEHOLDER, ASK_PAGE_TITLE } from '../lib/site-copy';
+import { ASK_PAGE_LEDE, ASK_PAGE_PLACEHOLDER, ASK_PAGE_TITLE, UI } from '../lib/site-copy';
 
-const askDescription = '向 Refined-X 提问：匹配常见问题与相关文章，逐步演进为可对话的智能站点。';
+const askDescription = ASK_PAGE_LEDE;
 const structuredData = [
   webPageJsonLd({
     path: '/ask/',
@@ -13,11 +13,13 @@ const structuredData = [
     description: askDescription,
   }),
   breadcrumbJsonLd([
-    { name: '首页', path: '/' },
-    { name: '提问', path: '/ask/' },
+    { name: UI.common.home, path: '/' },
+    { name: UI.ask.button, path: '/ask/' },
   ]),
 ];
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
+const askRuntimeJson = JSON.stringify(UI.askRuntime);
+const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 ---
 
 <StarlightPage
@@ -27,14 +29,14 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
     template: 'splash',
     contentType: 'page',
     slug: 'ask',
-    llmSummary: 'Refined-X 提问页，向站点提问并匹配策展答案与相关文章。',
+    llmSummary: ASK_PAGE_LEDE,
   }}
 >
   {structuredData.map((value) => (
     <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
   ))}
-  <div class="wrap ask-page">
-    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><span>提问</span></div>
+  <div class="wrap ask-page" data-ask-runtime={askRuntimeJson} data-ask-search-labels={askSearchLabelsJson}>
+    <div class="crumbs"><a href="/">{UI.common.home}</a><span class="sep">/</span><span>{UI.ask.button}</span></div>
 
     <section class="ask-stage" aria-labelledby="ask-page-heading">
       <h1 id="ask-page-heading" class="visually-hidden">{ASK_PAGE_TITLE}</h1>
@@ -50,13 +52,13 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
     </section>
 
     <p class="ask-privacy">
-      快捷问题优先使用本站预生成的 AI 策展答案；其他问题由第三方模型基于本站公开内容生成。仅实时提问的问题、回答与引用来源会完整保存，用于改进本站问答。
+      {UI.ask.privacyNote}
     </p>
 
     <section class="ask-agent-panel" id="ask-agent-panel" aria-labelledby="ask-agent-heading" hidden>
       <div class="ask-agent-head">
-        <span class="agent-note" id="ask-agent-heading"><Icon name="spark" size={13} /> <span id="ask-answer-source">AI 策展回答</span></span>
-        <span class="mono" id="ask-agent-status">准备回答</span>
+        <span class="agent-note" id="ask-agent-heading"><Icon name="spark" size={13} /> <span id="ask-answer-source">{UI.askRuntime.curatedSource}</span></span>
+        <span class="mono" id="ask-agent-status">{UI.ask.readyStatus}</span>
       </div>
       {turnstileSiteKey && (
         <div
@@ -64,12 +66,12 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
           class="ask-turnstile-slot"
           data-sitekey={turnstileSiteKey}
           data-action="turnstile-spin-v1"
-          aria-label="人机验证"
+          aria-label={UI.askRuntime.turnstileAria}
           hidden
         >
           <div class="ask-turnstile-loading" id="ask-turnstile-loading" hidden>
             <div class="ask-agent-spinner" role="status">
-              <span class="visually-hidden">正在加载安全验证</span>
+              <span class="visually-hidden">{UI.askRuntime.loadingVerify}</span>
             </div>
           </div>
         </div>
@@ -77,7 +79,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
       <div class="ask-agent-answer">
         <div id="ask-agent-pending" class="ask-agent-pending" hidden aria-hidden="true">
           <div class="ask-agent-spinner" role="status">
-            <span class="visually-hidden">正在处理提问</span>
+            <span class="visually-hidden">{UI.askRuntime.processingAsk}</span>
           </div>
           <p id="ask-agent-pending-text" class="ask-agent-pending-text"></p>
         </div>
@@ -85,8 +87,8 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
         <div id="ask-agent-live" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
       </div>
       <div class="ask-agent-foot">
-        <span id="ask-answer-foot-primary">预生成策展答案 · 无需调用实时模型</span>
-        <span id="ask-answer-foot-secondary">AI 整理内容，请以链接的公开页面为准</span>
+        <span id="ask-answer-foot-primary">{UI.askRuntime.curatedFootPrimary}</span>
+        <span id="ask-answer-foot-secondary">{UI.askRuntime.curatedFootSecondary}</span>
       </div>
     </section>
 
@@ -94,8 +96,8 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
       <div id="ask-page-results" class="ask-page-results" aria-live="polite" aria-atomic="false"></div>
 
       <div class="ask-page-foot">
-        <span class="agent-note"><Icon name="spark" size={12} /> 相关公开内容</span>
-        <span class="mono">数据源 <a href="/api/search-index.json" class="machine-link">/api/search-index.json</a></span>
+        <span class="agent-note"><Icon name="spark" size={12} /> {UI.ask.relatedPublic}</span>
+        <span class="mono">{UI.ask.dataSource} <a href="/api/search-index.json" class="machine-link">/api/search-index.json</a></span>
       </div>
     </div>
   </div>
@@ -111,6 +113,38 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 	import type { AnswerResult } from '../scripts/ask-search';
 	import { createTypewriter } from '../scripts/typewriter';
 	import { createTurnstileChallenge, waitForTurnstile } from '../scripts/turnstile-client';
+
+	const pageRoot = document.querySelector('.ask-page');
+	const rt = JSON.parse((pageRoot instanceof HTMLElement && pageRoot.dataset.askRuntime) || '{}') as {
+		thinkingMessages: string[];
+		verifyingLive: string;
+		curatedSource: string;
+		liveSource: string;
+		curatedFootPrimary: string;
+		liveFootPrimary: string;
+		curatedFootSecondary: string;
+		liveFootSecondary: string;
+		rateLimited: string;
+		timeout: string;
+		unavailable: string;
+		stop: string;
+		ask: string;
+		showingCurated: string;
+		curatedDone: string;
+		findingContent: string;
+		challengeUnavailable: string;
+		challengeScriptFailed: string;
+		organizingAnswer: string;
+		emptyAnswer: string;
+		answerDone: string;
+		stoppedText: string;
+		stoppedStatus: string;
+		temporarilyUnavailable: string;
+		invalidStream: string;
+		invalidStreamEmpty: string;
+		serviceUnavailable: string;
+	};
+	const searchLabels = JSON.parse((pageRoot instanceof HTMLElement && pageRoot.dataset.askSearchLabels) || '{}');
 
 	const input = document.getElementById('ask-page-input');
 	const results = document.getElementById('ask-page-results');
@@ -140,6 +174,8 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 					root: agentPending,
 					label: agentPendingText,
 					liveRegion: agentLive instanceof HTMLElement ? agentLive : undefined,
+					messages: rt.thinkingMessages ?? [],
+					verifyingLive: rt.verifyingLive,
 				})
 			: null;
 
@@ -220,33 +256,33 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 	};
 
 	const setAnswerMode = (mode: 'curated' | 'live') => {
-		if (answerSource) answerSource.textContent = mode === 'curated' ? 'AI 策展回答' : '公开问答 Agent';
+		if (answerSource) answerSource.textContent = mode === 'curated' ? rt.curatedSource : rt.liveSource;
 		if (answerFootPrimary) {
 			answerFootPrimary.textContent = mode === 'curated'
-				? '预生成策展答案 · 无需调用实时模型'
-				: '单轮问答 · 完整记录用于站点学习';
+				? rt.curatedFootPrimary
+				: rt.liveFootPrimary;
 		}
 		if (answerFootSecondary) {
 			answerFootSecondary.textContent = mode === 'curated'
-				? 'AI 整理内容，请以链接的公开页面为准'
-				: '回答可能出错，请以引用的公开页面为准';
+				? rt.curatedFootSecondary
+				: rt.liveFootSecondary;
 		}
 	};
 
 	const errorMessage = (error: unknown) => {
 		if (error instanceof PublicAskError) {
-			if (error.code.includes('limit') || error.status === 429) return '当前公开问答额度已用完，请查看下方相关公开内容。';
-			if (error.status === 504 || error.code.includes('timeout')) return '回答生成超时，请稍后重试。';
+			if (error.code.includes('limit') || error.status === 429) return rt.rateLimited;
+			if (error.status === 504 || error.code.includes('timeout')) return rt.timeout;
 			return error.message;
 		}
-		return '公开问答服务暂时不可用，请查看下方相关公开内容。';
+		return rt.unavailable;
 	};
 
 	const setGenerating = (generating: boolean) => {
 		panel?.setAttribute('aria-busy', generating ? 'true' : 'false');
 		if (submitButton) {
 			submitButton.classList.toggle('ask-send--icon', !generating);
-			submitButton.setAttribute('aria-label', generating ? '停止' : '提问');
+			submitButton.setAttribute('aria-label', generating ? rt.stop : rt.ask);
 			const icon = submitButton.querySelector<HTMLElement>('.ask-send-icon');
 			const stop = submitButton.querySelector<HTMLElement>('.ask-send-stop');
 			if (icon) icon.hidden = generating;
@@ -262,13 +298,13 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 		setAnswerMode('curated');
 		agentPanel.hidden = false;
 		panel?.classList.add('hide-curated-answers');
-		if (agentStatus) agentStatus.textContent = '正在呈现策展答案…';
+		if (agentStatus) agentStatus.textContent = rt.showingCurated;
 		setGenerating(false);
 		const text = answer.full || answer.a;
 		await typewriter.show(text);
 		if (run !== answerRun) return;
 		renderAnswerLinks(text);
-		if (agentStatus) agentStatus.textContent = '策展回答完成';
+		if (agentStatus) agentStatus.textContent = rt.curatedDone;
 	};
 
 	const runAgent = async (query: string) => {
@@ -285,7 +321,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 			turnstileContainer instanceof HTMLElement && Boolean(turnstileContainer.dataset.sitekey);
 		pending?.show(needsTurnstile ? 'verify' : 'think');
 		if (agentStatus) {
-			agentStatus.textContent = needsTurnstile ? '正在完成安全检查…' : '正在查找相关内容…';
+			agentStatus.textContent = needsTurnstile ? `${rt.verifyingLive}…` : rt.findingContent;
 		}
 		setGenerating(true);
 		let answer = '';
@@ -293,12 +329,12 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 		try {
 			const getTurnstileToken = async () => {
 				if (!(turnstileContainer instanceof HTMLElement) || !turnstileContainer.dataset.sitekey) {
-					throw new PublicAskError('CHALLENGE_UNAVAILABLE', '人机验证暂不可用，请查看下方相关公开内容。');
+					throw new PublicAskError('CHALLENGE_UNAVAILABLE', rt.challengeUnavailable);
 				}
 				pending?.show('verify');
 				turnstileContainer.hidden = false;
 				setTurnstileLoading(true);
-				if (agentStatus) agentStatus.textContent = '正在完成安全检查…';
+				if (agentStatus) agentStatus.textContent = `${rt.verifyingLive}…`;
 				if (!turnstileChallenge) {
 					let api;
 					try {
@@ -306,7 +342,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 					} catch {
 						throw new PublicAskError(
 							'CHALLENGE_UNAVAILABLE',
-							'人机验证脚本加载失败，请检查网络或广告拦截后重试。',
+							rt.challengeScriptFailed,
 						);
 					}
 					turnstileChallenge = createTurnstileChallenge({
@@ -321,12 +357,17 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 				setTurnstileLoading(false);
 				turnstileContainer.hidden = true;
 				pending?.show('think');
-				if (agentStatus) agentStatus.textContent = '正在查找相关内容…';
+				if (agentStatus) agentStatus.textContent = rt.findingContent;
 				return token;
 			};
 			await askPublicAgent(query, {
 				signal: controller.signal,
 				getTurnstileToken,
+				messages: {
+					invalidStream: rt.invalidStream,
+					invalidStreamEmpty: rt.invalidStreamEmpty,
+					serviceUnavailable: rt.serviceUnavailable,
+				},
 				onDelta(delta) {
 					if (!receivedDelta) {
 						receivedDelta = true;
@@ -334,26 +375,26 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 					}
 					answer += delta;
 					typewriter.append(delta);
-					if (agentStatus) agentStatus.textContent = '正在整理回答…';
+					if (agentStatus) agentStatus.textContent = rt.organizingAnswer;
 				},
 			});
-			const emptyAnswer = '没有收到完整回答，请重试。';
+			const emptyAnswer = rt.emptyAnswer;
 			if (!answer) await typewriter.show(emptyAnswer);
 			await typewriter.finish();
 			if (run !== answerRun) return;
 			renderAnswerLinks(answer || emptyAnswer);
-			if (agentStatus) agentStatus.textContent = '回答完成';
+			if (agentStatus) agentStatus.textContent = rt.answerDone;
 		} catch (error) {
 			if (run !== answerRun) return;
 			pending?.hide();
 			setTurnstileLoading(false);
 			if (turnstileContainer instanceof HTMLElement) turnstileContainer.hidden = true;
 			if (controller.signal.aborted) {
-				await typewriter.show(answer || '已停止生成。');
-				if (agentStatus) agentStatus.textContent = '已停止';
+				await typewriter.show(answer || rt.stoppedText);
+				if (agentStatus) agentStatus.textContent = rt.stoppedStatus;
 			} else {
 				await typewriter.show(errorMessage(error));
-				if (agentStatus) agentStatus.textContent = '暂时不可用';
+				if (agentStatus) agentStatus.textContent = rt.temporarilyUnavailable;
 			}
 		} finally {
 			if (activeRequest === controller) activeRequest = null;
@@ -371,6 +412,7 @@ const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
 			articlesQuery: 10,
 			onResultsRendered: pulseResults,
 			busyTarget: panel ?? undefined,
+			labels: searchLabels,
 		});
 
 		const renderCuratedFor = async (query: string) => {

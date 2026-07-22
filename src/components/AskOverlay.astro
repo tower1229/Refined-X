@@ -1,23 +1,26 @@
 ---
 import Icon from './Icon.astro';
-import { ASK_OVERLAY_PLACEHOLDER } from '../lib/site-copy';
+import { ASK_OVERLAY_PLACEHOLDER, UI } from '../lib/site-copy';
+
+const askSearchLabels = JSON.stringify(UI.askSearch);
+const askOverlayNote = UI.answers.label;
 ---
 
-<dialog id="ask-overlay" class="overlay" aria-labelledby="ask-title">
+<dialog id="ask-overlay" class="overlay" aria-labelledby="ask-title" data-ask-search-labels={askSearchLabels}>
 	<div class="overlay-panel">
-		<h2 id="ask-title" class="visually-hidden">向本站提问</h2>
+		<h2 id="ask-title" class="visually-hidden">{UI.ask.overlayHeading}</h2>
 		<div class="overlay-search">
 			<Icon name="spark" size={20} />
-			<label class="visually-hidden" for="ask-input">向本站提问</label>
+			<label class="visually-hidden" for="ask-input">{UI.ask.overlayHeading}</label>
 			<input id="ask-input" placeholder={ASK_OVERLAY_PLACEHOLDER} autocomplete="off" />
-			<button class="dialog-close" type="button" data-close-ask aria-label="关闭提问">
+			<button class="dialog-close" type="button" data-close-ask aria-label={UI.ask.closeAria}>
 				<Icon name="close" size={18} />
 			</button>
 		</div>
 		<div id="ask-results" class="overlay-results" aria-live="polite"></div>
 		<div class="overlay-foot">
-			<span class="agent-note"><Icon name="spark" size={12} /> 策展式问答</span>
-			<span><span class="kbd">Esc</span> 关闭 · <a href="/ask/">提问页</a></span>
+			<span class="agent-note"><Icon name="spark" size={12} /> {askOverlayNote}</span>
+			<span><span class="kbd">Esc</span> {UI.common.close} · <a href="/ask/">{UI.ask.pageTitle}</a></span>
 		</div>
 	</div>
 </dialog>
@@ -33,7 +36,19 @@ import { ASK_OVERLAY_PLACEHOLDER } from '../lib/site-copy';
 		throw new Error('Ask overlay markup is missing required elements');
 	}
 
-	const search = createAskSearch(input, results, { showAskFallback: true });
+	const raw = dialog instanceof HTMLElement ? dialog.dataset.askSearchLabels : undefined;
+	const labels = raw
+		? (JSON.parse(raw) as {
+				retry: string;
+				answersGroup: string;
+				articlesGroup: string;
+				aiFallback: string;
+				loadingIndex: string;
+				indexFailed: string;
+			})
+		: undefined;
+
+	const search = createAskSearch(input, results, { showAskFallback: true, labels });
 
 	const openAsk = async (query = '') => {
 		if (!(dialog instanceof HTMLDialogElement)) return;

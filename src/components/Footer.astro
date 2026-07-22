@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import { FOOTER_TAGLINE, SITE_BRAND, SITE_PERSONA } from '../lib/site-copy';
+import { FOOTER_TAGLINE, SITE_BRAND, SITE_PERSONA, UI } from '../lib/site-copy';
 import { SERIES_ORDER } from '../lib/articles';
 import { siteConfig } from '../../site.config.mjs';
 
@@ -26,27 +26,27 @@ const siteHost = (() => {
         </p>
       </div>
       <div>
-        <h4>Content</h4>
+        <h4>{UI.footer.content}</h4>
         <ul>
-          <li><a href="/writing/">Writing</a></li>
+          <li><a href="/writing/">{UI.nav.writing}</a></li>
           {seriesList.map((entry) => entry && (
             <li><a href={`/writing/${entry.id}/`}>{entry.data.title}</a></li>
           ))}
         </ul>
       </div>
       <div>
-        <h4>Site</h4>
+        <h4>{UI.footer.site}</h4>
         <ul>
-          <li><a href="/projects/">Projects</a></li>
-          <li><a href="/about/">About</a></li>
-          <li><a href="/friends/">Friends</a></li>
-          <li><a href="/ask/">Ask</a></li>
-          <li><a href="/topics/">Topics</a></li>
-          <li><a href="/answers/">Answers</a></li>
+          <li><a href="/projects/">{UI.nav.projects}</a></li>
+          <li><a href="/about/">{UI.nav.about}</a></li>
+          <li><a href="/friends/">{UI.common.friends}</a></li>
+          <li><a href="/ask/">{UI.ask.button}</a></li>
+          <li><a href="/topics/">{UI.footer.topics}</a></li>
+          <li><a href="/answers/">{UI.footer.answers}</a></li>
         </ul>
       </div>
       <div>
-        <h4>Agent-friendly</h4>
+        <h4>{UI.footer.agentFriendly}</h4>
         <ul>
           <li><a href="/llms.txt" class="mono machine-link">/llms.txt</a></li>
           <li><a href="/openapi.json" class="mono machine-link">/openapi.json</a></li>

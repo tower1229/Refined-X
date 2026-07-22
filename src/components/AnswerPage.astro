@@ -2,6 +2,7 @@
 import Icon from './Icon.astro';
 import { render, type CollectionEntry } from 'astro:content';
 import { getPublicProfile } from '../lib/public-data';
+import { UI } from '../lib/site-copy';
 
 interface Props {
 	entry: CollectionEntry<'docs'>;
@@ -15,9 +16,9 @@ const { question, shortAnswer, title } = entry.data;
 
 <div class="wrap page page-article">
 	<div class="crumbs">
-		<a href="/">首页</a><span class="sep">/</span>
-		<a href="/answers/">常见问题</a><span class="sep">/</span>
-		<span>答案</span>
+		<a href="/">{UI.answers.homeCrumb}</a><span class="sep">/</span>
+		<a href="/answers/">{UI.answers.label}</a><span class="sep">/</span>
+		<span>{UI.answers.answerCrumb}</span>
 	</div>
 
 	<div class="prose article-heading">
@@ -34,10 +35,10 @@ const { question, shortAnswer, title } = entry.data;
 	<div class="article-return answer-return">
 		<a class="btn btn-ghost" href="/ask/">
 			<Icon name="return" size={15} />
-			继续提问
+			{UI.answers.askAgain}
 		</a>
 		<a class="btn btn-ghost" href="/about/">
-			关于{publicProfile.name}
+			{UI.answers.aboutPerson(publicProfile.name)}
 		</a>
 	</div>
 </div>

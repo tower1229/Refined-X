@@ -23,6 +23,7 @@ const defaults = {
 	description:
 		'Refined-X is an agent-ready personal publish starter for Astro + Starlight: opinionated public content schema, editorial design, and machine-readable surfaces (llms.txt, OpenAPI, MCP discovery).',
 	site: 'https://example.com',
+	/** Selects UI chrome language pack (`en` | `zh-CN`). Brand/content stay in `brand`. */
 	locale: 'en',
 	timeZone: 'UTC',
 	contentRoot: './content',
@@ -54,11 +55,6 @@ const defaults = {
 			{ label: 'Collaborate', query: 'How can I collaborate?' },
 		],
 		footerTagline: 'Built for humans and agents.',
-		nav: {
-			writing: 'Writing',
-			projects: 'Projects',
-			about: 'About',
-		},
 		projects: {
 			heading: 'Projects',
 			description:
@@ -105,7 +101,6 @@ const overlay = await loadOverlay();
 const mergedBrand = {
 	...defaults.brand,
 	...(overlay.brand ?? {}),
-	nav: { ...defaults.brand.nav, ...(overlay.brand?.nav ?? {}) },
 	projects: { ...defaults.brand.projects, ...(overlay.brand?.projects ?? {}) },
 	about: { ...defaults.brand.about, ...(overlay.brand?.about ?? {}) },
 	askChips: overlay.brand?.askChips ?? defaults.brand.askChips,

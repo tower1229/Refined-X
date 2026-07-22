@@ -1,4 +1,5 @@
 ---
+import { UI } from '../lib/site-copy';
 import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
 import { sitePath } from '../lib/paths';
 import { seriesName } from '../lib/articles';
@@ -14,8 +15,8 @@ if (contentType === 'article') {
 	const profile = await getPublicProfile();
 	const articleUrl = absoluteUrl(sitePath(`/${entry.id}`));
 	const breadcrumbItems = [
-		{ name: '首页', item: absoluteUrl('/') },
-		{ name: '写作', item: absoluteUrl('/writing/') },
+		{ name: UI.common.home, item: absoluteUrl('/') },
+		{ name: UI.nav.writing, item: absoluteUrl('/writing/') },
 	];
 	if (entry.data.series) {
 		breadcrumbItems.push({
@@ -67,8 +68,8 @@ if (contentType === 'article') {
 	});
 	structuredData.push(
 		breadcrumbJsonLd([
-			{ name: '首页', path: '/' },
-			{ name: '常见问题', path: '/answers/' },
+			{ name: UI.common.home, path: '/' },
+			{ name: UI.answers.label, path: '/answers/' },
 			{ name: entry.data.question ?? entry.data.title, path: answerUrl },
 		]),
 	);

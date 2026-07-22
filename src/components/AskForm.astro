@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { ASK_BUTTON, ASK_CHIPS } from '../lib/site-copy';
+import { ASK_BUTTON, ASK_CHIPS, UI } from '../lib/site-copy';
 import { askPageUrl } from '../lib/paths';
 
 export type AskFormVariant = 'hero' | 'stage';
@@ -63,7 +63,7 @@ const askPageMaxLength = 500;
 				<span class="ask-send-icon" aria-hidden="true">
 					<Icon name="enter" size={sendIconSize} />
 				</span>
-				<span class="ask-send-stop" hidden>停止</span>
+				<span class="ask-send-stop" hidden>{UI.askRuntime.stop}</span>
 			</button>
 		</div>
 	</form>

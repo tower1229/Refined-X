@@ -28,10 +28,20 @@ export type AskSearchLimits = {
 	articlesQuery: number;
 };
 
+export type AskSearchLabels = {
+	retry: string;
+	answersGroup: string;
+	articlesGroup: string;
+	aiFallback: string;
+	loadingIndex: string;
+	indexFailed: string;
+};
+
 export type AskSearchConfig = Partial<AskSearchLimits> & {
 	onResultsRendered?: () => void;
 	busyTarget?: HTMLElement;
 	showAskFallback?: boolean;
+	labels?: AskSearchLabels;
 };
 
 const defaultLimits: AskSearchLimits = {
@@ -39,6 +49,15 @@ const defaultLimits: AskSearchLimits = {
   answersQuery: 3,
   articlesEmpty: 4,
   articlesQuery: 6,
+};
+
+const defaultLabels: AskSearchLabels = {
+	retry: 'Retry',
+	answersGroup: 'Curated answers',
+	articlesGroup: 'Related articles',
+	aiFallback: 'Not finding what you need? Try a live AI answer ✨',
+	loadingIndex: 'Loading search index…',
+	indexFailed: 'Failed to load search index. Check your network and retry.',
 };
 
 import { sitePath } from "../lib/paths.ts";
@@ -58,6 +77,7 @@ export function createAskSearch(
 	config: AskSearchConfig = {},
 ) {
 	const limits: AskSearchLimits = { ...defaultLimits, ...config };
+	const labels: AskSearchLabels = { ...defaultLabels, ...config.labels };
 	const { onResultsRendered, busyTarget } = config;
 	let searchData: SearchData | null = null;
 
@@ -71,7 +91,7 @@ export function createAskSearch(
     if (retry) {
       const button = element("button", "btn btn-ghost");
       button.type = "button";
-      button.textContent = "重试";
+      button.textContent = labels.retry;
       button.addEventListener("click", () => loadSearchData(true));
       state.append(button);
     }
@@ -132,13 +152,13 @@ export function createAskSearch(
       : searchData.articles.slice(0, limits.articlesEmpty);
 
     results.replaceChildren();
-    appendGroup("策展答案 · Answers", answers.map(answerNode), "res-group-answers");
-    appendGroup("相关文章", articles.map(articleNode));
+    appendGroup(labels.answersGroup, answers.map(answerNode), "res-group-answers");
+    appendGroup(labels.articlesGroup, articles.map(articleNode));
     
     if (config.showAskFallback && query.trim()) {
       const askLink = element("a", "res-ask");
       askLink.href = `/ask/?q=${encodeURIComponent(query.trim())}`;
-      askLink.textContent = "没有找到想要的答案？尝试让 AI 实时解答 ✨";
+      askLink.textContent = labels.aiFallback;
       results.append(askLink);
     }
     
@@ -148,7 +168,7 @@ export function createAskSearch(
   const loadSearchData = async (force = false) => {
     if (!force && searchData) return searchData;
     setBusy(true);
-    renderMessage("正在加载搜索索引…");
+    renderMessage(labels.loadingIndex);
     onResultsRendered?.();
     try {
       const response = await fetch("/api/search-index.json", {
@@ -160,7 +180,7 @@ export function createAskSearch(
       return searchData;
     } catch (error) {
       console.error("Failed to load search index", error);
-      renderMessage("搜索索引加载失败，请检查网络后重试。", true);
+      renderMessage(labels.indexFailed, true);
       onResultsRendered?.();
       return null;
     } finally {

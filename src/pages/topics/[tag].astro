@@ -1,5 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { UI } from '../../lib/site-copy';
 import ArticleFeed from '../../components/ArticleFeed.astro';
 import { absoluteUrl, breadcrumbJsonLd, getTopics, type PublicDocEntry } from '../../lib/public-data';
 
@@ -23,8 +24,8 @@ const structuredData = [
     '@type': 'CollectionPage',
     '@id': absoluteUrl(`${topicPath}#collection`),
     url: absoluteUrl(topicPath),
-    name: `主题：${name}`,
-    description: `Refined-X 中关于“${name}”的公开文章。`,
+    name: UI.topics.topicTitle(name),
+    description: UI.topics.topicDescription(name),
     inLanguage: 'zh-CN',
     isPartOf: { '@id': absoluteUrl('/#website') },
     mainEntity: {
@@ -39,8 +40,8 @@ const structuredData = [
     },
   },
   breadcrumbJsonLd([
-    { name: '首页', path: '/' },
-    { name: '主题目录', path: '/topics/' },
+    { name: UI.topics.homeCrumb, path: '/' },
+    { name: UI.topics.directory, path: '/topics/' },
     { name, path: topicPath },
   ]),
 ];
@@ -48,12 +49,12 @@ const structuredData = [
 
 <StarlightPage
   frontmatter={{
-    title: `主题：${name}`,
-    description: `Refined-X 中关于“${name}”的公开文章。`,
+    title: UI.topics.topicTitle(name),
+    description: UI.topics.topicDescription(name),
     template: 'splash',
     contentType: 'page',
     slug: `topics/${Astro.params.tag}`,
-    llmSummary: `Refined-X 中关于“${name}”的公开文章索引。`,
+    llmSummary: UI.topics.topicDescription(name),
     head: articles.length < 3 ? [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex, follow' } }] : []
   }}
 >
@@ -61,12 +62,12 @@ const structuredData = [
     <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
   ))}
   <div class="wrap page">
-    <div class="crumbs"><a href="/">首页</a><span class="sep">/</span><a href="/topics/">主题目录</a><span class="sep">/</span><span>{name}</span></div>
+    <div class="crumbs"><a href="/">{UI.topics.homeCrumb}</a><span class="sep">/</span><a href="/topics/">{UI.topics.directory}</a><span class="sep">/</span><span>{name}</span></div>
     
     <div class="eyebrow">TAG</div>
     <h1 id="_top" class="display page-heading page-heading-after-label">{name}</h1>
     <p class="lede page-lede">
-      共收录 {articles.length} 篇文章。
+      {UI.topics.articlesCollected(articles.length)}
     </p>
 
     <div class="content-list-spaced">
