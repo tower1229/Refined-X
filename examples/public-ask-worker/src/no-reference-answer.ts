@@ -1,3 +1,5 @@
+import type { SupportedLanguage } from "./instance-policy.ts";
+
 export const NO_REFERENCE_ANSWER_VARIANTS = [
   "我在当前公开资料里没有找到足够依据回答这个问题。可以换个更具体的问法，或限定到某篇文章、某个主题再试一次。",
   "这个问题暂时没有可引用的公开资料支撑。我能做的是基于站内已发布内容继续检索，但不会编造作者没有公开表达过的观点。",
@@ -11,10 +13,24 @@ export const NO_REFERENCE_ANSWER_VARIANTS = [
   "我暂时找不到足够材料支撑这个答案。为了保持准确，我不会硬凑结论；可以换个角度继续问。",
 ] as const;
 
-export function selectNoReferenceAnswer(random = Math.random): string {
+export const NO_REFERENCE_ANSWER_VARIANTS_EN = [
+  "I could not find enough public evidence on this site to answer that reliably. Try a narrower question or name a specific article or topic.",
+  "The current public content does not support a confident answer. I can keep searching the published pages, but I will not fill the gap with guesses.",
+  "There is not enough relevant material on this site to answer yet. Try adding a project, article, or technical keyword.",
+  "I did not find a reliable source for that question, so I will stop rather than invent an answer. A more specific clue may help.",
+  "This appears to be outside the current public corpus. Ask about a concrete article, project, topic, or published experience instead.",
+] as const;
+
+export function selectNoReferenceAnswer(
+  random = Math.random,
+  language: SupportedLanguage = "zh-CN",
+): string {
+  const variants = language === "zh-CN"
+    ? NO_REFERENCE_ANSWER_VARIANTS
+    : NO_REFERENCE_ANSWER_VARIANTS_EN;
   const index = Math.min(
-    NO_REFERENCE_ANSWER_VARIANTS.length - 1,
-    Math.floor(random() * NO_REFERENCE_ANSWER_VARIANTS.length),
+    variants.length - 1,
+    Math.floor(random() * variants.length),
   );
-  return NO_REFERENCE_ANSWER_VARIANTS[Math.max(0, index)];
+  return variants[Math.max(0, index)];
 }

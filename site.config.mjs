@@ -38,6 +38,8 @@ const defaults = {
 		askUrl: '',
 		mcpUrl: '',
 		healthUrl: '',
+		/** Must match the Worker PERSIST_INTERACTIONS setting when Live Ask is enabled. */
+		persistInteractions: true,
 	},
 	redirects: {},
 	brand: {

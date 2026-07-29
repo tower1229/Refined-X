@@ -81,6 +81,7 @@ test("pre-auth rate limiting rejects before reading the request body", async () 
   });
   const env = {
     ACTOR_HMAC_KEY: "test-secret",
+    SITE_URL: "https://refined-x.com",
     ASK_RATE_LIMITER: {
       async limit({ key }: { key: string }) {
         rateKey = key;
@@ -102,6 +103,7 @@ test("browser generation requires Turnstile before quota or upstream calls", asy
   const env = {
     ACTOR_HMAC_KEY: "test-secret",
     ALLOWED_ORIGIN: "https://refined-x.com",
+    SITE_URL: "https://refined-x.com",
     ASK_RATE_LIMITER: { async limit() { return { success: true }; } },
     DB: {
       prepare(sql: string) {
@@ -164,6 +166,7 @@ function acceptedEnv(overrides: Record<string, unknown> = {}) {
     DAILY_REQUEST_LIMIT: "1000",
     DAILY_GENERATION_LIMIT: "200",
     SITE_URL: "https://refined-x.com",
+    DEFAULT_LANGUAGE: "zh-CN",
     DEEPSEEK_MODEL: "test-model",
     ASK_RATE_LIMITER: { async limit() { return { success: true }; } },
     BROWSER_RATE_LIMITER: { async limit() { return { success: true }; } },
@@ -402,6 +405,47 @@ test("does not return success until the durable event is enqueued", async () => 
   assert.equal(body.error.code, "INTERNAL_ERROR");
 });
 
+test("non-persistent instances succeed without a learning queue", async () => {
+  const env = acceptedEnv({
+    PERSIST_INTERACTIONS: "false",
+    LEARNING_QUEUE: undefined,
+  });
+  const response = await handleAsk(new Request("https://ask.refined-x.com/ask", {
+    method: "POST",
+    headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.7" },
+    body: JSON.stringify({ query: { text: "x" }, prefer: { mode: "list" } }),
+  }), env);
+  assert.equal(response.status, 200);
+});
+
+test("non-persistent instances do not enqueue failed questions", async () => {
+  let queueCalls = 0;
+  const env = acceptedEnv({
+    PERSIST_INTERACTIONS: "false",
+    PUBLIC_CONTENT: {
+      async search() {
+        throw new Error("search unavailable");
+      },
+    },
+    LEARNING_QUEUE: {
+      async send() {
+        queueCalls += 1;
+      },
+    },
+  });
+  const response = await handleAsk(new Request("https://ask.refined-x.com/ask", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "cf-connecting-ip": "203.0.113.7",
+    },
+    body: JSON.stringify({ query: { text: "private question" }, prefer: { mode: "list" } }),
+  }), env);
+
+  assert.equal(response.status, 502);
+  assert.equal(queueCalls, 0);
+});
+
 test("records a failed interaction without replacing the upstream error", async () => {
   const events: Array<{ interaction: { status: string; answerId: string | null } }> = [];
   const env = acceptedEnv({
@@ -447,6 +491,7 @@ test("learning export returns interactions and deduplicated answer evidence", as
   let query = 0;
   const env = {
     LEARNING_EXPORT_TOKEN: "export-secret",
+    SITE_URL: "https://refined-x.com",
     DB: {
       prepare() {
         query += 1;
@@ -475,6 +520,7 @@ test("learning export includes expiry and excludes records at the 180-day bounda
   const sql: string[] = [];
   const env = {
     LEARNING_EXPORT_TOKEN: "export-secret",
+    SITE_URL: "https://refined-x.com",
     DB: { prepare(statement: string) { sql.push(statement); return { bind() { return this; }, async all() { return { results: [] }; } }; } },
   } as unknown as Env;
   await handleLearningExport(new Request(
@@ -489,6 +535,7 @@ test("learning export includes expiry and excludes records at the 180-day bounda
 test("learning export rejects acknowledgement of expired records", async () => {
   const env = {
     LEARNING_EXPORT_TOKEN: "export-secret",
+    SITE_URL: "https://refined-x.com",
     DB: { prepare() { return { bind() { return this; }, async first() { return { expired: 1 }; } }; } },
   } as unknown as Env;
   const response = await handleLearningExport(new Request(
@@ -496,6 +543,72 @@ test("learning export rejects acknowledgement of expired records", async () => {
     { method: "POST", headers: { authorization: "Bearer export-secret", "content-type": "application/json" }, body: JSON.stringify({ interactionIds: ["old"] }) },
   ), env, new Date("2026-07-04T12:00:00.000Z"));
   assert.equal(response.status, 409);
+});
+
+test("non-persistent instances hide the learning export without a token", async () => {
+  const response = await handleLearningExport(new Request(
+    "https://ask.refined-x.com/internal/learning/records",
+  ), {
+    SITE_URL: "https://refined-x.com",
+    PERSIST_INTERACTIONS: "false",
+  } as unknown as Env);
+  assert.equal(response.status, 404);
+});
+
+test("non-persistent model requests suppress AI Gateway payload logging", async (t) => {
+  let modelHeaders: Headers | undefined;
+  let calls = 0;
+  t.mock.method(globalThis, "fetch", async (_input: string | URL | Request, init?: RequestInit) => {
+    calls += 1;
+    if (calls === 1) {
+      return Response.json({ success: true, hostname: "refined-x.com", action: "public-ask" });
+    }
+    modelHeaders = new Headers(init?.headers);
+    return Response.json({ choices: [{ message: { content: "answer" } }] });
+  });
+  const env = acceptedEnv({
+    PERSIST_INTERACTIONS: "false",
+    LEARNING_QUEUE: undefined,
+    DB: {
+      prepare(sql: string) {
+        return {
+          bind() {
+            return {
+              async first() {
+                if (sql.includes("public_ask_cache_state")) return null;
+                if (sql.includes("WHERE generation_committed + generation_reserved")) {
+                  return { generation_reserved: 1 };
+                }
+                return { accepted_requests: 1 };
+              },
+              async run() {},
+            };
+          },
+        };
+      },
+    },
+    PUBLIC_CONTENT: {
+      async search() {
+        return { chunks: [{
+          id: "chunk",
+          score: 1,
+          text: "evidence",
+          item: { key: "/evidence" },
+        }] };
+      },
+    },
+  });
+  const response = await handleAsk(new Request("https://ask.refined-x.com/ask", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "cf-connecting-ip": "203.0.113.7",
+      "cf-turnstile-response": "valid-token",
+    },
+    body: JSON.stringify({ query: { text: "x" }, prefer: { mode: "summarize" } }),
+  }), env);
+  assert.equal(response.status, 200);
+  assert.equal(modelHeaders?.get("cf-aig-collect-log-payload"), "false");
 });
 
 test("trusted machine generation uses Key identity, rate limit, and daily quota without Turnstile", async (t) => {
@@ -694,12 +807,19 @@ test("Public Ask API keys cannot authorize the internal learning export", async 
   const response = await handleLearningExport(new Request(
     "https://ask.refined-x.com/internal/learning/records",
     { headers: { authorization: `Bearer ${publicKey}` } },
-  ), { LEARNING_EXPORT_TOKEN: publicKey } as Env);
+  ), { LEARNING_EXPORT_TOKEN: publicKey, SITE_URL: "https://refined-x.com" } as unknown as Env);
   assert.equal(response.status, 401);
 });
 
-test("rejects exhausted generation budget before calling the model", async (t) => {
+test("degrades an exhausted generation budget to deterministic sources without calling the model", async (t) => {
   let externalCalls = 0;
+  const cacheWrites: string[] = [];
+  const cache = cacheRuntime({
+    async match() { return undefined; },
+    async put(request) {
+      cacheWrites.push(request instanceof Request ? request.url : String(request));
+    },
+  });
   t.mock.method(globalThis, "fetch", async () => {
     externalCalls += 1;
     return Response.json({ success: true, hostname: "refined-x.com", action: "public-ask" });
@@ -722,7 +842,9 @@ test("rejects exhausted generation budget before calling the model", async (t) =
           bind() {
             return {
               async first() {
-                return sql.includes("generation_reserved") ? null : { accepted_requests: 1 };
+                return sql.includes("WHERE generation_committed + generation_reserved")
+                  ? null
+                  : { accepted_requests: 1 };
               },
             };
           },
@@ -738,12 +860,20 @@ test("rejects exhausted generation budget before calling the model", async (t) =
       "cf-turnstile-response": "valid-token",
     },
     body: JSON.stringify({ query: { text: "x" }, prefer: { mode: "summarize" } }),
-  }), env);
-  const body = await response.json() as { error: { code: string } };
-  assert.equal(response.status, 429);
-  assert.equal(body.error.code, "BUDGET_EXHAUSTED");
-  assert.ok(Number(response.headers.get("retry-after")) > 0);
+  }), env, cache.runtime);
+  await cache.flush();
+  const body = await response.json() as {
+    results: Array<{ "@type": string; text?: string; url?: string }>;
+  };
+  assert.equal(response.status, 200);
+  const summary = body.results.find((result) => result["@type"] === "SearchSummary");
+  assert.match(summary?.text ?? "", /没有调用模型/);
+  assert.match(summary?.text ?? "", /https:\/\/refined-x\.com\/evidence/);
+  assert.ok(body.results.some((result) =>
+    result["@type"] === "Article" && result.url === "https://refined-x.com/evidence"));
   assert.equal(externalCalls, 1);
+  assert.equal(cacheWrites.length, 1);
+  assert.match(cacheWrites[0], /\/retrieval\//);
 });
 
 test("rejects the first request beyond the accepted-request budget", async () => {
@@ -1222,8 +1352,14 @@ test("enqueues durable evidence before starting an asynchronous cache write", as
 
 test("allows concurrent and cross-node cache misses without singleflight", async () => {
   let searchCalls = 0;
+  let releaseConcurrentSearch: (() => void) | undefined;
+  const concurrentSearchGate = new Promise<void>((resolve) => {
+    releaseConcurrentSearch = resolve;
+  });
   const env = acceptedEnv({ PUBLIC_CONTENT: { async search() {
     searchCalls += 1;
+    if (searchCalls === 2) releaseConcurrentSearch?.();
+    if (searchCalls <= 2) await concurrentSearchGate;
     return { chunks: [{ id: "one", score: 1, text: "evidence", item: { key: "/one" } }] };
   } } });
   const request = () => new Request("https://ask.refined-x.com/ask", {
@@ -1472,5 +1608,26 @@ test("keeps the original rejection when best-effort audit enqueue fails", async 
   assert.equal(searchCalls, 0);
   assert.match(logs[0], /"event":"security_decision"/);
   assert.match(logs[1], /"event":"audit_enqueue_error"/);
+  assert.doesNotMatch(logs.join("\n"), /203\.0\.113\.7|\{\"query\":/);
+});
+
+test("non-persistent security rejections update abuse state without an audit queue", async (t) => {
+  const logs: string[] = [];
+  t.mock.method(console, "warn", (line: string) => { logs.push(line); });
+  const state = abuseStateDb();
+  const env = acceptedEnv({
+    DB: state.db,
+    PERSIST_INTERACTIONS: "false",
+    LEARNING_QUEUE: undefined,
+  });
+  const response = await handleAsk(new Request("https://ask.refined-x.com/ask", {
+    method: "POST",
+    headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.7" },
+    body: '{"query":',
+  }), env);
+
+  assert.equal(response.status, 400);
+  assert.equal(state.violations.length, 1);
+  assert.match(logs[0], /"event":"security_decision"/);
   assert.doesNotMatch(logs.join("\n"), /203\.0\.113\.7|\{\"query\":/);
 });

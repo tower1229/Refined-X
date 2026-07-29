@@ -24,6 +24,8 @@ export const zhCN: UiCopy = {
 		overlayHeading: '向本站提问',
 		privacyNote:
 			'快捷问题优先使用本站预生成的 AI 策展答案；其他问题由第三方模型基于本站公开内容生成。仅实时提问的问题、回答与引用来源会完整保存，用于改进本站问答。',
+		privacyNoteEphemeral:
+			'快捷问题优先使用本站预生成的 AI 策展答案；其他问题会由第三方服务处理，但本站不会保留问题，生成答案与来源可能被短期缓存。',
 		relatedPublic: '相关公开内容',
 		readyStatus: '准备回答',
 		dataSource: '数据源',
@@ -176,6 +178,7 @@ export const zhCN: UiCopy = {
 		liveSource: '公开问答 Agent',
 		curatedFootPrimary: '预生成策展答案 · 无需调用实时模型',
 		liveFootPrimary: '单轮问答 · 完整记录用于站点学习',
+		liveFootPrimaryEphemeral: '单轮问答 · 本站不保留问题',
 		curatedFootSecondary: 'AI 整理内容，请以链接的公开页面为准',
 		liveFootSecondary: '回答可能出错，请以引用的公开页面为准',
 		rateLimited: '当前公开问答额度已用完，请查看下方相关公开内容。',

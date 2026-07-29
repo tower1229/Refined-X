@@ -8,6 +8,7 @@ import {
   type SecurityRoute,
 } from "./abuse-guard.ts";
 import { getManualBlock, getTemporaryBlock } from "./abuse-rules.ts";
+import { publicMessage, type SupportedLanguage } from "./instance-policy.ts";
 
 function errorType(error: unknown) {
   return error instanceof Error ? error.name : "UnknownError";
@@ -21,6 +22,7 @@ export async function runPreAuthChecks(
   method: string,
   runtime: RejectionRuntime = {},
   runStorage?: <T>(operation: () => Promise<T>) => Promise<T>,
+  language: SupportedLanguage = "en",
 ): Promise<{ ok: true; actorId: string } | { ok: false; rejection: RejectionPayload }> {
   const actorId = await deriveAnonymousActor(remoteIp, env.ACTOR_HMAC_KEY);
   const security = () => buildSecurityContext({
@@ -32,6 +34,7 @@ export async function runPreAuthChecks(
     actorId,
     keyId: null,
     accessClass: "anonymous",
+    language,
   });
 
   const rate = await env.ASK_RATE_LIMITER.limit({ key: `ask:${actorId}` });
@@ -43,7 +46,7 @@ export async function runPreAuthChecks(
         "rate_limit",
         "PRE_AUTH_RATE_LIMIT",
         "RATE_LIMITED",
-        "请求过于频繁，请稍后再试。",
+        publicMessage(language, "browserRateLimited"),
         429,
         60,
       ),
@@ -64,7 +67,7 @@ export async function runPreAuthChecks(
           "temporary_block",
           "TEMPORARY_BLOCK_ACTIVE",
           "RATE_LIMITED",
-          "请求暂时被限制，请稍后再试。",
+          publicMessage(language, "temporarilyBlocked"),
           429,
           actorBlock.retryAfter,
         ),
@@ -81,14 +84,14 @@ export async function runPreAuthChecks(
           "manual_block",
           manualBlock.reasonCode,
           "FORBIDDEN",
-          "当前请求被访问规则拒绝。",
+          publicMessage(language, "forbidden"),
           403,
         ),
       };
     }
   } catch (error) {
     console.error(JSON.stringify({ event: "abuse_store_error", requestId, errorType: errorType(error) }));
-    return { ok: false, rejection: internalErrorRejection() };
+    return { ok: false, rejection: internalErrorRejection(language) };
   }
 
   return { ok: true, actorId };

@@ -42,7 +42,7 @@ test('markHeroThemeCrossfadeReady arms transitions on the document root', () => 
 	const root = {
 		dataset: {} as Record<string, string>,
 		style: { setProperty(_name: string, _value: string) {} },
-	} as HTMLElement;
+	} as unknown as HTMLElement;
 	const setPropertyCalls: Array<[string, string]> = [];
 	root.style.setProperty = (name: string, value: string) => {
 		setPropertyCalls.push([name, value]);
@@ -60,7 +60,7 @@ test('scheduleHeroThemeCrossfadeReady waits two animation frames before arming',
 	const root = {
 		dataset: {} as Record<string, string>,
 		style: { setProperty() {} },
-	} as HTMLElement;
+	} as unknown as HTMLElement;
 	const queued: FrameRequestCallback[] = [];
 	const scheduleFrame = (callback: FrameRequestCallback) => {
 		queued.push(callback);

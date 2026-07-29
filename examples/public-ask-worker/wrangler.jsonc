@@ -14,6 +14,8 @@
 	"vars": {
 		"SITE_URL": "https://example.com",
 		"ALLOWED_ORIGIN": "https://example.com",
+		"DEFAULT_LANGUAGE": "en",
+		"PERSIST_INTERACTIONS": "true",
 		"AI_GATEWAY_ACCOUNT_ID": "YOUR_CLOUDFLARE_ACCOUNT_ID",
 		"AI_GATEWAY_ID": "your-ai-gateway-id",
 		"DEEPSEEK_MODEL": "deepseek-v4-flash",

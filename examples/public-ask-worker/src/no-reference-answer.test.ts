@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { NO_REFERENCE_ANSWER_VARIANTS, selectNoReferenceAnswer } from "./no-reference-answer.ts";
+import {
+  NO_REFERENCE_ANSWER_VARIANTS,
+  NO_REFERENCE_ANSWER_VARIANTS_EN,
+  selectNoReferenceAnswer,
+} from "./no-reference-answer.ts";
 
 const APPROVED_VARIANTS = [
   "我在当前公开资料里没有找到足够依据回答这个问题。可以换个更具体的问法，或限定到某篇文章、某个主题再试一次。",
@@ -23,4 +27,9 @@ test("no-reference selection is injectable and deterministic in tests", () => {
   assert.equal(selectNoReferenceAnswer(() => 0), APPROVED_VARIANTS[0]);
   assert.equal(selectNoReferenceAnswer(() => 0.999999), APPROVED_VARIANTS[9]);
   assert.equal(selectNoReferenceAnswer(() => 1), APPROVED_VARIANTS[9]);
+});
+
+test("returns localized English no-reference answers", () => {
+  assert.equal(selectNoReferenceAnswer(() => 0, "en"), NO_REFERENCE_ANSWER_VARIANTS_EN[0]);
+  assert.match(selectNoReferenceAnswer(() => 0, "en"), /public evidence/);
 });

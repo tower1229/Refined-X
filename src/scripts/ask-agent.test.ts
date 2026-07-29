@@ -58,6 +58,7 @@ test('sends the structured NLWeb request with a Turnstile token', async () => {
 	await askPublicAgent('问题', {
 		endpoint: 'https://ask.example.com/ask',
 		fetchImpl,
+		language: 'zh-CN',
 		getTurnstileToken: async () => 'turnstile-token',
 		onDelta: (delta) => (answer += delta),
 	});
@@ -65,6 +66,7 @@ test('sends the structured NLWeb request with a Turnstile token', async () => {
 	assert.equal(capturedUrl, 'https://ask.example.com/ask');
 	assert.deepEqual(body.query, { text: '问题' });
 	assert.equal(body.meta.version, '0.55');
+	assert.equal(body.prefer['accept-language'], 'zh-CN');
 	assert.equal('remember' in body.meta, false);
 	assert.equal(new Headers(captured?.headers).get('cf-turnstile-response'), 'turnstile-token');
 	assert.equal(answer, '回答');

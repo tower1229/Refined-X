@@ -29,6 +29,7 @@ type AskOptions = {
 	endpoint?: string;
 	getTurnstileToken?: () => Promise<string>;
 	messages?: Partial<AskErrorMessages>;
+	language?: string;
 };
 
 /** Injected at build time via astro.config vite.define from siteConfig.ask.askUrl. */
@@ -120,7 +121,7 @@ export async function askPublicAgent(question: string, options: AskOptions) {
 					streaming: true,
 					response_format: 'conversational_search',
 					mode: 'list, summarize',
-					'accept-language': 'zh-CN',
+					'accept-language': options.language ?? 'en',
 				},
 				meta: { version: '0.55' },
 			}),

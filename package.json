@@ -22,7 +22,7 @@
   "scripts": {
     "collect-assets": "node scripts/collect-assets.mjs",
     "verify": "node scripts/verify.mjs",
-    "test:public-ask": "node --test src/scripts/ask-agent.test.ts src/scripts/ask-pending.test.ts src/scripts/turnstile-client.test.ts src/scripts/theme-control.test.ts src/scripts/theme-preference.test.ts src/scripts/hero-theme-bg.test.ts src/scripts/typewriter.test.ts",
+    "test:public-ask": "node --test src/lib/ask-persistence.test.ts src/scripts/ask-agent.test.ts src/scripts/ask-pending.test.ts src/scripts/source-link.test.ts src/scripts/turnstile-client.test.ts src/scripts/theme-control.test.ts src/scripts/theme-preference.test.ts src/scripts/hero-theme-bg.test.ts src/scripts/typewriter.test.ts",
     "test:related": "node --test src/lib/related-articles.test.ts",
     "sync-content": "astro sync --force",
     "predev": "npm run collect-assets",

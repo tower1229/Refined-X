@@ -2,6 +2,7 @@ import { type AskRuntime, type AskActionContext, executeAskAction } from "./inde
 import { answerMeta, type NlWebRequest, parseNlWebRequest } from "./protocol.ts";
 import { runPreAuthChecks } from "./pre-auth.ts";
 import { readJsonBody } from "./request-envelope.ts";
+import { resolveInstancePolicy } from "./instance-policy.ts";
 
 const ASK_CAPABILITY_DESCRIPTION = "NLWeb v0.55-compatible restricted /ask subset. Supports conversational_search, list, summarize, and SSE-equivalent ask results. Does not support /await, promise responses, elicitation, chatgpt_app, arbitrary extension fields, result actions, or long-term memory.";
 
@@ -100,7 +101,16 @@ export async function handleMcp(request: Request, env: Env, runtime: AskRuntime 
 
   const remoteIp = request.headers.get("cf-connecting-ip") ?? "unknown";
   const requestId = crypto.randomUUID();
-  const preAuth = await runPreAuthChecks(env, remoteIp, requestId, "/mcp", request.method, runtime);
+  const preAuth = await runPreAuthChecks(
+    env,
+    remoteIp,
+    requestId,
+    "/mcp",
+    request.method,
+    runtime,
+    undefined,
+    resolveInstancePolicy(env).language,
+  );
   if (!preAuth.ok) {
     return rejectionResponse(null, preAuth.rejection);
   }

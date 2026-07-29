@@ -22,6 +22,7 @@ export type UiCopy = {
 		closeAria: string;
 		overlayHeading: string;
 		privacyNote: string;
+		privacyNoteEphemeral: string;
 		relatedPublic: string;
 		readyStatus: string;
 		dataSource: string;
@@ -166,6 +167,7 @@ export type UiCopy = {
 		liveSource: string;
 		curatedFootPrimary: string;
 		liveFootPrimary: string;
+		liveFootPrimaryEphemeral: string;
 		curatedFootSecondary: string;
 		liveFootSecondary: string;
 		rateLimited: string;

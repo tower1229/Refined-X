@@ -93,7 +93,7 @@ export function createAskSearch(
       button.type = "button";
       button.textContent = labels.retry;
       button.addEventListener("click", () => loadSearchData(true));
-      state.append(button);
+      state.appendChild(button);
     }
     results.replaceChildren(state);
   };
@@ -102,7 +102,8 @@ export function createAskSearch(
     if (items.length === 0) return;
     const heading = element("div", `res-group-label ${className || ''}`.trim());
     heading.textContent = label;
-    results.append(heading, ...items);
+    results.appendChild(heading);
+    items.forEach((item) => results.appendChild(item));
   };
 
   const answerNode = (answer: AnswerResult) => {
@@ -112,7 +113,8 @@ export function createAskSearch(
     question.textContent = answer.q;
     const summary = element("div", "res-a");
     summary.textContent = answer.a;
-    link.append(question, summary);
+    link.appendChild(question);
+    link.appendChild(summary);
     return link;
   };
 
@@ -126,8 +128,9 @@ export function createAskSearch(
     meta.textContent = [article.seriesName, article.date]
       .filter(Boolean)
       .join(" · ");
-    row.append(title, meta);
-    link.append(row);
+    row.appendChild(title);
+    row.appendChild(meta);
+    link.appendChild(row);
     return link;
   };
 
@@ -159,7 +162,7 @@ export function createAskSearch(
       const askLink = element("a", "res-ask");
       askLink.href = `/ask/?q=${encodeURIComponent(query.trim())}`;
       askLink.textContent = labels.aiFallback;
-      results.append(askLink);
+      results.appendChild(askLink);
     }
     
     onResultsRendered?.();

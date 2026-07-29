@@ -6,6 +6,11 @@ import {
   type SecurityAuditEvent,
 } from "./durable-events.ts";
 import { failureResponse } from "./protocol.ts";
+import {
+  publicMessage,
+  resolveInstancePolicy,
+  type SupportedLanguage,
+} from "./instance-policy.ts";
 
 export type RejectionRuntime = {
   waitUntil?: (promise: Promise<unknown>) => void;
@@ -23,6 +28,8 @@ export type SecurityContext = {
   actorId: string | null;
   keyId: string | null;
   accessClass: AccessClass;
+  language: SupportedLanguage;
+  persistInteractions: boolean;
 };
 
 export function buildSecurityContext(params: {
@@ -34,7 +41,9 @@ export function buildSecurityContext(params: {
   actorId: string | null;
   keyId: string | null;
   accessClass: AccessClass;
+  language?: SupportedLanguage;
 }): SecurityContext {
+  const policy = resolveInstancePolicy(params.env, params.language);
   return {
     env: params.env,
     runtime: params.runtime,
@@ -44,6 +53,8 @@ export function buildSecurityContext(params: {
     actorId: params.actorId,
     keyId: params.keyId,
     accessClass: params.accessClass,
+    language: params.language ?? policy.language,
+    persistInteractions: policy.persistInteractions,
   };
 }
 
@@ -67,6 +78,21 @@ function auditRejection(
     action,
     reasonCode,
   }));
+  if (!context.persistInteractions) return;
+  const queue = context.env.LEARNING_QUEUE;
+  if (!queue) {
+    console.error(JSON.stringify({
+      event: "audit_enqueue_error",
+      requestId: context.requestId,
+      actorId: context.actorId,
+      keyId: context.keyId,
+      accessClass: context.accessClass,
+      action,
+      reasonCode,
+      errorType: "MissingQueueBinding",
+    }));
+    return;
+  }
   const event: SecurityAuditEvent = {
     version: 1,
     eventId: context.requestId,
@@ -84,7 +110,7 @@ function auditRejection(
     },
   };
   const enqueue = enqueueSecurityAudit(
-    context.env.LEARNING_QUEUE as Queue<PublicAskQueueEvent>,
+    queue as Queue<PublicAskQueueEvent>,
     event,
   ).catch((error) => {
     console.error(JSON.stringify({
@@ -111,8 +137,13 @@ export type RejectionPayload = {
   detail?: Record<string, unknown>;
 };
 
-export function internalErrorRejection(): RejectionPayload {
-  return { ok: false, code: "INTERNAL_ERROR", message: "公开问答服务暂时不可用。", status: 500 };
+export function internalErrorRejection(language: SupportedLanguage = "en"): RejectionPayload {
+  return {
+    ok: false,
+    code: "INTERNAL_ERROR",
+    message: publicMessage(language, "internalError"),
+    status: 500,
+  };
 }
 
 export function securityRejection(
@@ -159,13 +190,13 @@ export async function violationRejection(
     if (block && allowTemporaryBlock) {
       return securityRejection(
         context,
-        "temporary_block", reasonCode, "RATE_LIMITED", "请求暂时被限制，请稍后再试。",
+        "temporary_block", reasonCode, "RATE_LIMITED", publicMessage(context.language, "temporarilyBlocked"),
         429, block.retryAfter,
       );
     }
   } catch (error) {
     console.error(JSON.stringify({ event: "abuse_store_error", requestId: context.requestId, errorType: errorType(error) }));
-    return internalErrorRejection();
+    return internalErrorRejection(context.language);
   }
   return securityRejection(
     context,

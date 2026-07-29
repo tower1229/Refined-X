@@ -3,7 +3,16 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import Icon from '../components/Icon.astro';
 import AskForm from '../components/AskForm.astro';
 import { breadcrumbJsonLd, webPageJsonLd } from '../lib/public-data';
-import { ASK_PAGE_LEDE, ASK_PAGE_PLACEHOLDER, ASK_PAGE_TITLE, UI } from '../lib/site-copy';
+import {
+  ASK_PAGE_LEDE,
+  ASK_PAGE_PLACEHOLDER,
+  ASK_PAGE_TITLE,
+  ASK_PRIVACY_NOTE,
+  ASK_RUNTIME,
+  SITE_LOCALE,
+  SITE_ORIGIN,
+  UI,
+} from '../lib/site-copy';
 
 const askDescription = ASK_PAGE_LEDE;
 const structuredData = [
@@ -18,7 +27,7 @@ const structuredData = [
   ]),
 ];
 const turnstileSiteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '';
-const askRuntimeJson = JSON.stringify(UI.askRuntime);
+const askRuntimeJson = JSON.stringify(ASK_RUNTIME);
 const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 ---
 
@@ -35,7 +44,13 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
   {structuredData.map((value) => (
     <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
   ))}
-  <div class="wrap ask-page" data-ask-runtime={askRuntimeJson} data-ask-search-labels={askSearchLabelsJson}>
+  <div
+    class="wrap ask-page"
+    data-ask-runtime={askRuntimeJson}
+    data-ask-search-labels={askSearchLabelsJson}
+    data-site-locale={SITE_LOCALE}
+    data-site-origin={SITE_ORIGIN}
+  >
     <div class="crumbs"><a href="/">{UI.common.home}</a><span class="sep">/</span><span>{UI.ask.button}</span></div>
 
     <section class="ask-stage" aria-labelledby="ask-page-heading">
@@ -52,7 +67,7 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
     </section>
 
     <p class="ask-privacy">
-      {UI.ask.privacyNote}
+      {ASK_PRIVACY_NOTE}
     </p>
 
     <section class="ask-agent-panel" id="ask-agent-panel" aria-labelledby="ask-agent-heading" hidden>
@@ -111,6 +126,7 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 	import { createAskPendingController } from '../scripts/ask-pending';
 	import { createAskSearch } from '../scripts/ask-search';
 	import type { AnswerResult } from '../scripts/ask-search';
+	import { resolveSameOriginSource } from '../scripts/source-link';
 	import { createTypewriter } from '../scripts/typewriter';
 	import { createTurnstileChallenge, waitForTurnstile } from '../scripts/turnstile-client';
 
@@ -145,6 +161,8 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 		serviceUnavailable: string;
 	};
 	const searchLabels = JSON.parse((pageRoot instanceof HTMLElement && pageRoot.dataset.askSearchLabels) || '{}');
+	const siteLocale = pageRoot instanceof HTMLElement ? pageRoot.dataset.siteLocale || 'en' : 'en';
+	const siteOrigin = pageRoot instanceof HTMLElement ? pageRoot.dataset.siteOrigin || window.location.origin : window.location.origin;
 
 	const input = document.getElementById('ask-page-input');
 	const results = document.getElementById('ask-page-results');
@@ -215,7 +233,8 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 
 	const renderAnswerLinks = (text: string) => {
 		if (!(agentAnswer instanceof HTMLElement)) return;
-		agentAnswer.replaceChildren();
+		const answerElement = agentAnswer;
+		answerElement.replaceChildren();
 		
 		const processText = (str: string) => {
 			const boldMatcher = /\*\*(.*?)\*\*/g;
@@ -223,33 +242,35 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 			for (const bMatch of str.matchAll(boldMatcher)) {
 				const bIndex = bMatch.index ?? 0;
 				if (bIndex > last) {
-					agentAnswer.append(document.createTextNode(str.slice(last, bIndex)));
+					answerElement.appendChild(document.createTextNode(str.slice(last, bIndex)));
 				}
 				const strong = document.createElement('strong');
 				strong.textContent = bMatch[1];
-				agentAnswer.append(strong);
+				answerElement.appendChild(strong);
 				last = bIndex + bMatch[0].length;
 			}
 			if (last < str.length) {
-				agentAnswer.append(document.createTextNode(str.slice(last)));
+				answerElement.appendChild(document.createTextNode(str.slice(last)));
 			}
 		};
 
-		const matcher = /\[([^\]]+)\]\(([^)]+)\)|https:\/\/refined-x\.com\/[^\s)\]}>，。；！]+/g;
-		let offset = 0;
-		for (const match of text.matchAll(matcher)) {
-			const index = match.index ?? 0;
-			processText(text.slice(offset, index));
-			const link = document.createElement('a');
-			if (match[1] && match[2]) {
-				link.href = match[2];
-				link.textContent = match[1];
-			} else {
-				link.href = match[0];
-				link.textContent = match[0];
-			}
+			const matcher = /\[([^\]]+)\]\(([^)]+)\)|https?:\/\/[^\s)\]}>，。；！]+/g;
+			let offset = 0;
+			for (const match of text.matchAll(matcher)) {
+				const index = match.index ?? 0;
+				processText(text.slice(offset, index));
+				const candidate = match[2] || match[0];
+				const safeUrl = resolveSameOriginSource(candidate, siteOrigin);
+				if (!safeUrl) {
+					processText(match[1] || match[0]);
+					offset = index + match[0].length;
+					continue;
+				}
+				const link = document.createElement('a');
+			link.href = safeUrl.href;
+			link.textContent = match[1] || match[0];
 			link.rel = 'noopener';
-			agentAnswer.append(link);
+			answerElement.appendChild(link);
 			offset = index + match[0].length;
 		}
 		processText(text.slice(offset));
@@ -360,8 +381,9 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 				if (agentStatus) agentStatus.textContent = rt.findingContent;
 				return token;
 			};
-			await askPublicAgent(query, {
-				signal: controller.signal,
+				await askPublicAgent(query, {
+					signal: controller.signal,
+					language: siteLocale,
 				getTurnstileToken,
 				messages: {
 					invalidStream: rt.invalidStream,

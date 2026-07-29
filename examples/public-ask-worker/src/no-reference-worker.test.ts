@@ -11,6 +11,7 @@ function acceptedEnv(overrides: Record<string, unknown> = {}) {
     DAILY_REQUEST_LIMIT: "1000",
     DAILY_GENERATION_LIMIT: "200",
     SITE_URL: "https://refined-x.com",
+    DEFAULT_LANGUAGE: "zh-CN",
     DEEPSEEK_MODEL: "test-model",
     ASK_RATE_LIMITER: { async limit() { return { success: true }; } },
     BROWSER_RATE_LIMITER: { async limit() { return { success: true }; } },

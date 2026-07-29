@@ -12,6 +12,7 @@ function acceptedEnv(overrides: Record<string, unknown> = {}) {
     DAILY_REQUEST_LIMIT: "1000",
     DAILY_GENERATION_LIMIT: "200",
     SITE_URL: "https://refined-x.com",
+    DEFAULT_LANGUAGE: "zh-CN",
     DEEPSEEK_MODEL: "test-model",
     ASK_RATE_LIMITER: { async limit() { return { success: true }; } },
     BROWSER_RATE_LIMITER: { async limit() { return { success: true }; } },
@@ -119,13 +120,19 @@ test("MCP POST /mcp tools/call rejects summarize mode without API key with 403",
     headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.7" },
     body: JSON.stringify({
       jsonrpc: "2.0", id: 4, method: "tools/call",
-      params: { name: "ask", arguments: { query: { text: "test" }, prefer: { mode: "summarize" } } }
+      params: {
+        name: "ask",
+        arguments: {
+          query: { text: "test" },
+          prefer: { mode: "summarize", "accept-language": "en-US" },
+        },
+      }
     }),
   }), env);
   const body = await response.json() as { error: { code: string; message: string } };
   assert.equal(response.status, 403);
   assert.equal(body.error.code, "FORBIDDEN");
-  assert.match(body.error.message, /summarize mode/i);
+  assert.match(body.error.message, /generate summaries/i);
   assert.equal(audits.length, 1);
   assert.equal(audits[0].securityAudit.route, "/mcp");
   assert.equal(audits[0].securityAudit.reasonCode, "MODE_FORBIDDEN");

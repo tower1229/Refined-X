@@ -1,5 +1,6 @@
 import { siteConfig } from '../../site.config.mjs';
 import { getUi } from '../i18n/index';
+import { selectAskPersistenceCopy } from './ask-persistence';
 
 const ui = getUi(siteConfig.locale);
 
@@ -20,7 +21,7 @@ export const SITE_HOME_LEDE = siteConfig.brand.homeLede;
 
 export const WRITING_LEDE = siteConfig.brand.writingLede;
 
-export const ASK_CHIPS = siteConfig.brand.askChips;
+export const ASK_CHIPS = siteConfig.brand.askChips as Array<{ label: string; query: string }>;
 
 export const FOOTER_TAGLINE = siteConfig.brand.footerTagline;
 
@@ -39,6 +40,23 @@ export const ASK_BUTTON = ui.ask.button;
 export const ASK_PAGE_TITLE = ui.ask.pageTitle;
 
 export const ASK_PAGE_LEDE = ui.ask.pageLede;
+
+const askPersistenceCopy = selectAskPersistenceCopy(
+	siteConfig.ask.persistInteractions,
+	ui.ask,
+	ui.askRuntime,
+);
+
+export const ASK_PRIVACY_NOTE = askPersistenceCopy.privacyNote;
+
+export const ASK_RUNTIME = {
+	...ui.askRuntime,
+	liveFootPrimary: askPersistenceCopy.liveFootPrimary,
+};
+
+export const SITE_LOCALE = siteConfig.locale;
+
+export const SITE_ORIGIN = new URL(siteConfig.site).origin;
 
 export const MCP_ENDPOINT_URL = siteConfig.ask.mcpUrl || '';
 
