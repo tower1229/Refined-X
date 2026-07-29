@@ -14,6 +14,7 @@ dist/
 examples/**/.wrangler/
 examples/**/node_modules/
 examples/**/worker-configuration.d.ts
+examples/public-ask-worker/wrangler.demo.jsonc
 instance.config.mjs
 node_modules/
 npm-debug.log*

@@ -48,4 +48,29 @@ ask: {
 }
 ```
 
+## Isolated demo deployment
+
+Use `wrangler.demo.example.jsonc` as the versioned template for an independent
+Demo Worker. Copy it to the ignored `wrangler.demo.jsonc`, replace the account
+and D1 placeholders, then run all Demo operations with
+`-c wrangler.demo.jsonc`.
+
+The Demo config intentionally omits the learning Queue and sets
+`PERSIST_INTERACTIONS=false`. It still needs its own D1 database for quotas and
+abuse controls, its own AI Search instance, its own Turnstile widget, and the
+following Worker secrets:
+
+```bash
+npx wrangler secret put DEEPSEEK_API_KEY -c wrangler.demo.jsonc
+npx wrangler secret put TURNSTILE_SECRET_KEY -c wrangler.demo.jsonc
+npx wrangler secret put ACTOR_HMAC_KEY -c wrangler.demo.jsonc
+```
+
+Apply migrations before deploying:
+
+```bash
+npx wrangler d1 migrations apply refined-x-demo-ask --remote -c wrangler.demo.jsonc
+npx wrangler deploy -c wrangler.demo.jsonc
+```
+
 Protocol reference: [NLWeb v0.55](https://nlweb.ai/docs/specification). Live demo stack: [refined-x.com](https://refined-x.com) / [ask.refined-x.com](https://ask.refined-x.com/health).

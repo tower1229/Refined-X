@@ -1,0 +1,75 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "refined-x-demo-ask",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-07-29",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"workers_dev": false,
+	"upload_source_maps": true,
+	"routes": [
+		{
+			"pattern": "ask-demo.refined-x.com",
+			"custom_domain": true
+		}
+	],
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	},
+	"vars": {
+		"SITE_URL": "https://demo.refined-x.com",
+		"ALLOWED_ORIGIN": "https://demo.refined-x.com",
+		"DEFAULT_LANGUAGE": "en",
+		"PERSIST_INTERACTIONS": "false",
+		"AI_GATEWAY_ACCOUNT_ID": "YOUR_CLOUDFLARE_ACCOUNT_ID",
+		"AI_GATEWAY_ID": "refined-x-demo",
+		"DEEPSEEK_MODEL": "deepseek-v4-flash",
+		"DAILY_REQUEST_LIMIT": "1000",
+		"DAILY_GENERATION_LIMIT": "100",
+		"TURNSTILE_EXPECTED_HOSTNAME": "demo.refined-x.com",
+		"TURNSTILE_EXPECTED_ACTION": "public-ask"
+	},
+	"ai_search": [
+		{
+			"binding": "PUBLIC_CONTENT",
+			"instance_name": "refined-x-demo-content",
+			"remote": true
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "refined-x-demo-ask",
+			"database_id": "YOUR_D1_DATABASE_ID",
+			"migrations_dir": "migrations"
+		}
+	],
+	"ratelimits": [
+		{
+			"name": "ASK_RATE_LIMITER",
+			"namespace_id": "731041",
+			"simple": {
+				"limit": 30,
+				"period": 60
+			}
+		},
+		{
+			"name": "BROWSER_RATE_LIMITER",
+			"namespace_id": "731042",
+			"simple": {
+				"limit": 3,
+				"period": 60
+			}
+		},
+		{
+			"name": "KEY_RATE_LIMITER",
+			"namespace_id": "731043",
+			"simple": {
+				"limit": 10,
+				"period": 60
+			}
+		}
+	]
+}
