@@ -2,20 +2,85 @@
 
 # Refined-X
 
-![首页](docs/screenshots/home.jpg)
+## 面向 Agentic Web 的个人公开接口
 
-基于 [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/) 的 **Agent 友好的个人站点** 模板。
+一次发布，同时服务于人、搜索引擎与 AI Agent。
 
-- 清爽的阅读体验；
-- 全栈内容数据驱动；
-- 灵活自定义数据源目录、产物目录、配置目录，为个人数据仓库集成做好准备；
-- 自动生成 `llms.txt`、OpenAPI、JSON API、Markdown 镜像；
-- Agent 友好的 MCP 端口；
-- 符合 NLWeb 协议的 /ask 页面。
+Refined-X 是一个基于 [Astro](https://astro.build/) 和 [Starlight](https://starlight.astro.build/) 构建的 AI 友好型个人博客模板。
+你只需要用 Markdown 和 YAML 维护公开内容，Refined-X 就能把同一份内容转换为：
+
+- 面向读者的克制、清晰的个人网站；
+- 面向大语言模型的 Markdown 镜像、`llms.txt` 与结构化 JSON；
+- 面向程序和 Agent 的 OpenAPI、MCP 发现信息；
+- 可选的 NLWeb Public Ask 服务，用于实时、基于公开内容的问答。
+
+你的内容可以保存在自己的仓库或独立知识库中。网站默认是纯静态的，
+AI 问答服务始终是可选项。
+
+[在线演示](https://demo.refined-x.com) ·
+[询问 Demo](https://demo.refined-x.com/ask/) ·
+[使用此模板](https://github.com/new?template_name=Refined-X&template_owner=tower1229) ·
+[生产站点](https://refined-x.com)
+
+![Refined-X 首页](docs/screenshots/home.jpg)
+
+## 为什么需要 Refined-X？
+
+大多数个人网站发布 HTML 后便止步于此。这对浏览器足够友好，
+但 AI Agent 仍然需要从导航、布局和脚本中重新提取信息、判断结构和理解语义。
+
+Refined-X 将同一份公开内容发布为三种界面：
+
+| 界面       | 提供的能力                                                      |
+| ---------- | --------------------------------------------------------------- |
+| 面向人     | 文章、系列、项目、个人资料、精选回答、主题聚合、明暗主题        |
+| 面向机器   | 页面级 Markdown、`llms.txt`、`llms-full.txt`、JSON API、OpenAPI |
+| 面向 Agent | 静态精选搜索、可选 NLWeb `/ask`、可选 MCP `ask` 工具            |
+
+```mermaid
+flowchart LR
+  A["Markdown + YAML"] --> B["Refined-X 构建"]
+  B --> C["面向人的个人网站"]
+  B --> D["机器可读接口"]
+  D --> E["可选 Public Ask"]
+```
+
+## Refined-X 有什么不同？
+
+### 一份内容，多种输出
+
+文章、回答、项目、系列与公开个人资料使用明确的内容模型。
+网站页面和所有机器可读接口都由这份公开内容生成，
+避免为人和 Agent 分别维护两套数据。
+
+### 内容与模板相互独立
+
+`contentRoot`、`publicDir` 和 `outDir` 均可配置。
+你可以把个人内容长期保存在独立知识库或 monorepo 中，
+仅将 Refined-X 作为可替换的发布层。
+
+### 不接入 AI 后端也能完整使用
+
+默认站点完全静态。`/ask` 可以直接搜索精选回答和公开文章，
+不依赖模型、数据库或常驻服务器，也不会产生推理费用。
+
+### 需要时再启用实时问答
+
+可选的 Public Ask Worker 提供基于公开内容的检索和摘要，
+暴露受限的 NLWeb v0.55 兼容 `/ask` 接口与 Streamable HTTP MCP 服务，
+并内置配额、限流、浏览器验证、来源链接和明确的能力边界。
+
+### 为阅读而设计
+
+对 Agent 友好不意味着把个人网站做成控制台。
+Refined-X 使用克制的编辑式视觉语言、适度动效和无障碍明暗主题，
+让人的阅读体验始终处于首位。
 
 ## 快速开始
 
-本仓库已设为 [GitHub template](https://github.com/tower1229/Refined-X)，可在仓库页点击 **Use this template**，或：
+本仓库已经启用 GitHub Template。你可以点击
+[使用此模板](https://github.com/new?template_name=Refined-X&template_owner=tower1229)，
+也可以运行：
 
 ```sh
 npm create astro@latest -- --template tower1229/Refined-X
@@ -24,103 +89,211 @@ npm install
 npm run dev
 ```
 
-或直接克隆本仓库：
+然后打开 Astro 在终端中输出的本地地址。
+
+部署前建议依次执行：
 
 ```sh
-git clone git@github.com:tower1229/Refined-X.git
-cd Refined-X
-npm install
-npm run dev
+npm run check
+npm run test:public-ask
+npm run test:related
+npm run build
+npm run verify
 ```
 
-打开终端打印的本地地址。样例内容在 `content/`，静态资源在 `public/`。
+## 选择部署模式
 
-```sh
-npm run build && npm run verify
-```
+| 模式                  | 所需基础设施                                           | 获得的能力                                                          |
+| --------------------- | ------------------------------------------------------ | ------------------------------------------------------------------- |
+| 纯静态                | GitHub Pages、Cloudflare Pages、Netlify 或任意静态托管 | 网站、本地 Ask 搜索、Markdown、`llms.txt`、JSON、OpenAPI 与发现信息 |
+| 静态站点 + 外部知识库 | 静态托管加独立 `contentRoot`                           | 在内容保留于外部知识库的同时获得全部静态输出                        |
+| Live Ask              | 静态站点加参考 Cloudflare Worker                       | 基于公开内容的浏览器问答、NLWeb `/ask`、MCP `ask` 与健康检查        |
 
-## 内容 Schema
+建议先从纯静态模式开始，只在确实需要对话式访问时启用 Live Ask。
 
-将 `contentRoot` 指向符合下列结构的目录（默认 `./content`）：
+## 内容模型
+
+默认公开内容位于 `content/`：
 
 ```text
 content/
-  articles/**/*.md      # contentType: article + pubDate + slug + llmSummary
-  answers/**/*.md       # contentType: answer + question + shortAnswer
-  pages/**/*.md         # contentType: page（如 friends）
+  articles/**/*.md
+  answers/**/*.md
+  pages/**/*.md
   profile/
-    person.yaml         # kind: person
-    cooperation.yaml    # kind: cooperation
-    resume.md           # About 正文
+    person.yaml
+    cooperation.yaml
+    resume.md
   projects/*.{yaml,yml,json}
   series/
-    series.json         # { "order": ["…"] }
+    series.json
     *.yaml
 ```
 
-Schema **有明确约定**；内容树的**位置**可配置。
+文章 frontmatter 使用明确、可验证的字段：
 
-## 配置参考
-
-编辑 [`site.config.mjs`](site.config.mjs)，或在旁路放置 `../instance.config.mjs`（本包作为 git submodule 时）/ 设置环境变量 `REFINED_X_INSTANCE_CONFIG`。
-
-| 字段                                  | 默认                    | 作用                                                |
-| ------------------------------------- | ----------------------- | --------------------------------------------------- |
-| `locale`                              | `en`                    | 界面文案包（`en` \| `zh-CN`）                       |
-| `contentRoot`                         | `./content`             | 公开 Markdown/YAML 根目录                           |
-| `publicDir`                           | `./public`              | 静态资源（复制到 dist）                             |
-| `outDir`                              | `./dist`                | 构建输出                                            |
-| `assetSource`                         | 未设置                  | 可选图片库，供 `collect-assets` 使用                |
-| `site` / `title`                      | example.com / Refined-X | 站点身份                                            |
-| `ask.askUrl` / `mcpUrl` / `healthUrl` | 空                      | 可选 Public Ask / NLWeb Worker                      |
-| `redirects`                           | `{}`                    | Astro redirects                                     |
-| `brand.*`                             | Demo Author 文案        | 身份与内容（persona、标题、chips），不含界面 chrome |
-
-相对路径均相对本包根目录解析。
-
-## 能力矩阵
-
-| 能力                                      | 是否包含 | 说明                                  |
-| ----------------------------------------- | -------- | ------------------------------------- |
-| 编辑向 UI + 主题切换                      | 是       | 见 `DESIGN.md`                        |
-| 文章 / 专栏 / 作品 / 关于                 | 是       | 来自 `contentRoot`                    |
-| 精选 Answers + 静态 Ask 搜索              | 是       | `/ask`、`/answers`                    |
-| `llms.txt` / `llms-full.txt` / `.md` 镜像 | 是       | 构建时生成                            |
-| `/api/*.json` + `/openapi.json`           | 是       | 构建时生成                            |
-| `/.well-known/mcp/*` 发现                 | 是       | 配置 `ask.*` 前 URL 可为空            |
-| NLWeb `POST /ask` + MCP tool              | 可选     | 部署 Public Ask Worker 并设置 `ask.*` |
-
-样例 Demo（Themes Portal）：[demo.refined-x.com](https://demo.refined-x.com)。  
-线上实例参考：[refined-x.com](https://refined-x.com)。
-
-![写作](docs/screenshots/writing.png)
-
-### Themes Portal 短描述
-
-> Agent 友好的个人站点起步模板（Astro + Starlight）：opinionated 公开内容 schema、编辑向阅读体验、`llms.txt` / OpenAPI / JSON API、MCP 发现，以及可选的 NLWeb Public Ask Worker。
-
-Demo 托管：GitHub Pages + `demo.refined-x.com`，见 [`deploy/README.md`](deploy/README.md)。
-
-### create-astro 冒烟
-
-```sh
-npm create astro@latest -- --template tower1229/Refined-X
-# 默认分支应为 `main`
-cd <project> && npm install && npm run build && npm run verify
+```yaml
+---
+title: 为人和 Agent 同时构建个人网站
+description: 一段面向读者和搜索引擎的简短描述。
+contentType: article
+pubDate: 2026-07-01
+slug: humans-and-agents
+series: notes
+tags:
+  - publishing
+  - agents
+llmSummary: 一段供机器读取、忠于正文事实的简明摘要。
+---
 ```
 
-可选实时问答后端示例：[`examples/public-ask-worker`](examples/public-ask-worker)。
+构建时会校验必要日期、slug、摘要、回答字段和内容类型，
+使公开语料保持稳定且可被程序处理。
 
-## 作为 submodule 使用
+## 配置站点
 
-在父级 monorepo（例如自有 `20_Publish/` 的知识库）中：
+多数情况下，建议创建一个 `instance.config.mjs` 覆盖实例配置。
+你也可以直接修改 [`site.config.mjs`](site.config.mjs) 中的默认值：
+
+```js
+export default {
+  site: "https://example.com",
+  title: "你的名字",
+  locale: "zh-CN",
+  timeZone: "Asia/Shanghai",
+  contentRoot: "./content",
+  publicDir: "./public",
+  outDir: "./dist",
+  brand: {
+    persona: "你的名字",
+    homeHeading: "你的名字",
+    homeLede: "你关注什么，以及为什么写作。",
+  },
+};
+```
+
+常用配置：
+
+| 字段          | 默认值      | 用途                                  |
+| ------------- | ----------- | ------------------------------------- |
+| `locale`      | `en`        | 界面语言，可选 `en` 或 `zh-CN`        |
+| `contentRoot` | `./content` | 公开 Markdown/YAML 内容目录           |
+| `publicDir`   | `./public`  | 静态资源目录                          |
+| `outDir`      | `./dist`    | 构建输出目录                          |
+| `assetSource` | 未设置      | 可选的外部图片资源库                  |
+| `brand.*`     | Demo 数据   | 公开身份与首页文案                    |
+| `ask.*`       | 空          | 可选的 Public Ask、MCP 与健康检查地址 |
+
+相对路径均从 Refined-X 包根目录解析。
+
+## Agent 可读接口
+
+每次构建都会生成一组可预测的公开接口：
+
+| 地址                                | 用途                                |
+| ----------------------------------- | ----------------------------------- |
+| `/llms.txt`                         | 面向 Agent 的精简站点地图与重要链接 |
+| `/llms-full.txt`                    | 完整公开文本语料                    |
+| `/<page>.md`                        | 对应公开页面的纯净 Markdown 镜像    |
+| `/api/profile.json`                 | 结构化公开身份信息                  |
+| `/api/articles.json`                | 文章目录                            |
+| `/api/topics.json`                  | 主题目录                            |
+| `/api/search-index.json`            | 静态 Ask 与搜索语料                 |
+| `/openapi.json`                     | API 以及可选 Ask/MCP 契约           |
+| `/.well-known/about.json`           | 站点能力摘要                        |
+| `/.well-known/mcp/catalog.json`     | MCP 发现目录                        |
+| `/.well-known/mcp/server-card.json` | MCP 服务元数据                      |
+
+这些接口可以降低网站被检索、摄取和连接的成本，
+但不承诺所有 Agent 都会自动发现或主动调用它们。
+
+## 启用 Live Ask
+
+参考实现位于
+[`examples/public-ask-worker`](examples/public-ask-worker)。
+
+它提供：
+
+- `POST /ask`：受限的 NLWeb v0.55 兼容对话式搜索；
+- `POST /mcp`：提供 `ask` 工具的 Streamable HTTP MCP；
+- `GET /health`：服务与检索状态检查；
+- 基于 Cloudflare AI Search 的公开内容检索；
+- 通过 AI Gateway 提供的可选模型摘要；
+- 基于 D1 的配额和滥用控制；
+- 面向浏览器生成答案的 Turnstile 验证。
+
+部署 Worker 后，在实例配置中接入：
+
+```js
+export default {
+  ask: {
+    askUrl: "https://ask.example.com/ask",
+    mcpUrl: "https://ask.example.com/mcp",
+    healthUrl: "https://ask.example.com/health",
+  },
+};
+```
+
+启用 Live Ask 后，Refined-X 官方 Demo 使用
+`https://ask-demo.refined-x.com/mcp`。匿名 MCP 客户端只能获取带来源的检索结果；
+浏览器生成式回答由 Turnstile 和每日生成预算保护。
+
+Live Ask 有意不支持长期记忆、任意外部操作、动态权限征询，
+也不会模仿或冒充网站所有者。
+
+## 使用外部知识库
+
+Refined-X 可以作为子模块放入个人数据仓库：
 
 ```sh
 git submodule add git@github.com:tower1229/Refined-X.git 90_Website/Template
 ```
 
-在 submodule 旁新增 `90_Website/instance.config.mjs`，配置 `contentRoot` / `publicDir` / `outDir` / brand / ask URL。实例相关设置不要改 submodule 工作树内的文件。
+将 `instance.config.mjs` 放在子模块附近，或设置
+`REFINED_X_INSTANCE_CONFIG`：
 
-## 许可证
+```js
+export default {
+  contentRoot: "../../20_Publish",
+  publicDir: "../../30_Assets/Public",
+  outDir: "../../dist",
+};
+```
 
-MIT
+个人身份和实例配置保留在模板之外，
+因此更新 Refined-X 时不会覆盖你的内容与个性化信息。
+
+## 设计
+
+视觉系统、字体、组件规则、动效边界和无障碍说明详见
+[`DESIGN.md`](DESIGN.md)。
+
+![Refined-X 文章页面](docs/screenshots/writing.png)
+
+## 项目边界
+
+Refined-X 是：
+
+- 一个静态优先的个人发布模板；
+- 一套观点明确的公开内容模型；
+- 一份同时面向人、机器与 Agent 的公开接口参考实现。
+
+Refined-X 不是：
+
+- 托管式 CMS；
+- 私人 Agent；
+- 长期记忆服务；
+- 对所有 MCP 客户端自动发现能力的承诺。
+
+它服务的是“个人愿意公开表达和被外部读取的部分”，
+而不是替个人保存全部私人数据或代表个人执行任意行动。
+
+## 参与贡献
+
+欢迎提交 Issue、部署案例、文档改进和 Pull Request。
+如果你已经使用 Refined-X 发布了自己的站点，
+可以创建 showcase Issue，帮助其他人了解真实使用方式。
+
+## 开源许可
+
+[MIT](LICENSE)

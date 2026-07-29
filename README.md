@@ -2,20 +2,87 @@ English | [简体中文](README.zh-CN.md)
 
 # Refined-X
 
-![Home](docs/screenshots/home.jpg)
+## Your public interface for the agentic web
 
-An **agent-friendly personal site** template built on [Astro](https://astro.build/) + [Starlight](https://starlight.astro.build/).
+Publish once for people, search engines, and AI agents.
 
-- Clean reading experience;
-- Fully data-driven content stack;
-- Configurable content, output, and config directories — ready for personal data vault integration;
-- Auto-generates `llms.txt`, OpenAPI, JSON APIs, and Markdown mirrors;
-- Agent-friendly MCP discovery endpoints;
-- `/ask` page compatible with the NLWeb protocol.
+Refined-X is an opinionated personal publishing starter built with
+[Astro](https://astro.build/) and [Starlight](https://starlight.astro.build/).
+Write in Markdown and YAML; Refined-X turns the same public corpus into:
+
+- a calm, editorial website for human readers;
+- Markdown mirrors, `llms.txt`, and structured JSON for language models;
+- OpenAPI and MCP discovery metadata for programmatic clients;
+- an optional NLWeb-compatible Ask service for live, grounded Q&A.
+
+Your content stays in your own repository or knowledge vault. The site is
+static by default, and the AI service is optional.
+
+[Live demo](https://demo.refined-x.com) ·
+[Ask the demo](https://demo.refined-x.com/ask/) ·
+[Use this template](https://github.com/new?template_name=Refined-X&template_owner=tower1229) ·
+[Production example](https://refined-x.com)
+
+![Refined-X home page](docs/screenshots/home.jpg)
+
+## Why Refined-X?
+
+Most personal sites publish HTML and stop there. That works for browsers, but
+agents must still extract meaning from navigation, layout, and scripts.
+
+Refined-X publishes one source corpus through three surfaces:
+
+| Surface          | What it provides                                                        |
+| ---------------- | ----------------------------------------------------------------------- |
+| Human-readable   | Articles, series, projects, profile, answers, topics, light/dark themes |
+| Machine-readable | Per-page Markdown, `llms.txt`, `llms-full.txt`, JSON APIs, OpenAPI      |
+| Agent-queryable  | Static curated search, optional NLWeb `/ask`, optional MCP `ask` tool   |
+
+```mermaid
+flowchart LR
+  A["Markdown + YAML"] --> B["Refined-X build"]
+  B --> C["Editorial website"]
+  B --> D["Agent-readable surfaces"]
+  D --> E["Optional Public Ask"]
+```
+
+## What makes it different
+
+### One corpus, multiple outputs
+
+Articles, answers, projects, series, and public profile data share an explicit
+content schema. Refined-X generates the website and every machine-readable
+surface from that same source of truth.
+
+### Content independent from the theme
+
+`contentRoot`, `publicDir`, and `outDir` are configurable. Keep a personal
+vault or monorepo outside the template, and use Refined-X only as the publishing
+layer.
+
+### Useful without an AI backend
+
+The default site is fully static. `/ask` searches curated answers and public
+articles without a model, database, or runtime bill.
+
+### Live Q&A when you want it
+
+The optional Public Ask Worker adds grounded retrieval and summarization through
+a restricted NLWeb v0.55-compatible `/ask` endpoint and a Streamable HTTP MCP
+server. It includes quotas, rate limits, browser verification, source links,
+and explicit capability boundaries.
+
+### Designed for reading
+
+Agent support is not allowed to turn the site into a dashboard. Refined-X keeps
+an editorial, monochrome visual system with restrained motion and accessible
+light/dark themes.
 
 ## Quick start
 
-This repo is a [GitHub template](https://github.com/tower1229/Refined-X) — use **Use this template** on GitHub, or:
+This repository is a GitHub template. Select
+[Use this template](https://github.com/new?template_name=Refined-X&template_owner=tower1229),
+or run:
 
 ```sh
 npm create astro@latest -- --template tower1229/Refined-X
@@ -24,103 +91,209 @@ npm install
 npm run dev
 ```
 
-Or clone this repo:
+Then open the local URL printed by Astro.
+
+Before deploying:
 
 ```sh
-git clone git@github.com:tower1229/Refined-X.git
-cd Refined-X
-npm install
-npm run dev
+npm run check
+npm run test:public-ask
+npm run test:related
+npm run build
+npm run verify
 ```
 
-Open the local URL printed in the terminal. Sample content lives in `content/`; static assets in `public/`.
+## Choose a deployment mode
 
-```sh
-npm run build && npm run verify
-```
+| Mode                    | Infrastructure                                              | Result                                                                             |
+| ----------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Static                  | GitHub Pages, Cloudflare Pages, Netlify, or any static host | Website, local Ask search, Markdown, `llms.txt`, JSON, OpenAPI, discovery metadata |
+| Static + external vault | Static host plus an external `contentRoot`                  | Same outputs while content remains outside the template                            |
+| Live Ask                | Static site plus the reference Cloudflare Worker            | Grounded browser answers, NLWeb `/ask`, MCP `ask`, health endpoint                 |
 
-## Content schema
+Start static. Add Live Ask only when conversational access is useful.
 
-Point `contentRoot` at a directory that follows this shape (default `./content`):
+## Content model
+
+The default public corpus lives in `content/`:
 
 ```text
 content/
-  articles/**/*.md      # contentType: article + pubDate + slug + llmSummary
-  answers/**/*.md       # contentType: answer + question + shortAnswer
-  pages/**/*.md         # contentType: page (e.g. friends)
+  articles/**/*.md
+  answers/**/*.md
+  pages/**/*.md
   profile/
-    person.yaml         # kind: person
-    cooperation.yaml    # kind: cooperation
-    resume.md           # about body
+    person.yaml
+    cooperation.yaml
+    resume.md
   projects/*.{yaml,yml,json}
   series/
-    series.json         # { "order": ["…"] }
+    series.json
     *.yaml
 ```
 
-The schema is **opinionated**; the **location** of the content tree is configurable.
+Article frontmatter is intentionally explicit:
 
-## Config reference
-
-Edit [`site.config.mjs`](site.config.mjs), or place an overlay at `../instance.config.mjs` (when this package is used as a git submodule) / set the `REFINED_X_INSTANCE_CONFIG` environment variable.
-
-| Field | Default | Purpose |
-|-------|---------|---------|
-| `locale` | `en` | UI language pack (`en` \| `zh-CN`) |
-| `contentRoot` | `./content` | Public Markdown/YAML root |
-| `publicDir` | `./public` | Static assets (copied to dist) |
-| `outDir` | `./dist` | Build output |
-| `assetSource` | unset | Optional image library for `collect-assets` |
-| `site` / `title` | example.com / Refined-X | Site identity |
-| `ask.askUrl` / `mcpUrl` / `healthUrl` | empty | Optional Public Ask / NLWeb worker |
-| `redirects` | `{}` | Astro redirects |
-| `brand.*` | Demo Author copy | Identity & content (persona, headings, chips) — not UI chrome |
-
-Relative paths resolve from this package root.
-
-## Capability matrix
-
-| Capability | Included | Notes |
-|------------|----------|-------|
-| Editorial UI + theme toggle | Yes | See `DESIGN.md` |
-| Articles / series / projects / about | Yes | From `contentRoot` |
-| Curated Answers + static Ask search | Yes | `/ask`, `/answers` |
-| `llms.txt` / `llms-full.txt` / `.md` mirrors | Yes | Generated at build time |
-| `/api/*.json` + `/openapi.json` | Yes | Generated at build time |
-| `/.well-known/mcp/*` discovery | Yes | URLs may be empty until `ask.*` is configured |
-| NLWeb `POST /ask` + MCP tool | Optional | Deploy a Public Ask worker and set `ask.*` |
-
-Sample demo (Themes Portal): [demo.refined-x.com](https://demo.refined-x.com).  
-Example in the wild: [refined-x.com](https://refined-x.com).
-
-![Writing](docs/screenshots/writing.png)
-
-### Themes Portal short description
-
-> Agent-friendly personal site starter (Astro + Starlight): opinionated public content schema, editorial reading experience, `llms.txt` / OpenAPI / JSON APIs, MCP discovery, and an optional NLWeb Public Ask worker.
-
-Demo hosting: GitHub Pages + `demo.refined-x.com` — see [`deploy/README.md`](deploy/README.md).
-
-### create-astro smoke
-
-```sh
-npm create astro@latest -- --template tower1229/Refined-X
-# expects default branch `main`
-cd <project> && npm install && npm run build && npm run verify
+```yaml
+---
+title: Building for humans and agents
+description: A short description for readers and search engines.
+contentType: article
+pubDate: 2026-07-01
+slug: humans-and-agents
+series: notes
+tags:
+  - publishing
+  - agents
+llmSummary: A concise, evidence-grounded summary for machine-readable outputs.
+---
 ```
 
-Optional live Ask backend example: [`examples/public-ask-worker`](examples/public-ask-worker).
+The schema validates required dates, slugs, summaries, answer fields, and
+content types during the build.
 
-## Use as a submodule
+## Configure your site
 
-In a parent monorepo (e.g. a vault that owns `20_Publish/`):
+For most installations, create an `instance.config.mjs` overlay. You can also
+edit the defaults in [`site.config.mjs`](site.config.mjs):
+
+```js
+export default {
+  site: "https://example.com",
+  title: "Your Name",
+  locale: "en",
+  timeZone: "UTC",
+  contentRoot: "./content",
+  publicDir: "./public",
+  outDir: "./dist",
+  brand: {
+    persona: "Your Name",
+    homeHeading: "Your Name",
+    homeLede: "What you publish and why it matters.",
+  },
+};
+```
+
+Common options:
+
+| Field         | Default     | Purpose                                   |
+| ------------- | ----------- | ----------------------------------------- |
+| `locale`      | `en`        | UI language pack: `en` or `zh-CN`         |
+| `contentRoot` | `./content` | Public Markdown/YAML corpus               |
+| `publicDir`   | `./public`  | Static assets                             |
+| `outDir`      | `./dist`    | Build output                              |
+| `assetSource` | unset       | Optional external image library           |
+| `brand.*`     | demo values | Public identity and home-page copy        |
+| `ask.*`       | empty       | Optional Public Ask, MCP, and health URLs |
+
+Relative paths resolve from the Refined-X package root.
+
+## Agent-readable surfaces
+
+Every build exposes a predictable public interface:
+
+| Endpoint                            | Purpose                                         |
+| ----------------------------------- | ----------------------------------------------- |
+| `/llms.txt`                         | Compact site map and important links for agents |
+| `/llms-full.txt`                    | Full public text corpus                         |
+| `/<page>.md`                        | Clean Markdown mirror of a public page          |
+| `/api/profile.json`                 | Structured public identity                      |
+| `/api/articles.json`                | Article catalog                                 |
+| `/api/topics.json`                  | Topic catalog                                   |
+| `/api/search-index.json`            | Static Ask/search corpus                        |
+| `/openapi.json`                     | API and optional Ask/MCP contract               |
+| `/.well-known/about.json`           | Site capability summary                         |
+| `/.well-known/mcp/catalog.json`     | MCP discovery catalog                           |
+| `/.well-known/mcp/server-card.json` | MCP server metadata                             |
+
+These endpoints make the site easier to ingest and connect. They do not assume
+that every agent automatically discovers or invokes them.
+
+## Enable Live Ask
+
+The reference implementation lives in
+[`examples/public-ask-worker`](examples/public-ask-worker).
+
+It provides:
+
+- `POST /ask` — restricted NLWeb v0.55-compatible conversational search;
+- `POST /mcp` — Streamable HTTP MCP with an `ask` tool;
+- `GET /health` — service and retrieval readiness;
+- Cloudflare AI Search retrieval;
+- optional model-generated summaries through AI Gateway;
+- D1-backed quotas and abuse controls;
+- Turnstile protection for browser-generated answers.
+
+After deploying the Worker, connect it in your instance config:
+
+```js
+export default {
+  ask: {
+    askUrl: "https://ask.example.com/ask",
+    mcpUrl: "https://ask.example.com/mcp",
+    healthUrl: "https://ask.example.com/health",
+  },
+};
+```
+
+Once Live Ask is enabled, the hosted Refined-X demo uses
+`https://ask-demo.refined-x.com/mcp`. Anonymous MCP clients receive grounded
+search results; generated browser answers are protected by Turnstile and a
+daily generation budget.
+
+Live Ask intentionally does not support long-term memory, arbitrary actions,
+elicitation, or impersonating the site owner.
+
+## Use an external vault
+
+Refined-X can live as a submodule inside a personal data repository:
 
 ```sh
 git submodule add git@github.com:tower1229/Refined-X.git 90_Website/Template
 ```
 
-Add `90_Website/instance.config.mjs` next to the submodule to set `contentRoot` / `publicDir` / `outDir` / brand / ask URLs. Do not change files inside the submodule working tree for instance-specific settings.
+Place `instance.config.mjs` next to the submodule, or set
+`REFINED_X_INSTANCE_CONFIG`:
+
+```js
+export default {
+  contentRoot: "../../20_Publish",
+  publicDir: "../../30_Assets/Public",
+  outDir: "../../dist",
+};
+```
+
+Instance-specific settings stay outside the template, so upstream updates do
+not overwrite your identity or content.
+
+## Design
+
+See [`DESIGN.md`](DESIGN.md) for the visual system, typography, component
+rules, motion boundaries, and accessibility guidance.
+
+![Refined-X writing page](docs/screenshots/writing.png)
+
+## Scope
+
+Refined-X is:
+
+- a static-first personal publishing starter;
+- an opinionated public content schema;
+- a reference implementation for agent-readable and agent-queryable surfaces.
+
+Refined-X is not:
+
+- a hosted CMS;
+- a private personal agent;
+- a long-term memory service;
+- a promise of automatic MCP discovery in every client.
+
+## Contributing
+
+Issues, implementation reports, documentation improvements, and pull requests
+are welcome. If you launch a site with Refined-X, open a showcase issue so it
+can be included in the community gallery.
 
 ## License
 
-MIT
+[MIT](LICENSE)
