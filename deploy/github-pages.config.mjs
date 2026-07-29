@@ -5,4 +5,15 @@
 export default {
 	site: 'https://demo.refined-x.com',
 	locale: 'en',
+	brand: {
+		askChips: [
+			{ label: 'What is Refined-X?', query: 'What is Refined-X?' },
+			{ label: 'Agent-ready', query: 'How is Refined-X agent-ready?' },
+			{
+				label: 'External vault',
+				query: 'Can I keep content in an external vault?',
+			},
+			{ label: 'Live Ask', query: 'How does Live Ask work?' },
+		],
+	},
 };
