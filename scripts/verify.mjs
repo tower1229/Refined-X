@@ -7,6 +7,10 @@ const distRoot = siteConfig.outDir;
 const requiredPages = ['/', '/about/', '/projects/', '/writing/', '/ask/', '/answers/', '/friends/'];
 const requiredFiles = [
 	'/.nojekyll',
+	'/.well-known/about.json',
+	'/.well-known/mcp.json',
+	'/.well-known/mcp/catalog.json',
+	'/.well-known/mcp/server-card.json',
 	'/llms.txt',
 	'/openapi.json',
 	'/api/profile.json',
