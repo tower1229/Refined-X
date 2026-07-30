@@ -113,7 +113,7 @@ export function webPageJsonLd({
 		url: absoluteUrl(path),
 		name,
 		description,
-		inLanguage: 'zh-CN',
+		inLanguage: siteConfig.locale,
 		isPartOf: { '@id': absoluteUrl('/#website') },
 	};
 }
@@ -136,7 +136,7 @@ export function collectionPageJsonLd({
 		url: absoluteUrl(path),
 		name,
 		description,
-		inLanguage: 'zh-CN',
+		inLanguage: siteConfig.locale,
 		isPartOf: { '@id': absoluteUrl('/#website') },
 		mainEntity: {
 			'@type': 'ItemList',

@@ -33,7 +33,13 @@ jobs:
       - name: Build sample demo
         env:
           REFINED_X_INSTANCE_CONFIG: ${{ github.workspace }}/deploy/github-pages.config.mjs
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
         run: npm run build
+
+      - name: Verify sample demo
+        env:
+          REFINED_X_INSTANCE_CONFIG: ${{ github.workspace }}/deploy/github-pages.config.mjs
+        run: npm run verify
 
       - name: Inject custom domain CNAME
         # Keep out of public/ so template clones do not inherit this domain.

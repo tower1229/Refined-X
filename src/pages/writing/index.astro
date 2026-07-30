@@ -7,7 +7,7 @@ import SeriesGrid from '../../components/SeriesGrid.astro';
 import WritingPagination from '../../components/WritingPagination.astro';
 import { ARTICLE_PAGE_SIZE, getArticlePageCount } from '../../lib/articles';
 import { absoluteUrl, breadcrumbJsonLd } from '../../lib/public-data';
-import { SITE_BRAND, UI, WRITING_LEDE } from '../../lib/site-copy';
+import { SITE_BRAND, SITE_LOCALE, UI, WRITING_LEDE } from '../../lib/site-copy';
 
 const articles = (await getCollection('docs', ({ data }) => data.contentType === 'article'))
   .sort((a, b) => b.data.pubDate!.valueOf() - a.data.pubDate!.valueOf());
@@ -30,7 +30,7 @@ const structuredData = [
     url: absoluteUrl('/writing/'),
     name: UI.writing.label,
     description: WRITING_LEDE,
-    inLanguage: 'zh-CN',
+    inLanguage: SITE_LOCALE,
     isPartOf: { '@id': absoluteUrl('/#website') },
     mainEntity: {
       '@type': 'ItemList',

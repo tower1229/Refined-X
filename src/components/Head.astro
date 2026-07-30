@@ -1,5 +1,5 @@
 ---
-import { UI } from '../lib/site-copy';
+import { SITE_LOCALE, UI } from '../lib/site-copy';
 import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
 import { sitePath } from '../lib/paths';
 import { seriesName } from '../lib/articles';
@@ -40,7 +40,7 @@ if (contentType === 'article') {
 		publisher: { '@id': profile.id },
 		keywords: entry.data.tags,
 		articleSection: entry.data.series,
-		inLanguage: 'zh-CN',
+		inLanguage: SITE_LOCALE,
 		isPartOf: { '@id': absoluteUrl('/#website') },
 	});
 	structuredData.push({

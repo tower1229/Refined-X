@@ -5,6 +5,12 @@
 export default {
 	site: 'https://demo.refined-x.com',
 	locale: 'en',
+	ask: {
+		askUrl: 'https://ask-demo.refined-x.com/ask',
+		mcpUrl: 'https://ask-demo.refined-x.com/mcp',
+		healthUrl: 'https://ask-demo.refined-x.com/health',
+		persistInteractions: false,
+	},
 	brand: {
 		askChips: [
 			{ label: 'What is Refined-X?', query: 'What is Refined-X?' },

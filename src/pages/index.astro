@@ -15,6 +15,7 @@ import {
   SITE_HOME_HEADING,
   SITE_HOME_LEDE,
   SITE_HOME_TITLE,
+  SITE_LOCALE,
   SITE_PERSONA,
   UI,
 } from '../lib/site-copy';
@@ -36,7 +37,7 @@ const homeStructuredData = {
       name: SITE_BRAND,
       alternateName: [...SITE_ALTERNATE_NAMES],
       description: SITE_DESCRIPTION,
-	  inLanguage: 'zh-CN',
+	  inLanguage: SITE_LOCALE,
       author: { '@id': publicProfile.id },
       potentialAction: {
         '@type': 'SearchAction',
@@ -53,7 +54,7 @@ const homeStructuredData = {
       url: absoluteUrl('/'),
       name: SITE_HOME_TITLE,
       description: SITE_DESCRIPTION,
-      inLanguage: 'zh-CN',
+      inLanguage: SITE_LOCALE,
       isPartOf: { '@id': absoluteUrl('/#website') },
       about: { '@id': publicProfile.id },
     },

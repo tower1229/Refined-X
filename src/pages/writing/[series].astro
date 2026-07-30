@@ -1,6 +1,6 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
-import { UI } from '../../lib/site-copy';
+import { SITE_LOCALE, UI } from '../../lib/site-copy';
 import { getCollection } from 'astro:content';
 import ArticleFeed from '../../components/ArticleFeed.astro';
 import Icon from '../../components/Icon.astro';
@@ -40,7 +40,7 @@ const structuredData = [
     url: absoluteUrl(seriesUrl),
     name: seriesData.title,
     description: seriesData.intro || seriesData.description,
-    inLanguage: 'zh-CN',
+    inLanguage: SITE_LOCALE,
     isPartOf: { '@id': absoluteUrl('/#website') },
     mainEntity: {
       '@type': 'ItemList',
