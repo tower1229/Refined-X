@@ -5,7 +5,14 @@ import { builtPageExists, builtResourceExists } from './dist-path.mjs';
 
 const distRoot = siteConfig.outDir;
 const requiredPages = ['/', '/about/', '/projects/', '/writing/', '/ask/', '/answers/', '/friends/'];
-const requiredFiles = ['/llms.txt', '/openapi.json', '/api/profile.json', '/api/articles.json', '/api/search-index.json'];
+const requiredFiles = [
+	'/.nojekyll',
+	'/llms.txt',
+	'/openapi.json',
+	'/api/profile.json',
+	'/api/articles.json',
+	'/api/search-index.json',
+];
 
 const failures = [];
 
