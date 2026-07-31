@@ -111,6 +111,17 @@ npm run verify
 
 建议先从纯静态模式开始，只在确实需要对话式访问时启用 Live Ask。
 
+## 部署静态站点
+
+| 路径 | 说明 |
+| ---- | ---- |
+| GitHub Pages | 复制 [`deploy/user-github-pages.yml`](deploy/user-github-pages.yml) → 启用 Pages（GitHub Actions） |
+| Cloudflare Pages | 构建命令 `npm run build`，输出目录 `dist`，Node `24` |
+
+完整步骤见 [`docs/deploy-static.md`](docs/deploy-static.md)。
+
+Cloudflare Pages：在[控制台](https://dash.cloudflare.com/)连接仓库（[Git 集成文档](https://developers.cloudflare.com/pages/get-started/git-integration/)）。GitHub Pages：复制上方 workflow 即可。
+
 ## 内容模型
 
 默认公开内容位于 `content/`：
@@ -209,20 +220,12 @@ export default {
 
 ## 启用 Live Ask
 
-参考实现位于
-[`examples/public-ask-worker`](examples/public-ask-worker)。
+可选的 Cloudflare Worker，用于带来源的浏览器问答、NLWeb `POST /ask` 与 MCP `ask`。
+包目录：[`examples/public-ask-worker`](examples/public-ask-worker)。
 
-它提供：
+**部署清单与故障排查：** [`docs/deploy-live-ask.md`](docs/deploy-live-ask.md)。
 
-- `POST /ask`：受限的 NLWeb v0.55 兼容对话式搜索；
-- `POST /mcp`：提供 `ask` 工具的 Streamable HTTP MCP；
-- `GET /health`：服务与检索状态检查；
-- 基于 Cloudflare AI Search 的公开内容检索；
-- 通过 AI Gateway 提供的可选模型摘要；
-- 基于 D1 的配额和滥用控制；
-- 面向浏览器生成答案的 Turnstile 验证。
-
-部署 Worker 后，在实例配置中接入：
+Worker 上线后，在静态站点配置中接入：
 
 ```js
 export default {
@@ -234,9 +237,8 @@ export default {
 };
 ```
 
-启用 Live Ask 后，Refined-X 官方 Demo 使用
-`https://ask-demo.refined-x.com/mcp`。匿名 MCP 客户端只能获取带来源的检索结果；
-浏览器生成式回答由 Turnstile 和每日生成预算保护。
+若启用浏览器生成式回答，请在 Astro 构建时设置 `PUBLIC_TURNSTILE_SITE_KEY`。
+官方 Demo 使用 `https://ask-demo.refined-x.com/mcp`。
 
 Live Ask 有意不支持长期记忆、任意外部操作、动态权限征询，
 也不会模仿或冒充网站所有者。
@@ -293,6 +295,11 @@ Refined-X 不是：
 欢迎提交 Issue、部署案例、文档改进和 Pull Request。
 如果你已经使用 Refined-X 发布了自己的站点，
 可以创建 showcase Issue，帮助其他人了解真实使用方式。
+
+- [贡献指南](CONTRIBUTING.md)
+- [更新日志](CHANGELOG.md)
+- [安全策略](SECURITY.md)
+- [路线图](ROADMAP.md)
 
 ## 开源许可
 

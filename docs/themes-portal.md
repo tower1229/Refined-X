@@ -2,6 +2,7 @@
 
 **Name:** Refined-X  
 **Tagline:** Agent-ready personal publish starter  
+**Listing version:** 1.0.0  
 **Live demo:** https://demo.refined-x.com  
 **Example in the wild:** https://refined-x.com  
 **Repo:** https://github.com/tower1229/Refined-X  

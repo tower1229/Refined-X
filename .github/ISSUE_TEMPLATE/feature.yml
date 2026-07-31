@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose a new capability or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user scenario first. Check [ROADMAP.md](https://github.com/tower1229/Refined-X/blob/main/ROADMAP.md) before proposing large scope changes.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / scenario
+      description: Who is trying to do what, and what is painful today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should Refined-X do instead?
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Explicit non-goals
+      description: What should this change deliberately not do?
+      placeholder: e.g. not a hosted CMS, not long-term memory, not automatic MCP discovery guarantees
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches or existing workarounds.
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context

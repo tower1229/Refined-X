@@ -2,7 +2,7 @@
   "name": "refined-x",
   "private": true,
   "type": "module",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Agent-ready personal publish starter for Astro + Starlight",
   "repository": {
     "type": "git",
@@ -10,6 +10,9 @@
   },
   "homepage": "https://github.com/tower1229/Refined-X#readme",
   "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
   "keywords": [
     "astro",
     "starlight",

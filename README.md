@@ -113,6 +113,17 @@ npm run verify
 
 Start static. Add Live Ask only when conversational access is useful.
 
+## Deploy static site
+
+| Path | Guide |
+| ---- | ----- |
+| GitHub Pages | Copy [`deploy/user-github-pages.yml`](deploy/user-github-pages.yml) → enable Pages (GitHub Actions) |
+| Cloudflare Pages | Build `npm run build`, output `dist`, Node `24` |
+
+Step-by-step: [`docs/deploy-static.md`](docs/deploy-static.md).
+
+Cloudflare Pages: connect the repo in the [dashboard](https://dash.cloudflare.com/) ([git integration docs](https://developers.cloudflare.com/pages/get-started/git-integration/)). GitHub Pages: copy the workflow linked above.
+
 ## Content model
 
 The default public corpus lives in `content/`:
@@ -211,20 +222,12 @@ that every agent automatically discovers or invokes them.
 
 ## Enable Live Ask
 
-The reference implementation lives in
-[`examples/public-ask-worker`](examples/public-ask-worker).
+Optional Cloudflare Worker for grounded browser answers, NLWeb `POST /ask`, and
+MCP `ask`. Package: [`examples/public-ask-worker`](examples/public-ask-worker).
 
-It provides:
+**Deploy checklist and troubleshooting:** [`docs/deploy-live-ask.md`](docs/deploy-live-ask.md).
 
-- `POST /ask` — restricted NLWeb v0.55-compatible conversational search;
-- `POST /mcp` — Streamable HTTP MCP with an `ask` tool;
-- `GET /health` — service and retrieval readiness;
-- Cloudflare AI Search retrieval;
-- optional model-generated summaries through AI Gateway;
-- D1-backed quotas and abuse controls;
-- Turnstile protection for browser-generated answers.
-
-After deploying the Worker, connect it in your instance config:
+After the Worker is up, point the static site at it:
 
 ```js
 export default {
@@ -236,10 +239,8 @@ export default {
 };
 ```
 
-Once Live Ask is enabled, the hosted Refined-X demo uses
-`https://ask-demo.refined-x.com/mcp`. Anonymous MCP clients receive grounded
-search results; generated browser answers are protected by Turnstile and a
-daily generation budget.
+Set `PUBLIC_TURNSTILE_SITE_KEY` at Astro build time when using browser generation.
+The hosted demo uses `https://ask-demo.refined-x.com/mcp`.
 
 Live Ask intentionally does not support long-term memory, arbitrary actions,
 elicitation, or impersonating the site owner.
@@ -293,6 +294,11 @@ Refined-X is not:
 Issues, implementation reports, documentation improvements, and pull requests
 are welcome. If you launch a site with Refined-X, open a showcase issue so it
 can be included in the community gallery.
+
+- [Contributing guide](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [Security policy](SECURITY.md)
+- [Roadmap](ROADMAP.md)
 
 ## License
 

@@ -1,0 +1,64 @@
+# End-user GitHub Pages workflow for a Refined-X site.
+# Copy to `.github/workflows/deploy-pages.yml` in your repository.
+# Docs: docs/deploy-static.md
+#
+# Unlike the maintainer demo workflow, this does not inject a CNAME or bind
+# REFINED_X_INSTANCE_CONFIG to deploy/github-pages.config.mjs.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        # Optional overlay:
+        # env:
+        #   REFINED_X_INSTANCE_CONFIG: ${{ github.workspace }}/instance.config.mjs
+        #   PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
+        run: npm run build
+
+      - name: Verify
+        run: npm run verify
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

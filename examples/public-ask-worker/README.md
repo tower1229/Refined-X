@@ -4,6 +4,8 @@ Reference Cloudflare Worker that powers the optional **NLWeb-compatible** `POST 
 
 This is **not** required for the static Astro template. Without it, `/ask` still works as a curated static Answers search. Deploy this worker when you want live retrieval + summarization, then set `ask.askUrl` / `ask.mcpUrl` / `ask.healthUrl` in `site.config.mjs` (or your instance overlay).
 
+**End-user checklist and troubleshooting:** [`docs/deploy-live-ask.md`](../../docs/deploy-live-ask.md).
+
 ## What it implements
 
 - `POST /ask` — restricted NLWeb v0.55-compatible subset (`conversational_search`, `list`, `summarize`, SSE)
