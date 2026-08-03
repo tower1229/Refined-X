@@ -1,10 +1,19 @@
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { docsSchema } from '@astrojs/starlight/schema';
 import { z } from 'astro/zod';
 import { siteConfig } from '../site.config.mjs';
 import { SERIES_IDS } from './lib/series.mjs';
+
+/** Absolute content paths must be file:// URLs for Astro glob on Windows. */
+function contentBase(...segments: string[]) {
+	const abs = segments.length
+		? path.join(siteConfig.contentRoot, ...segments)
+		: siteConfig.contentRoot;
+	return pathToFileURL(abs);
+}
 
 function fallbackSlug(entry: string) {
 	return path.basename(entry, path.extname(entry));
@@ -124,27 +133,27 @@ const seriesSchema = z.object({
 export const collections = {
 	docs: defineCollection({
 		loader: glob({
-			base: siteConfig.contentRoot,
+			base: contentBase(),
 			pattern: '{articles/**/*.md,answers/**/*.md,pages/**/*.md}',
 			generateId: generateDocId,
 		}),
 		schema: docsSchema({ extend: publicDocFields }),
 	}),
 	profile: defineCollection({
-		loader: glob({ base: siteConfig.contentRoot, pattern: 'profile/*.{yaml,yml}' }),
+		loader: glob({ base: contentBase(), pattern: 'profile/*.{yaml,yml}' }),
 		schema: profileSchema,
 	}),
 	resume: defineCollection({
-		loader: glob({ base: siteConfig.contentRoot, pattern: 'profile/resume.md' }),
+		loader: glob({ base: contentBase(), pattern: 'profile/resume.md' }),
 		schema: resumeSchema,
 	}),
 	projects: defineCollection({
-		loader: glob({ base: siteConfig.contentRoot, pattern: 'projects/*.{yaml,yml,json}' }),
+		loader: glob({ base: contentBase(), pattern: 'projects/*.{yaml,yml,json}' }),
 		schema: projectSchema,
 	}),
 	series: defineCollection({
 		loader: glob({
-			base: path.join(siteConfig.contentRoot, 'series'),
+			base: contentBase('series'),
 			pattern: '*.{yaml,yml}',
 		}),
 		schema: seriesSchema,
