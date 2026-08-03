@@ -272,7 +272,9 @@ not overwrite your identity or content.
 See [`DESIGN.md`](DESIGN.md) for the visual system, typography, component
 rules, motion boundaries, and accessibility guidance.
 
-![Refined-X writing page](docs/screenshots/writing.png)
+![Refined-X cover — cascade](docs/community-cover/refined-x-cover-ink.png)
+
+![Refined-X cover — collage](docs/community-cover/refined-x-cover-paper.png)
 
 ## Scope
 

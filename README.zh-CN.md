@@ -270,7 +270,9 @@ export default {
 视觉系统、字体、组件规则、动效边界和无障碍说明详见
 [`DESIGN.md`](DESIGN.md)。
 
-![Refined-X 文章页面](docs/screenshots/writing.png)
+![Refined-X 封面 — 层叠](docs/community-cover/refined-x-cover-ink.png)
+
+![Refined-X 封面 — 拼贴](docs/community-cover/refined-x-cover-paper.png)
 
 ## 项目边界
 

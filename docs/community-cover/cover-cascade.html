@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1600" />
+  <title>Refined-X Cover — Cascade</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 1600px;
+      height: 900px;
+      overflow: hidden;
+      background: #ffe1bf;
+    }
+    .frame {
+      position: relative;
+      width: 1600px;
+      height: 900px;
+      overflow: hidden;
+      background: #ffe1bf;
+    }
+    .bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #ffe1bf;
+    }
+    .shapes {
+      position: absolute;
+      left: -318px;
+      top: -878px;
+      width: 2640.356px;
+      height: 2253.335px;
+    }
+    .shapes img {
+      position: absolute;
+      inset: 0 -2.37% -19.29% -11.94%;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      display: block;
+    }
+    .noise {
+      position: absolute;
+      inset: 0;
+      width: 1600px;
+      height: 900px;
+      object-fit: cover;
+      mix-blend-mode: overlay;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .stack { position: absolute; left: 54px; top: 54px; width: 2393px; height: 1965px; }
+    .shot {
+      position: absolute;
+      width: 755.567px;
+      overflow: hidden;
+      border-radius: 0;
+      box-shadow:
+        0px 20px 100px rgba(0, 0, 0, 0.2),
+        0px 40px 160px rgba(0, 0, 0, 0.18),
+        0px 100px 240px rgba(0, 0, 0, 0.12),
+        0px 200px 250px rgba(0, 0, 0, 0.04);
+      background: #0c0c0e;
+    }
+    .shot img {
+      display: block;
+      width: 100%;
+      height: auto;
+      vertical-align: top;
+    }
+    .shot-1 { left: 0; top: 0; height: 1965px; z-index: 4; }
+    .shot-2 { left: 545.69px; top: 209.88px; height: 1411.442px; z-index: 3; }
+    .shot-3 { left: 1091.38px; top: 419.76px; height: 1443.449px; z-index: 2; }
+    .shot-4 { left: 1637.06px; top: 629.64px; height: 953.379px; z-index: 1; }
+  </style>
+</head>
+<body>
+  <div class="frame" data-screen-label="cover-cascade">
+    <div class="bg">
+      <div class="shapes">
+        <img src="source/bg-peach/shapes.svg" alt="" />
+      </div>
+      <img class="noise" src="source/bg-peach/noise.png" alt="" />
+    </div>
+
+    <div class="stack">
+      <div class="shot shot-1">
+        <img src="source/shots/01-home-light-full.png" alt="Home" />
+      </div>
+      <div class="shot shot-2">
+        <img src="source/shots/04-article-light-full.png" alt="Article" />
+      </div>
+      <div class="shot shot-3">
+        <img src="source/shots/07-ask-light-full.png" alt="Ask" />
+      </div>
+      <div class="shot shot-4">
+        <img src="source/shots/06-projects-light-full.png" alt="Projects" />
+      </div>
+    </div>
+  </div>
+</body>
+</html>
