@@ -73,6 +73,15 @@ export type UiCopy = {
 		articleCountSuffix: (n: number) => string;
 		pageProgress: (page: number, total: number) => string;
 	};
+	comments: {
+		heading: string;
+		meta: string;
+		note: string;
+		loading: string;
+		unavailable: string;
+		noScript: string;
+		openDiscussions: string;
+	};
 	projects: {
 		featuredHeading: string;
 		coursesHeading: string;

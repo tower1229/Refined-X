@@ -1,0 +1,54 @@
+---
+import { siteConfig } from '../../site.config.mjs';
+import { UI } from '../lib/site-copy';
+import { articleCommentTerm } from '../lib/comments.mjs';
+
+interface Props {
+	entryId: string;
+}
+
+const { entryId } = Astro.props;
+const comments = siteConfig.comments;
+const discussionUrl = `https://github.com/${comments.repo}/discussions`;
+---
+<section
+	class="article-comments"
+	aria-labelledby="article-comments-heading"
+	data-giscus-comments
+	data-repo={comments.repo}
+	data-repo-id={comments.repoId}
+	data-category={comments.category}
+	data-category-id={comments.categoryId}
+	data-term={articleCommentTerm(entryId)}
+	data-lang={siteConfig.locale}
+	data-unavailable-label={UI.comments.unavailable}
+>
+	<div class="article-comments-heading">
+		<div>
+			<p class="mono article-comments-kicker">{UI.comments.meta}</p>
+			<h2 id="article-comments-heading" class="section-title">{UI.comments.heading}</h2>
+		</div>
+		<a class="mono article-comments-link" href={discussionUrl} rel="noopener noreferrer">
+			{UI.comments.openDiscussions}
+		</a>
+	</div>
+	<p class="article-comments-note">{UI.comments.note}</p>
+	<div class="article-comments-frame">
+		<p class="mono article-comments-status" data-giscus-status aria-live="polite">
+			{UI.comments.loading}
+		</p>
+		<div data-giscus-mount></div>
+	</div>
+	<noscript>
+		<p class="article-comments-noscript">
+			{UI.comments.noScript}
+			<a href={discussionUrl} rel="noopener noreferrer">{UI.comments.openDiscussions}</a>
+		</p>
+	</noscript>
+</section>
+
+<script>
+	import { initGiscusComments } from '../scripts/giscus-comments';
+
+	document.querySelectorAll<HTMLElement>('[data-giscus-comments]').forEach(initGiscusComments);
+</script>

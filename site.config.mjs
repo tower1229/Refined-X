@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { resolveCommentsConfig } from './src/lib/comments.mjs';
 
 function findPackageRoot() {
 	let dir = process.cwd();
@@ -40,6 +41,13 @@ const defaults = {
 		healthUrl: '',
 		/** Must match the Worker PERSIST_INTERACTIONS setting when Live Ask is enabled. */
 		persistInteractions: true,
+	},
+	/** Optional giscus repository/category identifiers. Leave all fields empty to disable comments. */
+	comments: {
+		repo: '',
+		repoId: '',
+		category: '',
+		categoryId: '',
 	},
 	redirects: {},
 	brand: {
@@ -113,6 +121,7 @@ const merged = {
 	...overlay,
 	social: { ...defaults.social, ...(overlay.social ?? {}) },
 	ask: { ...defaults.ask, ...(overlay.ask ?? {}) },
+	comments: resolveCommentsConfig({ ...defaults.comments, ...(overlay.comments ?? {}) }),
 	brand: mergedBrand,
 	mcp: { ...defaults.mcp, ...(overlay.mcp ?? {}) },
 	redirects: overlay.redirects ?? defaults.redirects,

@@ -1410,6 +1410,87 @@ h4 {
 .article-return {
   margin-top: 48px;
 }
+.article-comments {
+  margin-top: 64px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.article-comments-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.article-comments-kicker {
+  margin: 0 0 8px;
+  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.article-comments-note {
+  max-width: 54ch;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.article-comments-link {
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: none;
+  text-underline-offset: 4px;
+}
+.article-comments-link:hover,
+.article-comments-link:focus-visible {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.article-comments-frame {
+  position: relative;
+  min-height: 148px;
+  margin-top: 28px;
+}
+.article-comments-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  border-block: 1px solid var(--line-soft);
+  color: var(--faint);
+  font-size: 11px;
+  letter-spacing: 0.035em;
+}
+.article-comments-status::before {
+  content: '';
+  width: 18px;
+  height: 1px;
+  margin-right: 10px;
+  background: var(--line);
+  box-shadow: 28px 0 0 var(--line), 56px 0 0 var(--line);
+}
+.article-comments-status[hidden],
+.article-comments.is-ready .article-comments-status {
+  display: none;
+}
+.article-comments.is-unavailable .article-comments-status {
+  color: var(--muted);
+}
+.article-comments .giscus,
+.article-comments .giscus-frame {
+  width: 100%;
+}
+.article-comments-noscript {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.article-comments-noscript a {
+  margin-left: 0.35em;
+  color: var(--ink);
+}
 .answer-return {
   display: flex;
   flex-wrap: wrap;
@@ -3255,6 +3336,23 @@ body:has(.overlay[open]) {
   }
   .article-title {
     font-size: clamp(1.75rem, 6vw, 2.25rem);
+  }
+  .article-comments {
+    margin-top: 52px;
+    padding-top: 24px;
+  }
+  .article-comments-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .article-comments-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .article-comments-frame {
+    margin-top: 20px;
   }
   .overlay {
     padding: 5vh 12px 12px;

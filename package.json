@@ -2,7 +2,7 @@
   "name": "refined-x",
   "private": true,
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Agent-ready personal publish starter for Astro + Starlight",
   "repository": {
     "type": "git",
@@ -27,6 +27,7 @@
     "verify": "node scripts/verify.mjs",
     "test:public-ask": "node --test src/lib/ask-persistence.test.ts src/scripts/ask-agent.test.ts src/scripts/ask-pending.test.ts src/scripts/source-link.test.ts src/scripts/turnstile-client.test.ts src/scripts/theme-control.test.ts src/scripts/theme-preference.test.ts src/scripts/hero-theme-bg.test.ts src/scripts/typewriter.test.ts",
     "test:related": "node --test src/lib/related-articles.test.ts",
+    "test:comments": "node --test src/lib/comments.test.mjs src/scripts/giscus-comments.test.ts",
     "sync-content": "astro sync --force",
     "predev": "npm run collect-assets",
     "prebuild": "npm run collect-assets && npm run sync-content",

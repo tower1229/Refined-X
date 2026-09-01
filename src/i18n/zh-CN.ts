@@ -77,6 +77,15 @@ export const zhCN: UiCopy = {
 		articleCountSuffix: (n) => `共 ${n} 篇。`,
 		pageProgress: (page, total) => `第 ${page} / ${total} 页`,
 	},
+	comments: {
+		heading: '评论与讨论',
+		meta: 'GitHub Discussions',
+		note: '讨论由 GitHub Discussions 托管，参与评论需要 GitHub 账号。',
+		loading: '正在加载评论…',
+		unavailable: '评论暂时无法加载，你仍可前往 Discussions 参与。',
+		noScript: '浏览器未启用 JavaScript。',
+		openDiscussions: '前往 Discussions',
+	},
 	projects: {
 		featuredHeading: '精选作品',
 		coursesHeading: '我的公开课',

@@ -5,6 +5,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-01
+
+### Added
+
+- Optional giscus comments on article pages through four public instance configuration fields
+- Stable per-article discussion mapping, locale-aware copy, lazy loading, and synchronized light/dark themes
+- Build-time validation for partial comment configuration and generated-surface verification
+
+### Changed
+
+- Article footers now reserve a restrained editorial discussion area when comments are configured
+
 ## [1.0.0] - 2026-07-31
 
 First stable release of Refined-X as an agent-ready personal publishing starter.
@@ -27,3 +39,4 @@ First stable release of Refined-X as an agent-ready personal publishing starter.
 - Live Ask does not provide long-term memory, arbitrary tool actions, elicitation, or impersonation of the site owner
 
 [1.0.0]: https://github.com/tower1229/Refined-X/releases/tag/v1.0.0
+[1.1.0]: https://github.com/tower1229/Refined-X/releases/tag/v1.1.0

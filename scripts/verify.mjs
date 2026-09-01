@@ -80,8 +80,25 @@ if (siteConfig.ask.askUrl) {
 }
 
 try {
-	for (const htmlPath of await listHtmlFiles(distRoot)) {
+	const htmlFiles = await listHtmlFiles(distRoot);
+	let commentPages = 0;
+	for (const htmlPath of htmlFiles) {
 		const html = await readFile(htmlPath, 'utf8');
+		const relativePath = path.relative(distRoot, htmlPath).replaceAll('\\', '/');
+		const isArticle = /^\d{4}\/\d{2}\/\d{2}\/.+\/index\.html$/.test(relativePath);
+		const hasComments = html.includes('data-giscus-comments');
+
+		if (hasComments) commentPages += 1;
+		if (siteConfig.comments.enabled && isArticle && !hasComments) {
+			failures.push(`${relativePath} is an article but is missing the comments surface`);
+		}
+		if (hasComments && !isArticle) {
+			failures.push(`${relativePath} is not an article but includes the comments surface`);
+		}
+		if (hasComments && !/data-term="article:[^"]+"/.test(html)) {
+			failures.push(`${relativePath} is missing its stable article comment term`);
+		}
+
 		for (const match of html.matchAll(/"inLanguage":"([^"]+)"/g)) {
 			const language = match[1];
 			if (language !== siteConfig.locale) {
@@ -91,8 +108,14 @@ try {
 			}
 		}
 	}
+	if (siteConfig.comments.enabled && commentPages === 0) {
+		failures.push('Comments are enabled but no article comment surfaces were generated');
+	}
+	if (!siteConfig.comments.enabled && commentPages > 0) {
+		failures.push('Comments are disabled but comment surfaces were generated');
+	}
 } catch (error) {
-	failures.push(`HTML locale verification failed: ${error.message}`);
+	failures.push(`HTML integration verification failed: ${error.message}`);
 }
 
 if (failures.length > 0) {

@@ -78,6 +78,15 @@ export const en: UiCopy = {
 		articleCountSuffix: (n) => `${n} articles.`,
 		pageProgress: (page, total) => `Page ${page} / ${total}`,
 	},
+	comments: {
+		heading: 'Comments & discussion',
+		meta: 'GitHub Discussions',
+		note: 'Comments are hosted by GitHub Discussions. A GitHub account is required to participate.',
+		loading: 'Loading comments…',
+		unavailable: 'Comments could not load. You can still join the discussion on GitHub.',
+		noScript: 'JavaScript is disabled in this browser.',
+		openDiscussions: 'Open Discussions',
+	},
 	projects: {
 		featuredHeading: 'Featured projects',
 		coursesHeading: 'Courses',

@@ -3,6 +3,8 @@ import { UI } from '../lib/site-copy';
 import { getCollection } from 'astro:content';
 import Icon from './Icon.astro';
 import ArticleToc from './ArticleToc.astro';
+import ArticleComments from './ArticleComments.astro';
+import { siteConfig } from '../../site.config.mjs';
 import {
 	estimateReadingMinutes,
 	formatArticleDate,
@@ -114,6 +116,8 @@ const showToc = shouldShowToc(tocItems);
           </a>
         </div>
       )}
+
+      {siteConfig.comments.enabled && <ArticleComments entryId={entry.id} />}
 
       {rel.length > 0 && (
         <>

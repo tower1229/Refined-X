@@ -194,8 +194,30 @@ export default {
 | `assetSource` | 未设置      | 可选的外部图片资源库                  |
 | `brand.*`     | Demo 数据   | 公开身份与首页文案                    |
 | `ask.*`       | 空          | 可选的 Public Ask、MCP 与健康检查地址 |
+| `comments.*`  | 空          | 可选的 giscus 仓库与讨论分类          |
 
 相对路径均从 Refined-X 包根目录解析。
+
+## 启用文章评论
+
+Refined-X 可以在文章页按需加载 [giscus](https://giscus.app/)，并将讨论数据保存在
+公开的 GitHub Discussions 仓库中。启用 Discussions、安装 giscus GitHub App、
+创建讨论分类后，从 giscus 配置页复制四个公开标识：
+
+```js
+export default {
+  comments: {
+    repo: "owner/repository",
+    repoId: "R_...",
+    category: "Comments",
+    categoryId: "DIC_...",
+  },
+};
+```
+
+四项全部留空时评论关闭；部分配置会让构建明确失败，避免发布不可用的评论区。
+Refined-X 使用稳定的 `article:<entry.id>` 讨论键，语言和深浅色跟随站点，第三方
+iframe 会懒加载。访客参与评论需要 GitHub 账号。
 
 ## Agent 可读接口
 

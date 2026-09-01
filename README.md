@@ -196,8 +196,33 @@ Common options:
 | `assetSource` | unset       | Optional external image library           |
 | `brand.*`     | demo values | Public identity and home-page copy        |
 | `ask.*`       | empty       | Optional Public Ask, MCP, and health URLs |
+| `comments.*`  | empty       | Optional giscus repository and category   |
 
 Relative paths resolve from the Refined-X package root.
+
+## Enable article comments
+
+Refined-X can load [giscus](https://giscus.app/) on article pages and keep the
+discussion data in a public GitHub Discussions repository. Enable Discussions,
+install the giscus GitHub App, create a discussion category, then copy the four
+public identifiers from the giscus configuration page:
+
+```js
+export default {
+  comments: {
+    repo: "owner/repository",
+    repoId: "R_...",
+    category: "Comments",
+    categoryId: "DIC_...",
+  },
+};
+```
+
+Leave all four fields empty to disable comments. A partial configuration fails
+the build instead of silently publishing a broken surface. Refined-X uses a
+stable `article:<entry.id>` discussion key, follows the site locale and theme,
+and loads the third-party iframe lazily. Visitors need a GitHub account to
+participate.
 
 ## Agent-readable surfaces
 
