@@ -9,6 +9,8 @@
     "typecheck": "npm run cf-typegen && tsc --noEmit",
     "pretest": "npm run sync:persona",
     "test": "node --test src/*.test.ts scripts/*.test.mjs",
+    "test:mcp-sdk-spike": "node --test --test-concurrency=1 spike/mcp-dual-era/mcp-dual-era.integration.test.ts",
+    "bundle:mcp-sdk-spike": "npx wrangler deploy --dry-run --outdir=.wrangler/spike-bundle --config spike/mcp-dual-era/wrangler.jsonc",
     "test:staging": "node scripts/staging-regression.mjs",
     "test:staging:model": "node scripts/staging-model-smoke.mjs",
     "check:search": "node scripts/check-ai-search.mjs",
@@ -18,8 +20,12 @@
     "key:manage": "node scripts/manage-api-keys.mjs"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
     "@types/node": "24.3.0",
     "typescript": "5.9.3",
     "wrangler": "4.106.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0"
   }
 }
