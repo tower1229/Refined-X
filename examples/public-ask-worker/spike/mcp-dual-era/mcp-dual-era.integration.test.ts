@@ -284,6 +284,17 @@ test("Unicode length and empty mode boundaries without model calls", async () =>
     ),
   );
   assert.equal(extraField.body.result?.isError, true);
+
+  const context = await readRpc(
+    await postMcp(
+      modernHeaders("tools/call", "ask"),
+      modernBody("tools/call", {
+        name: "ask",
+        arguments: { query: { text: "x" }, context: { previous: "x" } },
+      }),
+    ),
+  );
+  assert.equal(context.body.result?.isError, true);
   assert.equal(await askCalls(), before + 6);
 });
 
@@ -490,8 +501,10 @@ test("auth/quota HTTP status mapping and concurrent isolation", async () => {
     ),
   ]);
   assert.equal(unauthorized.status, 401);
+  assert.equal(unauthorized.headers.get("retry-after"), null);
   assert.match(unauthorized.body.result.content[0].text, /UNAUTHORIZED/);
   assert.equal(forbidden.status, 403);
+  assert.equal(forbidden.headers.get("retry-after"), null);
   assert.match(forbidden.body.result.content[0].text, /FORBIDDEN/);
   assert.equal(quota.status, 429);
   assert.equal(quota.headers.get("retry-after"), "30");
@@ -516,10 +529,53 @@ test("legacy SSE final-state read preserves remapped auth status", async () => {
     },
   );
   assert.equal(res.status, 401);
-  assert.match(res.headers.get("content-type") ?? "", /text\/event-stream|application\/json/);
+  assert.match(res.headers.get("content-type") ?? "", /text\/event-stream/);
   const body = await readRpc(new Response(await res.arrayBuffer(), { status: res.status, headers: res.headers }));
   assert.equal(body.body.result.isError, true);
   assert.equal(await askCalls(), before + 1);
+});
+
+test("HTTP Authorization mapping: anonymous list, bad key, summarize forbid, rate limit", async () => {
+  const before = await askCalls();
+
+  const anonList = await readRpc(
+    await postMcp(
+      modernHeaders("tools/call", "ask"),
+      modernBody("tools/call", { name: "ask", arguments: { query: { text: "list-me" } } }),
+    ),
+  );
+  assert.equal(anonList.status, 200);
+  assert.equal(anonList.body.result?.structuredContent?.mode, "list");
+
+  const badKey = await readRpc(
+    await postMcp(
+      modernHeaders("tools/call", "ask", { authorization: "Bearer bad-key" }),
+      modernBody("tools/call", { name: "ask", arguments: { query: { text: "x" } } }),
+    ),
+  );
+  assert.equal(badKey.status, 401);
+  assert.equal(badKey.headers.get("retry-after"), null);
+
+  const forbid = await readRpc(
+    await postMcp(
+      modernHeaders("tools/call", "ask"),
+      modernBody("tools/call", {
+        name: "ask",
+        arguments: { query: { text: "x" }, prefer: { mode: "summarize" } },
+      }),
+    ),
+  );
+  assert.equal(forbid.status, 403);
+
+  const rate = await readRpc(
+    await postMcp(
+      modernHeaders("tools/call", "ask", { authorization: "Bearer rate-limited" }),
+      modernBody("tools/call", { name: "ask", arguments: { query: { text: "x" } } }),
+    ),
+  );
+  assert.equal(rate.status, 429);
+  assert.equal(rate.headers.get("retry-after"), "30");
+  assert.equal(await askCalls(), before + 4);
 });
 
 test("CORS allowlist and 16 KiB request bound", async () => {

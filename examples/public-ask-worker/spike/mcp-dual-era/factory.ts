@@ -108,7 +108,17 @@ export function createSpikeAskServer(_ctx: McpRequestContext): McpServer {
       },
     },
     async (args, extra) => {
-      const input = args as AskToolInput;
+      const input = { ...(args as AskToolInput) };
+      const authorization = extra.http?.req?.headers.get("authorization");
+      if (input.auth === undefined && authorization) {
+        if (authorization === "Bearer bad-key") input.auth = "unauthorized";
+        else if (authorization === "Bearer no-summarize") input.auth = "forbidden";
+        else if (authorization === "Bearer rate-limited") input.auth = "quota";
+      }
+      const mode = input.prefer?.mode ?? "";
+      if (input.auth === undefined && !authorization && mode.includes("summarize")) {
+        input.auth = "forbidden";
+      }
       return store.ask(input, extra.http?.req?.signal, store.outcome);
     },
   );
