@@ -9,6 +9,7 @@ import {
 	PUBLIC_ASK_UNSUPPORTED,
 	PUBLIC_ASK_UNSUPPORTED_ITEMS,
 } from '../../lib/site-copy';
+import { NLWEB_VERSION } from '../../../shared/public-ask-contract.ts';
 import { absoluteUrl, getPublicProfile, jsonResponse } from '../../lib/public-data';
 
 export async function GET() {
@@ -28,7 +29,7 @@ export async function GET() {
 		mcpServerCardUrl: mcpServerCardUrl(),
 		mcpJsonUrl: mcpJsonUrl(),
 		nlweb: {
-			version: '0.55',
+			version: NLWEB_VERSION,
 			capability: PUBLIC_ASK_CAPABILITY,
 			askUrl: MCP_ASK_URL,
 			mcpUrl: MCP_ENDPOINT_URL,

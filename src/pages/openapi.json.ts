@@ -1,10 +1,15 @@
+import {
+	ASK_RAW_INPUT_SCHEMA,
+	ASK_SUCCESS_RESULT_SCHEMA,
+	NLWEB_VERSION,
+	PUBLIC_ASK_CAPABILITY,
+	PUBLIC_ASK_SUPPORTED,
+	PUBLIC_ASK_UNSUPPORTED,
+} from '../../shared/public-ask-contract.ts';
 import { absoluteUrl, jsonResponse } from '../lib/public-data';
 import {
 	MCP_ASK_URL,
 	MCP_ENDPOINT_URL,
-	PUBLIC_ASK_CAPABILITY,
-	PUBLIC_ASK_SUPPORTED,
-	PUBLIC_ASK_UNSUPPORTED,
 	SITE_BRAND,
 } from '../lib/site-copy';
 
@@ -27,39 +32,7 @@ export function GET() {
 				wechat: { type: 'string', description: '微信号' },
 			},
 		},
-		NlWebAskRequest: {
-			type: 'object',
-			description: `${PUBLIC_ASK_CAPABILITY}. ${PUBLIC_ASK_SUPPORTED} ${PUBLIC_ASK_UNSUPPORTED}`,
-			required: ['query'],
-			additionalProperties: false,
-			properties: {
-				query: {
-					type: 'object',
-					required: ['text'],
-					properties: {
-						text: { type: 'string', minLength: 1, maxLength: 500 },
-					},
-					additionalProperties: false,
-				},
-				context: { type: 'object', maxProperties: 0, additionalProperties: false },
-				prefer: {
-					type: 'object',
-					additionalProperties: false,
-					properties: {
-						streaming: { type: 'boolean' },
-						response_format: { const: 'conversational_search' },
-						mode: { enum: ['list', 'summarize', 'list, summarize'] },
-						'accept-language': { type: 'string' },
-						'user-agent': { type: 'string' },
-					},
-				},
-				meta: {
-					type: 'object',
-					properties: { version: { const: '0.55' } },
-					additionalProperties: false,
-				},
-			},
-		},
+		NlWebAskRequest: ASK_RAW_INPUT_SCHEMA,
 		NlWebResponse: {
 			type: 'object',
 			required: ['_meta'],
@@ -69,10 +42,10 @@ export function GET() {
 					required: ['response_type', 'version'],
 					properties: {
 						response_type: { enum: ['answer', 'failure'] },
-						version: { const: '0.55' },
+						version: { const: NLWEB_VERSION },
 					},
 				},
-				results: { type: 'array', items: { type: 'object', additionalProperties: true } },
+				results: ASK_SUCCESS_RESULT_SCHEMA.properties.results,
 				error: { type: 'object', additionalProperties: true },
 			},
 		},

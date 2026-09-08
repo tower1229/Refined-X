@@ -1,48 +1,17 @@
-import { type AskRuntime, type AskActionContext, executeAskAction } from "./index.ts";
-import { answerMeta, type NlWebRequest, parseNlWebRequest } from "./protocol.ts";
+import { type AskRuntime, type AskActionContext, executeAskAction } from "./ask-service.ts";
+import { answerMeta, normalizeAskRequest, type NlWebRequest } from "./protocol.ts";
+import {
+  ASK_RAW_INPUT_SCHEMA,
+  PUBLIC_ASK_CAPABILITY,
+  PUBLIC_ASK_UNSUPPORTED,
+} from "../../../shared/public-ask-contract.ts";
 import { runPreAuthChecks } from "./pre-auth.ts";
 import { readJsonBody } from "./request-envelope.ts";
 import { resolveInstancePolicy } from "./instance-policy.ts";
 
-const ASK_CAPABILITY_DESCRIPTION = "NLWeb v0.55-compatible restricted /ask subset. Supports conversational_search, list, summarize, and SSE-equivalent ask results. Does not support /await, promise responses, elicitation, chatgpt_app, arbitrary extension fields, result actions, or long-term memory.";
+export const ASK_TOOL_INPUT_SCHEMA = ASK_RAW_INPUT_SCHEMA;
 
-export const ASK_TOOL_INPUT_SCHEMA = {
-  type: "object",
-  description: ASK_CAPABILITY_DESCRIPTION,
-  properties: {
-    query: {
-      type: "object",
-      properties: { text: { type: "string" } },
-      required: ["text"],
-      additionalProperties: false,
-    },
-    prefer: {
-      type: "object",
-      properties: {
-        streaming: { type: "boolean" },
-        mode: {
-          type: "string",
-          enum: ["list", "summarize", "list, summarize"],
-          description: "Comma separated modes: list, summarize",
-        },
-        response_format: { const: "conversational_search" },
-        "accept-language": { type: "string" },
-        "user-agent": { type: "string" },
-      },
-      additionalProperties: false,
-    },
-    context: { type: "object", maxProperties: 0, additionalProperties: false },
-    meta: {
-      type: "object",
-      properties: {
-        version: { const: "0.55" },
-      },
-      additionalProperties: false,
-    },
-  },
-  required: ["query"],
-  additionalProperties: false,
-} as const;
+const ASK_TOOL_DESCRIPTION = `Ask a natural language question through the ${PUBLIC_ASK_CAPABILITY}. ${PUBLIC_ASK_UNSUPPORTED}`;
 
 function jsonRpcError(id: string | number | null, code: number | string, message: string, status: number = 200, headers?: HeadersInit) {
   return Response.json({ jsonrpc: "2.0", id, error: { code, message } }, { status, headers });
@@ -78,16 +47,7 @@ function rejectionResponse(id: string | number | null, rejection: { code: string
 }
 
 function normalizeAskArguments(args: unknown): NlWebRequest {
-  if (!isRecord(args)) {
-    throw new Error("tool arguments must be an object");
-  }
-  const normalized = { ...args };
-  const prefer = isRecord(normalized.prefer) ? { ...normalized.prefer } : {};
-  if (!prefer.mode) {
-    prefer.mode = "list";
-  }
-  normalized.prefer = prefer;
-  return parseNlWebRequest(normalized);
+  return normalizeAskRequest(args, "mcp");
 }
 
 export async function handleMcp(request: Request, env: Env, runtime: AskRuntime = {}): Promise<Response> {
@@ -146,7 +106,7 @@ export async function handleMcp(request: Request, env: Env, runtime: AskRuntime 
       tools: [
         {
           name: "ask",
-          description: `Ask a natural language question through the ${ASK_CAPABILITY_DESCRIPTION}`,
+          description: ASK_TOOL_DESCRIPTION,
           inputSchema: ASK_TOOL_INPUT_SCHEMA,
         },
       ],

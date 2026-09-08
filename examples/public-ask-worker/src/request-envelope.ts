@@ -1,4 +1,4 @@
-import { parseNlWebRequest, RequestProblem, type NlWebRequest } from "./protocol.ts";
+import { normalizeAskRequest, RequestProblem, type NlWebRequest } from "./protocol.ts";
 
 export const MAX_REQUEST_BYTES = 16 * 1024;
 
@@ -64,7 +64,7 @@ export async function readRequestEnvelope(
       text += decoder.decode(value, { stream: true });
     }
     text += decoder.decode();
-    return parseNlWebRequest(JSON.parse(text));
+    return normalizeAskRequest(JSON.parse(text), "http");
   } catch (error) {
     if (error instanceof RequestEnvelopeProblem || error instanceof RequestProblem) throw error;
     throw new RequestEnvelopeProblem("request body must be valid JSON");

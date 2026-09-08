@@ -12,6 +12,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "../../shared/**/*.ts",
     "spike/mcp-dual-era/ask-tool.ts",
     "spike/mcp-dual-era/factory.ts",
     "spike/mcp-dual-era/http-boundary.ts",

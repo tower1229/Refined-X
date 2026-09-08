@@ -71,7 +71,13 @@ test("MCP POST /mcp tools/list returns the ask tool schema", async () => {
   assert.equal(body.result.tools[0].inputSchema.properties.query.additionalProperties, false);
   assert.equal(body.result.tools[0].inputSchema.properties.context.maxProperties, 0);
   assert.equal(body.result.tools[0].inputSchema.properties.prefer.additionalProperties, false);
-  assert.deepEqual(body.result.tools[0].inputSchema.properties.prefer.properties.mode.enum, ["list", "summarize", "list, summarize"]);
+  assert.equal(body.result.tools[0].inputSchema.properties.prefer.properties.mode.type, "string");
+  assert.equal("enum" in body.result.tools[0].inputSchema.properties.prefer.properties.mode, false);
+  assert.deepEqual(body.result.tools[0].inputSchema.properties.prefer.properties.mode.examples, [
+    "list",
+    "summarize",
+    "list, summarize",
+  ]);
   assert.equal(body.result.tools[0].inputSchema.properties.prefer.properties.response_format.const, "conversational_search");
   assert.equal(body.result.tools[0].inputSchema.properties.meta.additionalProperties, false);
   assert.equal(body.result.tools[0].inputSchema.properties.prefer.properties.streaming.type, "boolean");

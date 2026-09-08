@@ -1,133 +1,21 @@
-export const NLWEB_VERSION = "0.55";
+export {
+  NLWEB_VERSION,
+  RequestProblem,
+  normalizeAskRequest,
+  parseNlWebRequest,
+  responseModes,
+  type NlWebMeta,
+  type NlWebRequest,
+  type NlWebResult,
+  type NlWebSuccessBody,
+  type AskEntry,
+} from "../../../shared/public-ask-contract.ts";
 
-export type NlWebRequest = {
-  query: {
-    text: string;
-  };
-  prefer?: {
-    streaming?: boolean;
-    response_format?: string;
-    mode?: string;
-    "accept-language"?: string;
-    "user-agent"?: string;
-  };
-  meta?: {
-    version?: string;
-  };
-};
-
-export type NlWebResult = {
-  "@type": string;
-  [key: string]: unknown;
-};
-
-export type NlWebMeta = {
-  response_type: "answer" | "failure";
-  response_format: "conversational_search";
-  version: typeof NLWEB_VERSION;
-  request_id: string;
-  streaming?: boolean;
-};
-
-export class RequestProblem extends Error {
-  readonly code: "INVALID_QUERY" | "UNSUPPORTED_FORMAT" | "UNSUPPORTED_MODE";
-
-  constructor(
-    code: "INVALID_QUERY" | "UNSUPPORTED_FORMAT" | "UNSUPPORTED_MODE",
-    message: string,
-  ) {
-    super(message);
-    this.code = code;
-  }
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function rejectUnknownFields(value: Record<string, unknown>, allowed: readonly string[], path = "") {
-  const allowedSet = new Set(allowed);
-  const unknown = Object.keys(value).find((key) => !allowedSet.has(key));
-  if (unknown) {
-    throw new RequestProblem("INVALID_QUERY", `unsupported field: ${path}${unknown}`);
-  }
-}
-
-export function parseNlWebRequest(value: unknown): NlWebRequest {
-  if (!isObject(value) || !isObject(value.query)) {
-    throw new RequestProblem("INVALID_QUERY", "query must be an object");
-  }
-  rejectUnknownFields(value, ["query", "context", "prefer", "meta"]);
-  rejectUnknownFields(value.query, ["text"], "query.");
-  const text = value.query.text;
-  if (typeof text !== "string" || text.trim().length === 0 || [...text.trim()].length > 500) {
-    throw new RequestProblem("INVALID_QUERY", "query.text must contain 1 to 500 characters");
-  }
-  if (value.context !== undefined && !isObject(value.context)) {
-    throw new RequestProblem("INVALID_QUERY", "context must be an object");
-  }
-  if (isObject(value.context)) rejectUnknownFields(value.context, [], "context.");
-  if (value.prefer !== undefined && !isObject(value.prefer)) {
-    throw new RequestProblem("INVALID_QUERY", "prefer must be an object");
-  }
-  if (value.meta !== undefined && !isObject(value.meta)) {
-    throw new RequestProblem("INVALID_QUERY", "meta must be an object");
-  }
-
-  const prefer = value.prefer as NlWebRequest["prefer"];
-  const meta = value.meta as NlWebRequest["meta"];
-  if (isObject(prefer)) {
-    rejectUnknownFields(
-      prefer,
-      ["streaming", "response_format", "mode", "accept-language", "user-agent"],
-      "prefer.",
-    );
-  }
-  if (isObject(meta)) rejectUnknownFields(meta, ["version"], "meta.");
-  if (prefer?.streaming !== undefined && typeof prefer.streaming !== "boolean") {
-    throw new RequestProblem("INVALID_QUERY", "prefer.streaming must be a boolean");
-  }
-  for (const field of ["accept-language", "user-agent"] as const) {
-    if (prefer?.[field] !== undefined && typeof prefer[field] !== "string") {
-      throw new RequestProblem("INVALID_QUERY", `prefer.${field} must be a string`);
-    }
-  }
-  if (prefer?.mode !== undefined && typeof prefer.mode !== "string") {
-    throw new RequestProblem("INVALID_QUERY", "prefer.mode must be a string");
-  }
-  if (prefer?.response_format !== undefined && typeof prefer.response_format !== "string") {
-    throw new RequestProblem("INVALID_QUERY", "prefer.response_format must be a string");
-  }
-  if (meta?.version !== undefined && typeof meta.version !== "string") {
-    throw new RequestProblem("INVALID_QUERY", "meta.version must be a string");
-  }
-  if (meta?.version !== undefined && meta.version !== NLWEB_VERSION) {
-    throw new RequestProblem("INVALID_QUERY", `only NLWeb ${NLWEB_VERSION} is supported`);
-  }
-  if (
-    prefer?.response_format !== undefined &&
-    prefer.response_format !== "conversational_search"
-  ) {
-    throw new RequestProblem("UNSUPPORTED_FORMAT", "only conversational_search is supported");
-  }
-  const modes = responseModes(prefer?.mode);
-  if (modes.some((mode) => mode !== "list" && mode !== "summarize")) {
-    throw new RequestProblem("UNSUPPORTED_MODE", "supported modes are list and summarize");
-  }
-
-  return {
-    query: { text: text.trim() },
-    ...(prefer === undefined ? {} : { prefer }),
-    ...(meta === undefined ? {} : { meta }),
-  };
-}
-
-export function responseModes(mode: string | undefined): string[] {
-  return (mode ?? "list, summarize")
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
+import {
+  NLWEB_VERSION,
+  type NlWebMeta,
+  type NlWebResult,
+} from "../../../shared/public-ask-contract.ts";
 
 export function answerMeta(requestId: string, streaming = false): NlWebMeta {
   return {

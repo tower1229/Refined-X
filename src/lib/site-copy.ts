@@ -1,6 +1,21 @@
 import { siteConfig } from '../../site.config.mjs';
 import { getUi } from '../i18n/index';
 import { selectAskPersistenceCopy } from './ask-persistence';
+import {
+	PUBLIC_ASK_CAPABILITY,
+	PUBLIC_ASK_SUPPORTED,
+	PUBLIC_ASK_UNSUPPORTED,
+	PUBLIC_ASK_SUPPORTED_ITEMS,
+	PUBLIC_ASK_UNSUPPORTED_ITEMS,
+} from '../../shared/public-ask-contract.ts';
+
+export {
+	PUBLIC_ASK_CAPABILITY,
+	PUBLIC_ASK_SUPPORTED,
+	PUBLIC_ASK_UNSUPPORTED,
+	PUBLIC_ASK_SUPPORTED_ITEMS,
+	PUBLIC_ASK_UNSUPPORTED_ITEMS,
+};
 
 const ui = getUi(siteConfig.locale);
 
@@ -63,27 +78,6 @@ export const MCP_ENDPOINT_URL = siteConfig.ask.mcpUrl || '';
 export const MCP_ASK_URL = siteConfig.ask.askUrl || '';
 
 export const MCP_HEALTH_URL = siteConfig.ask.healthUrl || '';
-
-export const PUBLIC_ASK_CAPABILITY =
-	'NLWeb v0.55-compatible restricted /ask subset';
-
-export const PUBLIC_ASK_SUPPORTED =
-	'Supports POST /ask with conversational_search, list, summarize, buffered SSE, and MCP ask over Streamable HTTP.';
-
-export const PUBLIC_ASK_UNSUPPORTED =
-	'Does not support /await, promise responses, elicitation, chatgpt_app, arbitrary extension fields, result actions, or long-term memory.';
-
-export const PUBLIC_ASK_SUPPORTED_ITEMS = ['POST /ask', 'conversational_search', 'list', 'summarize', 'SSE', 'MCP ask'] as const;
-
-export const PUBLIC_ASK_UNSUPPORTED_ITEMS = [
-	'/await',
-	'promise responses',
-	'elicitation',
-	'chatgpt_app',
-	'arbitrary extension fields',
-	'result actions',
-	'long-term memory',
-] as const;
 
 export const MCP_AGENT_PROMPT = MCP_ENDPOINT_URL
 	? ui.mcp.agentPrompt(MCP_ENDPOINT_URL)
