@@ -1,0 +1,6 @@
+{
+  "setup-worktree": [
+    "npm ci",
+    "if [ -f \"$ROOT_WORKTREE_PATH/.env\" ]; then cp \"$ROOT_WORKTREE_PATH/.env\" .env; elif [ -f .env.example ]; then cp .env.example .env; fi"
+  ]
+}

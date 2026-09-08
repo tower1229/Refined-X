@@ -30,7 +30,7 @@ npm run bundle:mcp-sdk-spike
 ## Findings for batch B
 
 1. **Published `2.0.0` has no `maxRequestBodySize` option** in installed `CreateMcpHandlerOptions` (online API docs mention it; package DTS/runtime do not). Spike enforces **16 KiB** by reading the body first, returning **413**, then passing `parsedBody` into `handler.fetch`.
-2. **Auth/quota HTTP remapping** works for modern JSON and legacy SSE when the outer layer buffers the SDK final response and applies a per-request outcome (`AsyncLocalStorage`). Concurrent 401/403/429 do not cross-contaminate. Spike uses synthetic `auth` tool args to isolate SDK mapping; real Bearer/Key/`runPreAuthChecks` stay for batch B.
+2. **Auth/quota HTTP remapping** works for modern JSON and legacy SSE when the outer layer buffers the SDK final response and applies a per-request outcome (`AsyncLocalStorage`). Concurrent 401/403/429 do not cross-contaminate. Spike covers both synthetic `auth` tool args and `Authorization: Bearer …` / anonymous summarize→403 mapping; real Key/`runPreAuthChecks` stay for batch B.
 3. **Modern requests** require matching `MCP-Protocol-Version`, `Mcp-Method`, and (for `tools/call`) `Mcp-Name`; mismatch → `-32020` without entering ask.
 4. **Legacy unsupported initialize** counter-offers `2025-11-25`; `notifications/initialized` → **202** empty body.
 5. **Cancel:** client abort is verified not to hang; tool entry may or may not occur depending on race — recorded as bounded behavior, not as production cancel semantics.
