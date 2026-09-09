@@ -215,7 +215,6 @@ async function runClaudeModern(baseUrl) {
     ];
   }
 
-  await reset(baseUrl);
   const listPrompt =
     'Call mcp__refined-x-ask__ask with {"query":{"text":"acceptance list"},"prefer":{"mode":"list"}} then say DONE';
   const listRun = runCapture("claude", claudeArgs(configPath, listPrompt), envModern, dir, {
