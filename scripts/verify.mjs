@@ -2,23 +2,41 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { siteConfig } from '../site.config.mjs';
 import { builtPageExists, builtResourceExists } from './dist-path.mjs';
+import {
+	MUST_NOT_EXIST_PATHS,
+	requiredDiscoveryFilesForStage,
+	verifyLlmsAgainstCapabilities,
+	verifyOpenApiAgainstCapabilities,
+} from './verify-capabilities.mjs';
+import { resolvePublicCapabilities } from '../src/lib/public-capabilities.ts';
 
 const distRoot = siteConfig.outDir;
 const requiredPages = ['/', '/about/', '/projects/', '/writing/', '/ask/', '/answers/', '/friends/'];
 const requiredFiles = [
 	'/.nojekyll',
-	'/.well-known/about.json',
-	'/.well-known/mcp.json',
-	'/.well-known/mcp/catalog.json',
-	'/.well-known/mcp/server-card.json',
-	'/llms.txt',
-	'/openapi.json',
 	'/api/profile.json',
 	'/api/articles.json',
 	'/api/search-index.json',
+	...requiredDiscoveryFilesForStage(),
 ];
 
 const failures = [];
+
+const caps = resolvePublicCapabilities({
+	site: siteConfig.site,
+	title: siteConfig.title,
+	ask: {
+		askUrl: siteConfig.ask.askUrl,
+		mcpUrl: siteConfig.ask.mcpUrl,
+		healthUrl: siteConfig.ask.healthUrl,
+		protocolProfile: siteConfig.ask.protocolProfile,
+	},
+	mcp: {
+		packageIdentifier: siteConfig.mcp.packageIdentifier,
+		airIdentifier: siteConfig.mcp.airIdentifier,
+		discoveryMetaKey: siteConfig.mcp.discoveryMetaKey,
+	},
+});
 
 async function listHtmlFiles(directory) {
 	const files = [];
@@ -36,6 +54,11 @@ for (const page of requiredPages) {
 for (const file of requiredFiles) {
 	if (!(await builtResourceExists(distRoot, file))) failures.push(`Missing file: ${file}`);
 }
+for (const file of MUST_NOT_EXIST_PATHS) {
+	if (await builtResourceExists(distRoot, file)) {
+		failures.push(`File must not exist at this migration stage: ${file}`);
+	}
+}
 
 try {
 	const profile = JSON.parse(await readFile(path.join(distRoot, 'api/profile.json'), 'utf8'));
@@ -46,15 +69,19 @@ try {
 
 try {
 	const llms = await readFile(path.join(distRoot, 'llms.txt'), 'utf8');
-	if (!llms.includes('# ')) failures.push('llms.txt looks empty');
-	if (siteConfig.ask.mcpUrl && !llms.includes(siteConfig.ask.mcpUrl)) {
-		failures.push('llms.txt missing configured MCP URL');
-	}
+	failures.push(...verifyLlmsAgainstCapabilities(caps, llms));
 } catch (error) {
 	failures.push(`llms.txt unreadable: ${error.message}`);
 }
 
-if (siteConfig.ask.askUrl) {
+try {
+	const openapi = JSON.parse(await readFile(path.join(distRoot, 'openapi.json'), 'utf8'));
+	failures.push(...verifyOpenApiAgainstCapabilities(caps, openapi));
+} catch (error) {
+	failures.push(`openapi.json integration verification failed: ${error.message}`);
+}
+
+if (caps.ask) {
 	try {
 		const askHtml = await readFile(path.join(distRoot, 'ask', 'index.html'), 'utf8');
 		if (!askHtml.includes('challenges.cloudflare.com/turnstile/')) {
@@ -66,17 +93,21 @@ if (siteConfig.ask.askUrl) {
 	} catch (error) {
 		failures.push(`Ask integration verification failed: ${error.message}`);
 	}
+}
 
-	try {
-		const openapi = JSON.parse(await readFile(path.join(distRoot, 'openapi.json'), 'utf8'));
-		const askServers = openapi?.paths?.['/ask']?.post?.servers;
-		const askOrigin = new URL(siteConfig.ask.askUrl).origin;
-		if (!Array.isArray(askServers) || !askServers.some((server) => server?.url === askOrigin)) {
-			failures.push('openapi.json missing configured Ask server');
-		}
-	} catch (error) {
-		failures.push(`openapi.json integration verification failed: ${error.message}`);
+try {
+	const catalog = JSON.parse(await readFile(path.join(distRoot, '.well-known/mcp/catalog.json'), 'utf8'));
+	if (/official/i.test(JSON.stringify(catalog))) {
+		failures.push('mcp catalog must not claim Official maturity');
 	}
+	if (caps.mcp && (!Array.isArray(catalog.entries) || catalog.entries.length === 0)) {
+		failures.push('mcp catalog missing entry for configured mcpUrl');
+	}
+	if (!caps.mcp && Array.isArray(catalog.entries) && catalog.entries.length > 0) {
+		failures.push('mcp catalog must not advertise entries without mcpUrl');
+	}
+} catch (error) {
+	failures.push(`mcp catalog verification failed: ${error.message}`);
 }
 
 try {
@@ -123,4 +154,4 @@ if (failures.length > 0) {
 	process.exit(1);
 }
 
-console.log(`verify ok (dist=${distRoot})`);
+console.log(`verify ok (dist=${distRoot}, mode=${caps.mode}, protocolProfile=${caps.protocolProfile.id})`);

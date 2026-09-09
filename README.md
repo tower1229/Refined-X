@@ -195,7 +195,7 @@ Common options:
 | `outDir`      | `./dist`    | Build output                              |
 | `assetSource` | unset       | Optional external image library           |
 | `brand.*`     | demo values | Public identity and home-page copy        |
-| `ask.*`       | empty       | Optional Public Ask, MCP, and health URLs |
+| `ask.*`       | empty       | Optional Public Ask / MCP / health URLs; `protocolProfile` defaults to `undeclared` (set `dual-era` only after deployment acceptance) |
 | `comments.*`  | empty       | Optional giscus repository and category   |
 
 Relative paths resolve from the Refined-X package root.
@@ -237,10 +237,10 @@ Every build exposes a predictable public interface:
 | `/api/articles.json`                | Article catalog                                 |
 | `/api/topics.json`                  | Topic catalog                                   |
 | `/api/search-index.json`            | Static Ask/search corpus                        |
-| `/openapi.json`                     | API and optional Ask/MCP contract               |
+| `/openapi.json`                     | API and optional Ask/MCP contract (only declares configured remotes) |
 | `/.well-known/about.json`           | Site capability summary                         |
-| `/.well-known/mcp/catalog.json`     | MCP discovery catalog                           |
-| `/.well-known/mcp/server-card.json` | MCP server metadata                             |
+| `/.well-known/mcp/catalog.json`     | Legacy MCP discovery projection (compatibility) |
+| `/.well-known/mcp/server-card.json` | Legacy MCP server-card projection (compatibility) |
 
 These endpoints make the site easier to ingest and connect. They do not assume
 that every agent automatically discovers or invokes them.
@@ -260,6 +260,8 @@ export default {
     askUrl: "https://ask.example.com/ask",
     mcpUrl: "https://ask.example.com/mcp",
     healthUrl: "https://ask.example.com/health",
+    // Optional. Default undeclared — do not claim modern dual-era until accepted.
+    // protocolProfile: "dual-era",
   },
 };
 ```

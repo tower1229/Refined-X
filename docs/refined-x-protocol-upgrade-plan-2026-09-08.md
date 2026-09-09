@@ -2,7 +2,7 @@
 
 **调研截止：2026-09-08**  
 **源码基线：`tower1229/Refined-X@00781cecb0616cf64b27370830d448c1006fa72f`**  
-**状态：实施进行中。批次 0（#12 Dual-era MCP SDK spike）与批次 A 契约/ask-service（#13 Shared Ask contract）已在本仓落地；其余批次 A（`public-capabilities`、OpenAPI 条件输出等）与批次 B（双代 `/mcp` adapter、wire 错误形状）仍未完成。不表示已发布或生产升级完成。**
+**状态：实施进行中。批次 0（#12）与批次 A 的 #13/#14 实现已在本仓落地（以对应 issue/PR 关闭为准）；批次 B（双代 `/mcp` adapter、wire 错误形状）仍未完成。不表示已发布或生产升级完成。**
 
 **本地复核：`a7897f46fc70c5852fa9c986f0327a12a89ec925`，相对上述源码基线仅新增本方案。实施进度以 GitHub Issues #12/#13 及后续提交为准。**
 
@@ -430,7 +430,7 @@ MCP legacy：2025-11-25、2025-06-18、2025-03-26 的协商与调用，不支持
 
 批次 0 通过后，抽取 shared 契约和 ask-service，锁定原始输入与默认策略；修复配置驱动 OpenAPI、完整 URL、about/llms/Head 一致性和不实文案。旧发现输出改为共用能力模型的兼容投影。不得先改错误测试期待值而保留错误实现；MCP wire 错误修复及对应测试统一放在批次 B。
 
-**进度：** shared 契约与 ask-service（#13）已落地；配置驱动 OpenAPI / 完整 URL / `public-capabilities` 投影等其余项仍待做。
+**进度：** shared 契约与 ask-service（#13）以及 `public-capabilities` / 条件 OpenAPI / discovery 投影 / capability-aware verify（#14）已落地。
 
 **退出条件：**根目录现有 check、test:public-ask、test:related、test:comments、build、verify，以及 Worker test/typecheck 通过；新增配置组合测试覆盖 static/ask-only/mcp-only/both、前缀和子路径。shared 在两处独立安装后可导入，无循环依赖；HTTP Ask 的真实浏览器路径使用本地模拟服务回归。不得用生产 AI Search 远程 binding 跑普通 CI。
 

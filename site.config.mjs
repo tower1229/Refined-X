@@ -39,6 +39,12 @@ const defaults = {
 		askUrl: '',
 		mcpUrl: '',
 		healthUrl: '',
+		/**
+		 * Public protocol declaration for discovery/OpenAPI.
+		 * Default `undeclared` does not claim modern dual-era until a deployment has passed acceptance.
+		 * Set `dual-era` only after the accepted Worker + static docs combo is verified.
+		 */
+		protocolProfile: 'undeclared',
 		/** Must match the Worker PERSIST_INTERACTIONS setting when Live Ask is enabled. */
 		persistInteractions: true,
 	},
