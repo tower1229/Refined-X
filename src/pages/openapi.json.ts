@@ -33,21 +33,31 @@ export function GET() {
 			},
 		},
 		NlWebAskRequest: ASK_RAW_INPUT_SCHEMA,
-		NlWebResponse: {
+		NlWebAnswer: ASK_SUCCESS_RESULT_SCHEMA,
+		NlWebFailure: {
 			type: 'object',
-			required: ['_meta'],
+			required: ['_meta', 'error'],
 			properties: {
 				_meta: {
 					type: 'object',
-					required: ['response_type', 'version'],
+					required: ['response_type', 'response_format', 'version', 'request_id'],
 					properties: {
-						response_type: { enum: ['answer', 'failure'] },
+						response_type: { const: 'failure' },
+						response_format: { const: 'conversational_search' },
 						version: { const: NLWEB_VERSION },
+						request_id: { type: 'string' },
 					},
+					additionalProperties: false,
 				},
-				results: ASK_SUCCESS_RESULT_SCHEMA.properties.results,
 				error: { type: 'object', additionalProperties: true },
 			},
+			additionalProperties: false,
+		},
+		NlWebResponse: {
+			oneOf: [
+				{ $ref: '#/components/schemas/NlWebAnswer' },
+				{ $ref: '#/components/schemas/NlWebFailure' },
+			],
 		},
 	};
 	const response = (description: string, schema: object) => ({

@@ -244,7 +244,7 @@ export function normalizeAskRequest(value: unknown, entry: AskEntry = "http"): N
   rejectUnknownFields(prepared.query, ["text"], "query.");
   const text = prepared.query.text;
   if (typeof text !== "string" || text.trim().length === 0 || [...text.trim()].length > QUERY_TEXT_MAX_CODE_POINTS) {
-    throw new RequestProblem("INVALID_QUERY", "query.text must contain 1 to 500 characters");
+    throw new RequestProblem("INVALID_QUERY", "query.text must contain 1 to 500 Unicode code points");
   }
   if (prepared.context !== undefined && !isObject(prepared.context)) {
     throw new RequestProblem("INVALID_QUERY", "context must be an object");

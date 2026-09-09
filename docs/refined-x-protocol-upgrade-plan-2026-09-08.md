@@ -2,9 +2,9 @@
 
 **调研截止：2026-09-08**  
 **源码基线：`tower1229/Refined-X@00781cecb0616cf64b27370830d448c1006fa72f`**  
-**状态：实施合同；可从批次 0 开始。SDK 精确发布包与 Worker 集成仍待验证，批次 0 通过后才进入主改造；不表示已实现或已发布。**
+**状态：实施进行中。批次 0（#12 Dual-era MCP SDK spike）与批次 A 契约/ask-service（#13 Shared Ask contract）已在本仓落地；其余批次 A（`public-capabilities`、OpenAPI 条件输出等）与批次 B（双代 `/mcp` adapter、wire 错误形状）仍未完成。不表示已发布或生产升级完成。**
 
-**本地复核：`a7897f46fc70c5852fa9c986f0327a12a89ec925`，相对上述源码基线仅新增本方案。**
+**本地复核：`a7897f46fc70c5852fa9c986f0327a12a89ec925`，相对上述源码基线仅新增本方案。实施进度以 GitHub Issues #12/#13 及后续提交为准。**
 
 ## 1. 执行结论
 
@@ -82,8 +82,8 @@ Refined-X 仍是静态优先的个人发布模板。HTML、文章 Markdown、公
 | F04 | `index.ts` 的 OPTIONS/CORS 与 `/mcp` 分支 | CORS 只放行 content-type、authorization、Turnstile；`/mcp` 直接返回 handleMcp，未像统一出口一样附加跨域处理。 | 成功和失败响应统一处理 CORS；允许需要的 MCP 头；将 Origin 校验与浏览器 CORS 明确分开。 |
 | F05 | `src/pages/openapi.json.ts` | ask/mcp 未配置时仍生成对应 POST path，回落到静态站点 origin。 | 纯静态模式不声明远程 Ask/MCP；静态 `/ask/` UI 不是 POST API。 |
 | F06 | `openapi.json.ts`；`scripts/verify.mjs` | 外部端点仅取 `.origin` 并固定 `/ask` 或 `/mcp`；验证脚本也仅核对 origin。 | 支持带路径前缀的真实 URL；验证 server+path 重建结果等于配置的完整端点。 |
-| F07 | `protocol.ts`、`mcp-server.ts`、`openapi.json.ts`、`site-copy.ts` | schema、版本、能力文案多处重复；工具 query.text 未声明运行时已有的 1–500 字符边界。 | 统一契约；保留既有 Unicode 计数、trim 和默认 mode 的语义，不以简单复制 Zod max 代替原行为。 |
-| F08 | `index.ts` ↔ `mcp-server.ts` | 相互导入：入口导入协议处理器，协议处理器又从入口导入 executeAskAction。 | 抽出独立 ask-service；入口、HTTP 和 MCP adapter 单向依赖它。 |
+| F07 | `protocol.ts`、`mcp-server.ts`、`openapi.json.ts`、`site-copy.ts` | schema、版本、能力文案多处重复；工具 query.text 未声明运行时已有的 1–500 字符边界。 | 统一契约；保留既有 Unicode 计数、trim 和默认 mode 的语义，不以简单复制 Zod max 代替原行为。**部分完成（#13）：** 已新增 `shared/public-ask-contract.ts` 并接线 Worker/OpenAPI/site-copy；完整能力模型投影仍待 `public-capabilities.ts`。 |
+| F08 | `index.ts` ↔ `mcp-server.ts` | 相互导入：入口导入协议处理器，协议处理器又从入口导入 executeAskAction。 | 抽出独立 ask-service；入口、HTTP 和 MCP adapter 单向依赖它。**已完成（#13）：** `examples/public-ask-worker/src/ask-service.ts`；`index`/`mcp-server` 单向依赖。 |
 | F09 | `mcp-discovery.ts` | 将草案 Catalog 标为 Official；Catalog / Card / mcp.json / about.json 同时重复身份与发现信息。 | 更正成熟度，保留少量有用途的输出；历史草案输出通过同一数据源投影，随后退役。 |
 | F10 | `llms.txt.ts`；`scripts/verify.mjs` | llms 无条件列出三份 MCP 发现文档，构建验证强制要求它们存在。 | 验证按部署能力与迁移阶段变化；新增“必须不存在”的断言，防止删除后又被脚本补回。 |
 
@@ -343,8 +343,8 @@ MCP 不发送中途业务通知；若 SDK legacy 使用 SSE，则有界读取到
 
 | 文件或目录 | 操作 | 完成标准 |
 |---|---|---|
-| `shared/public-ask-contract.ts` | 新增最小共享契约。 | 请求/结果约束、版本、模式默认与能力边界只有一个业务来源；不泄漏服务端依赖。 |
-| `examples/public-ask-worker/src/ask-service.ts` | 从 index 提取 executeAskAction 及必要业务实现。 | index 与 mcp-server 不循环依赖；HTTP/MCP 的权限与业务结果等价。 |
+| `shared/public-ask-contract.ts` | 新增最小共享契约。 | **已完成（#13）。** 请求/结果约束、版本、模式默认与能力边界只有一个业务来源；不泄漏服务端依赖。 |
+| `examples/public-ask-worker/src/ask-service.ts` | 从 index 提取 executeAskAction 及必要业务实现。 | **已完成（#13）。** index 与 mcp-server 不循环依赖；HTTP/MCP 的权限与业务结果等价。 |
 | `examples/public-ask-worker/src/mcp-server.ts` | 原位改为 SDK v2 adapter。 | 同路径 modern+legacy；只有一个 ask 注册及业务调用；删除旧分发器。 |
 | `examples/public-ask-worker/src/index.ts` | 保留 Worker 路由、queue、scheduled；统一 HTTP 边界。 | `/ask`、`/mcp`、health、内部路由不混淆；错误响应也有正确头。 |
 | `examples/public-ask-worker/src/protocol.ts` | 保留 NLWeb 编码与流格式，引用 shared 契约。 | 0.55 受限行为与前端不退化；入口默认模式差异不丢失。 |
@@ -424,11 +424,13 @@ MCP legacy：2025-11-25、2025-06-18、2025-03-26 的协商与调用，不支持
 
 **退出条件：**上述检查全通过，记录版本、命令、日志及结果；将可复用最小测试纳入后续 CI。未通过则记录具体 blocker，最多尝试当前固定版本及一个具有相关修复依据的候选版本；仍失败时停止依赖该能力的主改造并更新方案，不无限试版本、不引入第二套 SDK、不暗降为 legacy-only。依赖 DNS 失败按环境阻塞记录。
 
-批次 0 不需要真实商业模型调用。精确包版本由该步骤证据决定，不在本文伪造已通过的 pin；因此本文定义的实施起点是验证工作，尚未满足主改造门槛。
+批次 0 不需要真实商业模型调用。精确包版本由该步骤证据决定，不在本文伪造已通过的 pin。**进度：** #12 已关闭；隔离 spike、SDK pin 与证据见 `examples/public-ask-worker/spike/mcp-dual-era/`。
 
 ### 批次 A：契约、业务边界和静态能力修复
 
 批次 0 通过后，抽取 shared 契约和 ask-service，锁定原始输入与默认策略；修复配置驱动 OpenAPI、完整 URL、about/llms/Head 一致性和不实文案。旧发现输出改为共用能力模型的兼容投影。不得先改错误测试期待值而保留错误实现；MCP wire 错误修复及对应测试统一放在批次 B。
+
+**进度：** shared 契约与 ask-service（#13）已落地；配置驱动 OpenAPI / 完整 URL / `public-capabilities` 投影等其余项仍待做。
 
 **退出条件：**根目录现有 check、test:public-ask、test:related、test:comments、build、verify，以及 Worker test/typecheck 通过；新增配置组合测试覆盖 static/ask-only/mcp-only/both、前缀和子路径。shared 在两处独立安装后可导入，无循环依赖；HTTP Ask 的真实浏览器路径使用本地模拟服务回归。不得用生产 AI Search 远程 binding 跑普通 CI。
 

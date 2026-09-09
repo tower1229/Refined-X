@@ -263,6 +263,54 @@ test("legal summarize requests return an NLWeb protocol answer", async (t) => {
   assert.ok(body.results.some((item) => item["@type"] === "SearchSummary" && item.text === "summarized answer"));
 });
 
+test("HTTP Ask without prefer.mode defaults to list, summarize and requires Turnstile", async (t) => {
+  let externalCalls = 0;
+  t.mock.method(globalThis, "fetch", async () => {
+    externalCalls += 1;
+    return externalCalls === 1
+      ? Response.json({ success: true, hostname: "refined-x.com", action: "public-ask" })
+      : Response.json({ choices: [{ message: { content: "default-mode summary" } }] });
+  });
+  const env = acceptedEnv({
+    PUBLIC_CONTENT: {
+      async search() {
+        return { chunks: [{ id: "chunk", score: 1, text: "evidence", item: { key: "/evidence" } }] };
+      },
+    },
+    DB: {
+      prepare(sql: string) {
+        return {
+          bind() {
+            return {
+              async first() {
+                return sql.includes("generation_reserved") ? { generation_reserved: 1 } : { accepted_requests: 1 };
+              },
+              async run() {},
+            };
+          },
+        };
+      },
+    },
+  });
+  const response = await handleAsk(new Request("https://ask.refined-x.com/ask", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "cf-connecting-ip": "203.0.113.7",
+      "cf-turnstile-response": "valid-token",
+    },
+    body: JSON.stringify({ query: { text: "x" } }),
+  }), env);
+  const body = await response.json() as {
+    _meta: { response_type: string; version: string };
+    results: Array<{ "@type": string; text?: string }>;
+  };
+  assert.equal(response.status, 200);
+  assert.equal(body._meta.response_type, "answer");
+  assert.ok(body.results.some((item) => item["@type"] === "SearchSummary" && item.text === "default-mode summary"));
+  assert.ok(externalCalls >= 2, "Turnstile + model calls prove summarize ran under HTTP default modes");
+});
+
 test("streaming ask emits start result complete events from the public endpoint", async () => {
   const env = acceptedEnv({
     PUBLIC_CONTENT: {

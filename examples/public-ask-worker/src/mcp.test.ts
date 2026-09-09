@@ -112,6 +112,34 @@ test("MCP POST /mcp tools/call executes ask in list mode", async () => {
   assert.deepEqual(nlweb.results, []);
 });
 
+test("MCP POST /mcp tools/call treats empty prefer.mode as list without summarize auth", async () => {
+  let searchCalls = 0;
+  let browserRateCalls = 0;
+  const env = acceptedEnv({
+    PUBLIC_CONTENT: { async search() { searchCalls += 1; return { chunks: [] }; } },
+    BROWSER_RATE_LIMITER: { async limit() { browserRateCalls += 1; return { success: true }; } },
+  });
+  const response = await handleMcp(new Request("https://ask.refined-x.com/mcp", {
+    method: "POST",
+    headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.7" },
+    body: JSON.stringify({
+      jsonrpc: "2.0", id: 31, method: "tools/call",
+      params: { name: "ask", arguments: { query: { text: "test" }, prefer: { mode: "" } } },
+    }),
+  }), env);
+  const body = await response.json() as { result: { content: Array<{ type: string, text: string }> }; error?: unknown };
+  assert.equal(response.status, 200);
+  assert.equal(body.error, undefined);
+  assert.equal(searchCalls, 1);
+  assert.equal(browserRateCalls, 0);
+  const nlweb = JSON.parse(body.result.content[0].text) as {
+    _meta: { response_type: string };
+    results: unknown[];
+  };
+  assert.equal(nlweb._meta.response_type, "answer");
+  assert.deepEqual(nlweb.results, []);
+});
+
 test("MCP POST /mcp tools/call rejects summarize mode without API key with 403", async () => {
   const audits: SecurityAuditEvent[] = [];
   const env = acceptedEnv({
