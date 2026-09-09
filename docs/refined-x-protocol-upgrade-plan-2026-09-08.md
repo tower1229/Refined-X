@@ -32,7 +32,7 @@
 
 初次远程调研未执行构建或测试，生产站元数据探测因 DNS 失败未取得 HTTP 响应。随后本地评估使用 Node 24.18.0 执行 Worker 测试脚本主体 `node --test src/*.test.ts scripts/*.test.mjs`，126 项通过；没有执行会同步生成文件的 npm pretest。另直接验证 parser 接受前后带空白的 500 个 emoji、`summarize,list` 和 ` list , summarize `。现有测试包含旧协议断言，其通过不代表 MCP 合规。
 
-尚未运行完整站点构建、SDK/workerd 集成或真实产品客户端会话，未调用生产 Ask 或触发真实模型。npm registry 查询同样遇到 DNS 失败；官方文档及 main 源码不能替代精确发布包的安装和验收。以上环境失败不是生产故障或 SDK 不可用证据。
+**调研当时（2026-09-08）**尚未运行完整站点构建、SDK/workerd 集成或真实产品客户端会话，未调用生产 Ask 或触发真实模型；npm registry 查询同样遇到 DNS 失败。官方文档及 main 源码不能替代精确发布包的安装和验收；以上环境失败不是生产故障或 SDK 不可用证据。**后续进度**以本文顶部状态、第 13 节批次进度与 [`docs/mcp-client-support-matrix.md`](mcp-client-support-matrix.md) 为准：离线双代集成与合成 mock 产品客户端（Claude Code modern + Codex legacy）已记录；受控 staging / 真实模型与实例部署仍另记。
 
 ### 2.2 不改变的产品边界
 

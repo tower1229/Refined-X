@@ -9,7 +9,7 @@
   "anonymousList": "passed",
   "authenticatedSummarize": "passed",
   "errorHandling": "passed",
-  "testedAt": "2026-09-09T03:25:38.509Z",
+  "testedAt": "2026-09-09T05:39:06.553Z",
   "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/codex-legacy/",
   "businessBackend": "synthetic_mock",
   "featureFlags": {

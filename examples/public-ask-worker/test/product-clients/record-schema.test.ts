@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -10,6 +10,20 @@ import {
 } from "./record-schema.ts";
 
 const dir = dirname(fileURLToPath(import.meta.url));
+const repoRoot = join(dir, "../../../..");
+
+const CORE_PHASE_TRACES: Record<string, string[]> = {
+  "claude-code-modern": [
+    "01-server-trace.json",
+    "02-server-trace.json",
+    "03-server-trace.json",
+  ],
+  "codex-legacy": [
+    "04-server-trace.json",
+    "05-server-trace.json",
+    "06-server-trace.json",
+  ],
+};
 
 test("not_run template matches plan §12.2 shape", () => {
   const record: ProductClientRecord = {
@@ -94,6 +108,16 @@ test("checked-in matrix and core records validate", () => {
       assert.equal(record[gate], "passed", `${id}.${gate}`);
     }
     assert.equal(row.marketingClaimAllowed, true, id);
+    const evidenceDir = join(repoRoot, record.evidencePath);
+    assert.ok(existsSync(evidenceDir), `${id} evidencePath missing: ${record.evidencePath}`);
+    for (const name of CORE_PHASE_TRACES[id] ?? []) {
+      assert.ok(existsSync(join(evidenceDir, name)), `${id} missing phase trace ${name}`);
+    }
+    assert.equal(
+      existsSync(join(evidenceDir, "server-trace.json")),
+      false,
+      `${id} must not keep merged server-trace.json`,
+    );
   }
 
   for (const row of matrix.rows) {

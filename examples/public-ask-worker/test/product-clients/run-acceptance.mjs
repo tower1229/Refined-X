@@ -163,10 +163,12 @@ async function runClaudeModern(baseUrl) {
     },
   };
 
-  const configPath = join(dir, "fixtures", "claude-modern.mcp.json");
-  const configAuthPath = join(dir, "fixtures", "claude-modern-auth.mcp.json");
-  const configBadPath = join(dir, "fixtures", "claude-modern-bad.mcp.json");
-  const settingsPath = join(tmpdir(), `claude-acceptance-settings-${process.pid}.json`);
+  const configDir = join(tmpdir(), `claude-acceptance-mcp-${process.pid}`);
+  mkdirSync(configDir, { recursive: true });
+  const configPath = join(configDir, "claude-modern.mcp.json");
+  const configAuthPath = join(configDir, "claude-modern-auth.mcp.json");
+  const configBadPath = join(configDir, "claude-modern-bad.mcp.json");
+  const settingsPath = join(configDir, "claude-acceptance.settings.json");
   writeFileSync(configPath, JSON.stringify(mcpConfig, null, 2) + "\n");
   writeFileSync(configAuthPath, JSON.stringify(mcpConfigAuth, null, 2) + "\n");
   writeFileSync(configBadPath, JSON.stringify(mcpConfigBad, null, 2) + "\n");
@@ -487,7 +489,7 @@ try {
     notes: "Extended/alternate legacy candidate; Codex covered the core legacy gate.",
   });
   notRunExtended("Cursor", "cursor.json", {
-    notes: "Extended matrix — Streamable HTTP supported per docs; 2026-07-28 not verified here.",
+    notes: "Extended matrix — not_run. Do not market as verified.",
   });
   notRunExtended("OpenAI Responses API remote MCP", "openai-responses-api.json", {
     notes: "Extended matrix — not run; do not market as verified.",

@@ -23,8 +23,10 @@ Clean checkout reproduction: root `npm ci` (site job) + Worker `npm ci` (worker 
 
 Evidence directories (synthetic mock Worker backend — empty retrieval / no-reference summarize; **not** production model acceptance):
 
-- `examples/public-ask-worker/test/product-clients/evidence/claude-code-modern/`
-- `examples/public-ask-worker/test/product-clients/evidence/codex-legacy/`
+- `examples/public-ask-worker/test/product-clients/evidence/claude-code-modern/` — per-phase `01/02/03-server-trace.json` plus stream transcripts
+- `examples/public-ask-worker/test/product-clients/evidence/codex-legacy/` — per-phase `04/05/06-server-trace.json` plus CLI transcripts
+
+Do not treat a single merged `server-trace.json` as the current layout.
 
 Re-run (requires local Claude Code + Codex CLIs and auth for their agent models):
 

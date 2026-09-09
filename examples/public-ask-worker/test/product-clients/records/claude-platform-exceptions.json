@@ -12,5 +12,5 @@
   "testedAt": null,
   "evidencePath": null,
   "businessBackend": null,
-  "notes": "Extended matrix \u2014 default v1 runtime environments not exercised in this acceptance pass."
+  "notes": "Extended matrix — default v1 runtime environments not exercised in this acceptance pass."
 }
