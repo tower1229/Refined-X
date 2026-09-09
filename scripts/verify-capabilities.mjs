@@ -183,6 +183,10 @@ export const RETIRED_LEGACY_MCP_DISCOVERY_PATHS = [
 	'/.well-known/mcp/server-card.json',
 ];
 
-export function retiredLegacyMcpDiscoveryPathsMustNotExist() {
-	return [...RETIRED_LEGACY_MCP_DISCOVERY_PATHS];
+/** SEP-2127 path intentionally not added (#18) — must not appear in dist. */
+export const FORBIDDEN_AI_CATALOG_PATH = '/.well-known/ai-catalog.json';
+
+/** Discovery paths that must not exist after #18 retirement (legacy + no ai-catalog). */
+export function discoveryPathsMustNotExist() {
+	return [...RETIRED_LEGACY_MCP_DISCOVERY_PATHS, FORBIDDEN_AI_CATALOG_PATH];
 }

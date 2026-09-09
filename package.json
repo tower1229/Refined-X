@@ -25,7 +25,7 @@
   "scripts": {
     "collect-assets": "node scripts/collect-assets.mjs",
     "verify": "node scripts/verify.mjs",
-    "test:public-ask": "node --test shared/public-ask-contract.test.ts shared/import-boundary.test.ts src/lib/ask-persistence.test.ts src/lib/public-capabilities.test.ts src/lib/openapi-document.test.ts src/lib/mcp-discovery.test.ts src/lib/awp-manifest.test.ts src/lib/verify-capabilities.test.ts src/scripts/ask-agent.test.ts src/scripts/ask-pending.test.ts src/scripts/source-link.test.ts src/scripts/turnstile-client.test.ts src/scripts/theme-control.test.ts src/scripts/theme-preference.test.ts src/scripts/hero-theme-bg.test.ts src/scripts/typewriter.test.ts",
+    "test:public-ask": "node --test shared/public-ask-contract.test.ts shared/import-boundary.test.ts src/lib/ask-persistence.test.ts src/lib/public-capabilities.test.ts src/lib/openapi-document.test.ts src/lib/mcp-discovery.test.ts src/lib/awp-manifest.test.ts src/lib/verify-capabilities.test.ts src/lib/site-config-overlay.test.mjs src/scripts/ask-agent.test.ts src/scripts/ask-pending.test.ts src/scripts/source-link.test.ts src/scripts/turnstile-client.test.ts src/scripts/theme-control.test.ts src/scripts/theme-preference.test.ts src/scripts/hero-theme-bg.test.ts src/scripts/typewriter.test.ts",
     "test:related": "node --test src/lib/related-articles.test.ts",
     "test:comments": "node --test src/lib/comments.test.mjs src/scripts/giscus-comments.test.ts",
     "sync-content": "astro sync --force",

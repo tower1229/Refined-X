@@ -6,7 +6,7 @@ import {
 	awpPathsMustExist,
 	awpPathsMustNotExist,
 	requiredDiscoveryFilesForStage,
-	retiredLegacyMcpDiscoveryPathsMustNotExist,
+	discoveryPathsMustNotExist,
 	verifyAwpManifestPair,
 	verifyLlmsAgainstCapabilities,
 	verifyLlmsHasNoAwpWhenDisabled,
@@ -51,9 +51,9 @@ for (const file of awpPathsMustNotExist(awpEnabled)) {
 		failures.push(`File must not exist when discovery.awp is off: ${file}`);
 	}
 }
-for (const file of retiredLegacyMcpDiscoveryPathsMustNotExist()) {
+for (const file of discoveryPathsMustNotExist()) {
 	if (await builtResourceExists(distRoot, file)) {
-		failures.push(`Retired legacy MCP discovery file must not exist: ${file}`);
+		failures.push(`Forbidden discovery file must not exist: ${file}`);
 	}
 }
 for (const file of awpPathsMustExist(awpEnabled)) {

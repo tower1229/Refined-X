@@ -4,7 +4,7 @@ import {
 	awpPathsMustExist,
 	awpPathsMustNotExist,
 	requiredDiscoveryFilesForStage,
-	retiredLegacyMcpDiscoveryPathsMustNotExist,
+	discoveryPathsMustNotExist,
 	verifyAwpManifestPair,
 	verifyLlmsAgainstCapabilities,
 	verifyLlmsHasNoAwpWhenDisabled,
@@ -70,16 +70,17 @@ test('verify requires llms to expose configured MCP URL and rejects retired disc
 	);
 });
 
-test('verify stage requires about/llms/openapi and forbids retired legacy MCP discovery files', () => {
+test('verify stage requires about/llms/openapi and forbids retired legacy MCP discovery and ai-catalog', () => {
 	assert.deepEqual(requiredDiscoveryFilesForStage(), [
 		'/.well-known/about.json',
 		'/llms.txt',
 		'/openapi.json',
 	]);
-	assert.deepEqual(retiredLegacyMcpDiscoveryPathsMustNotExist(), [
+	assert.deepEqual(discoveryPathsMustNotExist(), [
 		'/.well-known/mcp.json',
 		'/.well-known/mcp/catalog.json',
 		'/.well-known/mcp/server-card.json',
+		'/.well-known/ai-catalog.json',
 	]);
 });
 

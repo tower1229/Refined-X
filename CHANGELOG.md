@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - AWP #17 follow-up: plan/README sync for `discovery.awp`, shared phase-1 action allowlist, drop unused `search_index` entity, and tighten static-API output-key fixture contract
+- Instance overlays that still set retired `mcp` keys are ignored with a console warning (#18 follow-up)
+- Verify forbids `/.well-known/ai-catalog.json` in dist alongside retired legacy MCP discovery paths
 - `/.well-known/about.json` no longer exposes retired catalog/server-card/`mcp.json` URL fields
 - Illegal `ask.*` URLs, unknown `protocolProfile`, and Ask/MCP pathnames that collide with static OpenAPI paths fail during site config load
 - Hand-rolled MCP initialize/tools dispatcher removed; domain auth/quota codes live in tool error content with HTTP status remapping (no string JSON-RPC business codes)

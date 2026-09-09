@@ -15,7 +15,7 @@
 | MCP | 接入官方 TypeScript SDK v2 的 Web 标准服务入口，支持 `2026-07-28`，同时保留基于 `initialize` 的旧客户端兼容；两种行为在同一 `/mcp`，共享同一个 `ask` 工具。 |
 | NLWeb | 保留 `0.55` 的受限 `/ask` 子集。当前官网规范仍是该版本，不能因为版本号低而当作废弃实现删除。 |
 | AWP | 可选发现实验已按 §8.2 / #17 落地：`discovery.awp` 默认关闭；开启后由单一 builder 生成字节一致的 `/agent.json` 与 `/.well-known/agent.json`。不引入 AWP server。核心升级仍不依赖 AWP。 |
-| 历史发现文档 | 停止将旧 MCP Catalog / Server Card 实现称为稳定官方标准；冻结为薄兼容输出，发布弃用说明后退役。 |
+| 历史发现文档 | 旧 MCP Catalog / Server Card / `mcp.json` **已按 #18 删除**；不新增 `/.well-known/ai-catalog.json`。 |
 | OpenAPI | 本次优先修正真实接口、条件输出与 schema，保留 3.1.x 兼容输出；不为追新而强制切换到 3.2。 |
 | 安全与成本 | 保留现有 API Key、Turnstile、配额、缓存、审计和保留策略；协议升级不能成为绕过权限或重复推理的路径。 |
 | 维护边界 | 不引入两套 MCP SDK、两个业务核心、独立 AWP 服务、A2A、支付、任务系统、MCP Apps 或自建 OAuth 授权服务器。 |
@@ -50,7 +50,7 @@ Refined-X 仍是静态优先的个人发布模板。HTML、文章 Markdown、公
 | MCP 2025 系列 | 属于 legacy 行为：initialize 握手。官方 SDK 明确提供双时代服务方式。 | 属于当前兼容基线，不是无条件应删的“废代码”。 |
 | NLWeb `0.55` | 当前官网仍发布此版本规范，官方实现也仍使用 0.55。 | 保留现有受限子集，不扩展 await、长期记忆或任意任务执行。 |
 | AWP `0.2` | 官网规范仍标记 Draft RFC，发布日期 2026-04-16。 | 小范围试验，不能宣传为主流客户端普遍内建的入口。 |
-| MCP Server Cards / SEP-2127 | GitHub 提案仍 open、in-review；2026-09-03 仍有更新，提案说明使用 `/.well-known/ai-catalog.json`。 | 现有 `/.well-known/mcp/catalog.json` 不能继续被称作稳定“官方入口”；也不宜马上追着草案再添新路径。 |
+| MCP Server Cards / SEP-2127 | GitHub 提案仍 open、in-review；2026-09-03 仍有更新，提案说明使用 `/.well-known/ai-catalog.json`。 | 调研时仓库曾有 `/.well-known/mcp/catalog.json`，不能称作稳定“官方入口”；**#18 后该路径及 server-card / mcp.json 已删除**；仍不新增 `ai-catalog`。 |
 | OpenAPI | 官方 latest 当前指向 3.2.0；项目输出 3.1.0。 | 版本较旧不等于应删。现阶段先确保现有消费者能正确调用 3.1.x 描述的实际接口。 |
 
 依据：[S01][S02][S06][S09–S12][S16]。OpenAPI 保留 3.1.x 是本方案的兼容策略，不是对全部 Agent 的 OpenAPI 版本支持作出的统计结论。

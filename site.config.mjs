@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveCommentsConfig } from './src/lib/comments.mjs';
 import { assertPublicCapabilitiesConfig } from './src/lib/public-capabilities.ts';
+import { omitRetiredSiteOverlayKeys } from './src/lib/site-config-overlay.mjs';
 
 function findPackageRoot() {
 	let dir = process.cwd();
@@ -115,23 +116,31 @@ function resolvePath(value) {
 }
 
 const overlay = await loadOverlay();
+const stripped = omitRetiredSiteOverlayKeys(overlay);
+if (stripped.ignoredRetiredMcp) {
+	console.warn(
+		'instance config key "mcp" was removed in #18 (legacy discovery retirement); ignoring overlay.mcp',
+	);
+}
+/** Keep overlay shape loose for siteConfig inference (helper return is untyped object). */
+const overlayRest = /** @type {typeof overlay} */ (stripped.overlay);
 const mergedBrand = {
 	...defaults.brand,
-	...(overlay.brand ?? {}),
-	projects: { ...defaults.brand.projects, ...(overlay.brand?.projects ?? {}) },
-	about: { ...defaults.brand.about, ...(overlay.brand?.about ?? {}) },
-	askChips: overlay.brand?.askChips ?? defaults.brand.askChips,
-	alternateNames: overlay.brand?.alternateNames ?? defaults.brand.alternateNames,
+	...(overlayRest.brand ?? {}),
+	projects: { ...defaults.brand.projects, ...(overlayRest.brand?.projects ?? {}) },
+	about: { ...defaults.brand.about, ...(overlayRest.brand?.about ?? {}) },
+	askChips: overlayRest.brand?.askChips ?? defaults.brand.askChips,
+	alternateNames: overlayRest.brand?.alternateNames ?? defaults.brand.alternateNames,
 };
 const merged = {
 	...defaults,
-	...overlay,
-	social: { ...defaults.social, ...(overlay.social ?? {}) },
-	ask: { ...defaults.ask, ...(overlay.ask ?? {}) },
-	comments: resolveCommentsConfig({ ...defaults.comments, ...(overlay.comments ?? {}) }),
+	...overlayRest,
+	social: { ...defaults.social, ...(overlayRest.social ?? {}) },
+	ask: { ...defaults.ask, ...(overlayRest.ask ?? {}) },
+	comments: resolveCommentsConfig({ ...defaults.comments, ...(overlayRest.comments ?? {}) }),
 	brand: mergedBrand,
-	discovery: { ...defaults.discovery, ...(overlay.discovery ?? {}) },
-	redirects: overlay.redirects ?? defaults.redirects,
+	discovery: { ...defaults.discovery, ...(overlayRest.discovery ?? {}) },
+	redirects: overlayRest.redirects ?? defaults.redirects,
 };
 
 const contentRoot = resolvePath(merged.contentRoot);
