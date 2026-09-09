@@ -199,6 +199,7 @@ Common options:
 | `assetSource` | unset       | Optional external image library           |
 | `brand.*`     | demo values | Public identity and home-page copy        |
 | `ask.*`       | empty       | Optional Public Ask / MCP / health URLs; `protocolProfile` defaults to `undeclared` (set `dual-era` only after deployment acceptance) |
+| `discovery.awp` | `false`   | Optional AWP 0.2 manifests; when `true`, emits byte-identical `/agent.json` and `/.well-known/agent.json` (phase-1 static reads only); llms does not auto-recommend them; subpath deploy limits — see plan §8.3 |
 | `comments.*`  | empty       | Optional giscus repository and category   |
 
 Relative paths resolve from the Refined-X package root.

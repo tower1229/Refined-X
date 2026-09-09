@@ -198,6 +198,7 @@ export default {
 | `assetSource` | 未设置      | 可选的外部图片资源库                  |
 | `brand.*`     | Demo 数据   | 公开身份与首页文案                    |
 | `ask.*`       | 空          | 可选 Public Ask / MCP / 健康检查 URL；`protocolProfile` 默认 `undeclared`（仅在部署验收后设为 `dual-era`） |
+| `discovery.awp` | `false`   | 可选 AWP 0.2；`true` 时生成字节一致的 `/agent.json` 与 `/.well-known/agent.json`（一期仅静态读）；llms 不自动推荐；子路径部署限制见计划 §8.3 |
 | `comments.*`  | 空          | 可选的 giscus 仓库与讨论分类          |
 
 相对路径均从 Refined-X 包根目录解析。

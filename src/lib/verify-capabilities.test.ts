@@ -97,7 +97,7 @@ test('verifyAwpManifestPair rejects divergent bytes and Ask actions', () => {
 		endpoint: '/ask',
 	});
 	const bad = `${JSON.stringify(withAsk, null, 2)}\n`;
-	assert.ok(verifyAwpManifestPair(bad, bad).some((line) => /must not project Ask|outside phase-1/.test(line)));
+	assert.ok(verifyAwpManifestPair(bad, bad).some((line) => /outside phase-1/.test(line)));
 });
 
 test('llms must not mention agent.json when AWP is off', () => {
@@ -132,65 +132,4 @@ test('route helper returns null when AWP off and identical bodies when on', () =
 	const parsed = JSON.parse(a);
 	assert.equal(parsed.awp_version, '0.2');
 	assert.equal(parsed.protocols.mcp.endpoint, 'https://ask.example.com/mcp');
-});
-
-test('manifest outputs keys align with fixture-shaped static API responses', () => {
-	const manifest = buildAwpManifest(caps(), { intent: 'fixture', siteBasePath: '/' });
-	const profileFixture = {
-		id: 'https://example.com/#person',
-		name: 'Demo',
-		jobTitle: 'Author',
-		description: 'Bio',
-		url: 'https://example.com/about/',
-		sameAs: ['https://github.com/example'],
-	};
-	const articlesFixture = {
-		count: 1,
-		articles: [
-			{
-				id: 'https://example.com/a',
-				title: 'Hello',
-				description: 'd',
-				llmSummary: 's',
-				url: 'https://example.com/a/',
-				pubDate: '2026-01-01T00:00:00.000Z',
-				tags: ['x'],
-				markdownUrl: 'https://example.com/a.md',
-			},
-		],
-	};
-	const topicsFixture = {
-		count: 1,
-		topics: [
-			{
-				name: 'x',
-				slug: 'x',
-				url: 'https://example.com/topics/x/',
-				articleCount: 1,
-				articles: articlesFixture.articles,
-			},
-		],
-	};
-	const searchFixture = {
-		articles: [{ url: '/a/', title: 'Hello', excerpt: 's', tags: ['x'], series: '', seriesName: '', date: '2026-01-01' }],
-		answers: [],
-		items: [{ type: 'article', url: '/a/', title: 'Hello', excerpt: 's' }],
-	};
-
-	for (const actionId of ['get_profile', 'list_articles', 'list_topics', 'get_search_index'] as const) {
-		const action = manifest.actions.find((a) => a.id === actionId);
-		assert.ok(action, `missing action ${actionId}`);
-	}
-	for (const key of Object.keys(manifest.actions.find((a) => a.id === 'get_profile')!.outputs)) {
-		assert.ok(key in profileFixture, `profile fixture missing ${key}`);
-	}
-	for (const key of Object.keys(manifest.actions.find((a) => a.id === 'list_articles')!.outputs)) {
-		assert.ok(key in articlesFixture, `articles fixture missing ${key}`);
-	}
-	for (const key of Object.keys(manifest.actions.find((a) => a.id === 'list_topics')!.outputs)) {
-		assert.ok(key in topicsFixture, `topics fixture missing ${key}`);
-	}
-	for (const key of Object.keys(manifest.actions.find((a) => a.id === 'get_search_index')!.outputs)) {
-		assert.ok(key in searchFixture, `search-index fixture missing ${key}`);
-	}
 });

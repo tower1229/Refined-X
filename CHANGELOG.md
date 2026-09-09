@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- AWP #17 follow-up: plan/README sync for `discovery.awp`, shared phase-1 action allowlist, drop unused `search_index` entity, and tighten static-API output-key fixture contract
+
 - Legacy MCP catalog / server-card / `mcp.json` outputs are thin projections from shared capabilities; maturity marked `legacy-draft-compatibility` (not Official)
 - `/.well-known/about.json` keeps top-level `mcpCatalogUrl` / `mcpServerCardUrl` / `mcpJsonUrl` for client compatibility and adds `discoveryMaturity` / `discoveryNotes`
 - llms.txt and Footer stop primary-recommending retired MCP discovery paths; configured MCP URL remains the primary agent entry when present

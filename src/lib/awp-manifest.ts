@@ -17,6 +17,16 @@ export const AWP_DRAFT_VERSION = '0.2' as const;
 /** Dual discovery paths; both must emit identical serialized bytes when enabled. */
 export const AWP_MANIFEST_PATHS = ['/agent.json', '/.well-known/agent.json'] as const;
 
+/** Phase-1 action ids — shared by builder and verify allowlist. */
+export const PHASE1_AWP_ACTION_IDS = [
+	'get_profile',
+	'list_articles',
+	'list_topics',
+	'get_search_index',
+] as const;
+
+export type Phase1AwpActionId = (typeof PHASE1_AWP_ACTION_IDS)[number];
+
 export type AwpDiscoveryConfig = {
 	discovery?: {
 		awp?: boolean;
@@ -101,19 +111,12 @@ function buildEntities(): NonNullable<AwpManifest['entities']> {
 				articles: 'array[article_summary]',
 			},
 		},
-		search_index: {
-			fields: {
-				articles: 'array[object]',
-				answers: 'array[object]',
-				items: 'array[object]',
-			},
-		},
 	};
 }
 
 function buildStaticActions(siteBasePath: string): AwpAction[] {
-	return [
-		{
+	const byId: Record<Phase1AwpActionId, AwpAction> = {
+		get_profile: {
 			id: 'get_profile',
 			description: 'Fetch the public author profile JSON (identity, bio, links).',
 			auth_required: false,
@@ -129,7 +132,7 @@ function buildStaticActions(siteBasePath: string): AwpAction[] {
 			endpoint: staticApiEndpoint(siteBasePath, '/api/profile.json'),
 			method: 'GET',
 		},
-		{
+		list_articles: {
 			id: 'list_articles',
 			description: 'List public articles as a static JSON index (count + article summaries).',
 			auth_required: false,
@@ -141,7 +144,7 @@ function buildStaticActions(siteBasePath: string): AwpAction[] {
 			endpoint: staticApiEndpoint(siteBasePath, '/api/articles.json'),
 			method: 'GET',
 		},
-		{
+		list_topics: {
 			id: 'list_topics',
 			description: 'List public topic tags with linked article summaries.',
 			auth_required: false,
@@ -153,7 +156,7 @@ function buildStaticActions(siteBasePath: string): AwpAction[] {
 			endpoint: staticApiEndpoint(siteBasePath, '/api/topics.json'),
 			method: 'GET',
 		},
-		{
+		get_search_index: {
 			id: 'get_search_index',
 			description:
 				'Retrieve the prebuilt static search index JSON for offline/local filtering. This is index retrieval, not a query search API.',
@@ -167,7 +170,8 @@ function buildStaticActions(siteBasePath: string): AwpAction[] {
 			endpoint: staticApiEndpoint(siteBasePath, '/api/search-index.json'),
 			method: 'GET',
 		},
-	];
+	};
+	return PHASE1_AWP_ACTION_IDS.map((id) => byId[id]);
 }
 
 function buildMcpProtocol(caps: PublicCapabilities): AwpManifest['protocols'] | undefined {

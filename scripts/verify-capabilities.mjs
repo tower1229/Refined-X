@@ -3,7 +3,7 @@
  * Pure functions so unit tests can cover config combinations without a full build.
  */
 
-import { AWP_MANIFEST_PATHS } from '../src/lib/awp-manifest.ts';
+import { AWP_MANIFEST_PATHS, PHASE1_AWP_ACTION_IDS } from '../src/lib/awp-manifest.ts';
 
 /**
  * @param {object} caps
@@ -132,12 +132,7 @@ export function verifyAwpManifestPair(rootBody, wellKnownBody) {
 	if (!Array.isArray(manifest.actions) || manifest.actions.length === 0) {
 		failures.push('AWP manifest actions must be a non-empty array');
 	} else {
-		const allowedActionIds = new Set([
-			'get_profile',
-			'list_articles',
-			'list_topics',
-			'get_search_index',
-		]);
+		const allowedActionIds = new Set(PHASE1_AWP_ACTION_IDS);
 		const requiredActionFields = ['id', 'description', 'auth_required', 'inputs', 'outputs'];
 		for (const action of manifest.actions) {
 			for (const field of requiredActionFields) {
@@ -151,9 +146,6 @@ export function verifyAwpManifestPair(rootBody, wellKnownBody) {
 			if (action?.id && !allowedActionIds.has(action.id)) {
 				failures.push(`AWP action ${action.id} is outside phase-1 static read allowlist`);
 			}
-		}
-		if (manifest.actions.some((action) => /ask/i.test(action.id))) {
-			failures.push('phase-1 AWP must not project Ask as an action');
 		}
 	}
 

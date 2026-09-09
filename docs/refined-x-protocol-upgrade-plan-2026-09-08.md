@@ -2,7 +2,7 @@
 
 **调研截止：2026-09-08**  
 **源码基线：`tower1229/Refined-X@00781cecb0616cf64b27370830d448c1006fa72f`**  
-**状态：实施进行中。批次 0（#12）与批次 A（#13/#14）已完成；批次 B 双代 `/mcp` adapter（#15）与离线 CI 集成、产品客户端矩阵记录（#16：Claude Code modern + Codex legacy，合成 mock）已在本仓落地。受控 staging / 真实模型与实例部署另记。不表示已发布或生产升级完成。**
+**状态：实施进行中。批次 0（#12）与批次 A（#13/#14）已完成；批次 B 双代 `/mcp` adapter（#15）与离线 CI 集成、产品客户端矩阵记录（#16：Claude Code modern + Codex legacy，合成 mock）已在本仓落地；独立后续项 AWP 发现实验（#17）已落地且 `discovery.awp` 默认关闭。受控 staging / 真实模型与实例部署另记。不表示已发布或生产升级完成。**
 
 **本地复核：`a7897f46fc70c5852fa9c986f0327a12a89ec925`，相对上述源码基线仅新增本方案。实施进度以 GitHub Issues #12/#13 及后续提交为准。**
 
@@ -99,7 +99,7 @@ Refined-X 仍是静态优先的个人发布模板。HTML、文章 Markdown、公
          └── public-capabilities（内部类型化描述；不是新增网络协议）
                   ├── OpenAPI
                   ├── about.json（项目自有公开索引）
-                  ├── AWP manifest（后续独立实验）
+                  ├── AWP manifest（#17，discovery.awp 门控）
                   └── 历史发现兼容投影（限期保留）
 
 人：/ask/ UI ── NLWeb POST /ask ─┐
@@ -358,7 +358,7 @@ MCP 不发送中途业务通知；若 SDK legacy 使用 SSE，则有界读取到
 | `src/pages/openapi.json.ts` | 条件输出、准确 server/path、共享 schema。 | **已完成（#14）。** 静态模式不虚构动态 endpoint；operationId 稳定。 |
 | `src/pages/.well-known/about.json.ts` | 使用统一模型，保持对既有客户端的迁移窗口。 | **已完成（#14）。** 自有格式定位明确；顶层 legacy URL 保留并标注 `discoveryMaturity`，不偷偷删除兼容字段。 |
 | `src/lib/awp-manifest.ts`（#17 实验） | 有限 AWP 0.2 projection；`discovery.awp` 门控。 | **已完成（#17）。** 关闭时不输出；开启时符合固定草案约束。 |
-| `src/pages/agent.json.ts` 与 `src/pages/.well-known/agent.json.ts`（#17） | 薄路由共用同一序列化结果。 | **已完成（#17）。** 关闭时由 build gate 清理；开启时字节一致。 |
+| `src/pages/agent.json.ts` 与 `src/pages/.well-known/agent.json.ts`（#17） | 薄路由共用同一序列化结果。 | **已完成（#17）。** 关闭时 Astro 空 404 不落盘（`awpDiscoveryGate` 为兜底）；开启时字节一致。 |
 | `src/pages/llms.txt.ts`、`src/lib/site-copy.ts`、相关 Head/MCP 引导组件 | 更新链接及文案。 | **已完成（#14）。** 不再推荐退役入口为主；仍提供用户可复制的真实 MCP URL；不要求 AWP。 |
 | `scripts/verify.mjs` | 从固定存在清单改为能力驱动检查。 | **已完成（#14+#17）。** AWP 按 `discovery.awp` 在 must-exist / must-not-exist 间切换；legacy discovery 文件兼容期仍应存在。 |
 | `.github/workflows/ci.yml`、Worker package scripts | 接入批次 0 固定的离线 workerd 集成与 bundle 检查。 | 干净 checkout + 两处 lockfile 安装可复现；不使用 remote AI Search binding 或生产凭据。 |
@@ -388,7 +388,7 @@ MCP legacy：2025-11-25、2025-06-18、2025-03-26 的协商与调用，不支持
 
 业务与安全：匿名 list 不生成摘要；受信 Key 摘要成功且额度只扣一次；失效 Key、权限不足、限流、超时和取消有一致处理；Origin 不允许时拒绝；CLI 无 Origin 不误拒；未实现的 await/elicitation/memory 仍不可用；内部 learning 路由不进入任何公开发现输出。
 
-构建：静态模式不得出现远程 POST `/ask` 或 MCP 的虚假承诺；mcp-only 配置可发现 MCP；完整路径正确；本轮不生成 AWP 路由或链接；后续实验才检查 AWP 两份输出一致、required fields、via 引用和动作输入输出；独立退役后才要求旧入口不再被 README、llms、Head 或 verify 引用。兼容期验证旧路径形状与配置条件，不提前断言其不存在。
+构建：静态模式不得出现远程 POST `/ask` 或 MCP 的虚假承诺；mcp-only 配置可发现 MCP；完整路径正确；#17 后 AWP 默认关闭（无输出/链接）；`discovery.awp: true` 时检查双路径字节一致、required fields 与一期 action allowlist；独立退役后才要求旧 MCP 入口不再被 README、llms、Head 或 verify 引用。兼容期验证旧路径形状与配置条件，不提前断言其不存在。
 
 真实客户端记录示例结构：
 
@@ -448,9 +448,9 @@ MCP legacy：2025-11-25、2025-06-18、2025-03-26 的协商与调用，不支持
 
 ### 独立后续项：AWP 实验与历史入口退役
 
-AWP 按第 8.2 节的消费者条件单独启动。本轮不新增 AWP 文件、开关及默认承诺。历史入口在核心版本完成兼容投影与弃用说明后，按第 10.2 节时间和消费者门槛另行删除；删除时同步清理路由、builder、字段、fixture、文案和 verify 规则。
+AWP 发现实验已按 §8.2 / #17 落地：`discovery.awp` 默认关闭，核心交付仍不依赖 AWP，可独立关闭且不影响 `/mcp` 与 `/ask`。历史 MCP 发现入口在核心版本完成兼容投影与弃用说明后，按第 10.2 节时间和消费者门槛另行删除；删除时同步清理路由、builder、字段、fixture、文案和 verify 规则。
 
-这两项有独立退出条件，不作为批次 B 的隐含前置。核心交付可以完成，同时如实记录未启动实验和处于观察期的兼容输出。
+历史入口退役仍有独立退出条件，不作为批次 B 的隐含前置。核心交付可以完成，同时如实记录默认关闭的 AWP 实验与处于观察期的兼容输出。
 
 ## 14. 上线、回滚和持续维护
 
@@ -468,7 +468,7 @@ AWP 按第 8.2 节的消费者条件单独启动。本轮不新增 AWP 文件、
 
 本次升级完成，应表现为客户端更容易接入、权限和错误更一致、真实能力更明确，而不是协议文件更多。
 
-发布验收必须确认：同一个 `/mcp` 可接入新旧目标客户端；静态模式仍独立可用；NLWeb 子集及浏览器交互没有功能损失；没有两套 ask 核心；没有非法 JSON-RPC 业务错误码；错误矩阵、请求大小与并发隔离通过；本轮未引入 AWP；历史发现已变为真实能力的兼容投影，并有弃用与后续退役记录；公开文档区分已验证与未验证能力。
+发布验收必须确认：同一个 `/mcp` 可接入新旧目标客户端；静态模式仍独立可用；NLWeb 子集及浏览器交互没有功能损失；没有两套 ask 核心；没有非法 JSON-RPC 业务错误码；错误矩阵、请求大小与并发隔离通过；AWP 默认关闭且核心路径不依赖它（#17）；历史发现已变为真实能力的兼容投影，并有弃用与后续退役记录；公开文档区分已验证与未验证能力。
 
 完成状态分开记录：批次 0 技术门槛通过、A/B 本地实现及 CI、真实产品客户端、受控 staging、实例部署。未取得部署授权或未完成线上验证时，结论只能是“实现完成/可供发布”，不能写成“生产升级完成”。文档修订本身不把任何 not_run 项变为 passed。
 
