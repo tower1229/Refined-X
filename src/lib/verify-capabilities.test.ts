@@ -1,12 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-	MUST_NOT_EXIST_PATHS,
+	awpPathsMustExist,
+	awpPathsMustNotExist,
+	verifyAwpManifestPair,
 	verifyLlmsAgainstCapabilities,
+	verifyLlmsHasNoAwpWhenDisabled,
 	verifyOpenApiAgainstCapabilities,
 } from '../../scripts/verify-capabilities.mjs';
+import { buildAwpManifest, serializeAwpManifest } from './awp-manifest.ts';
+import { resolveSiteAwpManifestBody } from './awp-manifest-route.ts';
 import { buildOpenApiDocument } from './openapi-document.ts';
-import { resolvePublicCapabilities } from './public-capabilities.ts';
+import { PROTOCOL_PROFILE_DUAL_ERA, resolvePublicCapabilities } from './public-capabilities.ts';
 
 const base = {
 	site: 'https://example.com/',
@@ -61,7 +66,131 @@ test('verify requires llms to expose configured MCP URL and not primary-recommen
 	);
 });
 
-test('AWP paths are listed as must-not-exist for this ticket', () => {
-	assert.ok(MUST_NOT_EXIST_PATHS.includes('/agent.json'));
-	assert.ok(MUST_NOT_EXIST_PATHS.includes('/.well-known/agent.json'));
+test('AWP paths are must-not-exist when switch is off and must-exist when on', () => {
+	assert.deepEqual(awpPathsMustNotExist(false), ['/agent.json', '/.well-known/agent.json']);
+	assert.deepEqual(awpPathsMustExist(false), []);
+	assert.deepEqual(awpPathsMustNotExist(true), []);
+	assert.deepEqual(awpPathsMustExist(true), ['/agent.json', '/.well-known/agent.json']);
+});
+
+test('verifyAwpManifestPair accepts byte-identical draft-0.2 manifests', () => {
+	const body = serializeAwpManifest(
+		buildAwpManifest(caps(), { intent: 'Public site', siteBasePath: '/' }),
+	);
+	assert.deepEqual(verifyAwpManifestPair(body, body), []);
+});
+
+test('verifyAwpManifestPair rejects divergent bytes and Ask actions', () => {
+	const good = serializeAwpManifest(
+		buildAwpManifest(caps(), { intent: 'Public site', siteBasePath: '/' }),
+	);
+	assert.ok(verifyAwpManifestPair(good, `${good} `).length > 0);
+
+	const withAsk = JSON.parse(good);
+	withAsk.actions.push({
+		id: 'ask',
+		description: 'Ask',
+		auth_required: true,
+		inputs: {},
+		outputs: {},
+		method: 'POST',
+		endpoint: '/ask',
+	});
+	const bad = `${JSON.stringify(withAsk, null, 2)}\n`;
+	assert.ok(verifyAwpManifestPair(bad, bad).some((line) => /must not project Ask|outside phase-1/.test(line)));
+});
+
+test('llms must not mention agent.json when AWP is off', () => {
+	assert.deepEqual(verifyLlmsHasNoAwpWhenDisabled('# Site\n', false), []);
+	assert.ok(verifyLlmsHasNoAwpWhenDisabled('# Site\n- [/agent.json](/agent.json)\n', false).length > 0);
+	assert.deepEqual(verifyLlmsHasNoAwpWhenDisabled('# Site\n- [/agent.json](/agent.json)\n', true), []);
+});
+
+test('route helper returns null when AWP off and identical bodies when on', () => {
+	const off = resolveSiteAwpManifestBody({
+		...base,
+		description: 'Demo',
+		ask: { askUrl: '', mcpUrl: '' },
+		discovery: { awp: false },
+	});
+	assert.equal(off, null);
+
+	const onConfig = {
+		...base,
+		description: 'Demo site for agents',
+		ask: {
+			askUrl: '',
+			mcpUrl: 'https://ask.example.com/mcp',
+			protocolProfile: PROTOCOL_PROFILE_DUAL_ERA,
+		},
+		discovery: { awp: true },
+	};
+	const a = resolveSiteAwpManifestBody(onConfig);
+	const b = resolveSiteAwpManifestBody(onConfig);
+	assert.ok(a);
+	assert.equal(a, b);
+	const parsed = JSON.parse(a);
+	assert.equal(parsed.awp_version, '0.2');
+	assert.equal(parsed.protocols.mcp.endpoint, 'https://ask.example.com/mcp');
+});
+
+test('manifest outputs keys align with fixture-shaped static API responses', () => {
+	const manifest = buildAwpManifest(caps(), { intent: 'fixture', siteBasePath: '/' });
+	const profileFixture = {
+		id: 'https://example.com/#person',
+		name: 'Demo',
+		jobTitle: 'Author',
+		description: 'Bio',
+		url: 'https://example.com/about/',
+		sameAs: ['https://github.com/example'],
+	};
+	const articlesFixture = {
+		count: 1,
+		articles: [
+			{
+				id: 'https://example.com/a',
+				title: 'Hello',
+				description: 'd',
+				llmSummary: 's',
+				url: 'https://example.com/a/',
+				pubDate: '2026-01-01T00:00:00.000Z',
+				tags: ['x'],
+				markdownUrl: 'https://example.com/a.md',
+			},
+		],
+	};
+	const topicsFixture = {
+		count: 1,
+		topics: [
+			{
+				name: 'x',
+				slug: 'x',
+				url: 'https://example.com/topics/x/',
+				articleCount: 1,
+				articles: articlesFixture.articles,
+			},
+		],
+	};
+	const searchFixture = {
+		articles: [{ url: '/a/', title: 'Hello', excerpt: 's', tags: ['x'], series: '', seriesName: '', date: '2026-01-01' }],
+		answers: [],
+		items: [{ type: 'article', url: '/a/', title: 'Hello', excerpt: 's' }],
+	};
+
+	for (const actionId of ['get_profile', 'list_articles', 'list_topics', 'get_search_index'] as const) {
+		const action = manifest.actions.find((a) => a.id === actionId);
+		assert.ok(action, `missing action ${actionId}`);
+	}
+	for (const key of Object.keys(manifest.actions.find((a) => a.id === 'get_profile')!.outputs)) {
+		assert.ok(key in profileFixture, `profile fixture missing ${key}`);
+	}
+	for (const key of Object.keys(manifest.actions.find((a) => a.id === 'list_articles')!.outputs)) {
+		assert.ok(key in articlesFixture, `articles fixture missing ${key}`);
+	}
+	for (const key of Object.keys(manifest.actions.find((a) => a.id === 'list_topics')!.outputs)) {
+		assert.ok(key in topicsFixture, `topics fixture missing ${key}`);
+	}
+	for (const key of Object.keys(manifest.actions.find((a) => a.id === 'get_search_index')!.outputs)) {
+		assert.ok(key in searchFixture, `search-index fixture missing ${key}`);
+	}
 });

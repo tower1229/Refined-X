@@ -3,11 +3,15 @@ import path from 'node:path';
 import { siteConfig } from '../site.config.mjs';
 import { builtPageExists, builtResourceExists } from './dist-path.mjs';
 import {
-	MUST_NOT_EXIST_PATHS,
+	awpPathsMustExist,
+	awpPathsMustNotExist,
 	requiredDiscoveryFilesForStage,
+	verifyAwpManifestPair,
 	verifyLlmsAgainstCapabilities,
+	verifyLlmsHasNoAwpWhenDisabled,
 	verifyOpenApiAgainstCapabilities,
 } from './verify-capabilities.mjs';
+import { isAwpDiscoveryEnabled } from '../src/lib/awp-manifest.ts';
 import { resolvePublicCapabilities, siteConfigToCapabilitiesInput } from '../src/lib/public-capabilities.ts';
 
 const distRoot = siteConfig.outDir;
@@ -23,6 +27,7 @@ const requiredFiles = [
 const failures = [];
 
 const caps = resolvePublicCapabilities(siteConfigToCapabilitiesInput(siteConfig));
+const awpEnabled = isAwpDiscoveryEnabled(siteConfig);
 
 async function listHtmlFiles(directory) {
 	const files = [];
@@ -40,9 +45,14 @@ for (const page of requiredPages) {
 for (const file of requiredFiles) {
 	if (!(await builtResourceExists(distRoot, file))) failures.push(`Missing file: ${file}`);
 }
-for (const file of MUST_NOT_EXIST_PATHS) {
+for (const file of awpPathsMustNotExist(awpEnabled)) {
 	if (await builtResourceExists(distRoot, file)) {
-		failures.push(`File must not exist at this migration stage: ${file}`);
+		failures.push(`File must not exist when discovery.awp is off: ${file}`);
+	}
+}
+for (const file of awpPathsMustExist(awpEnabled)) {
+	if (!(await builtResourceExists(distRoot, file))) {
+		failures.push(`Missing AWP file when discovery.awp is on: ${file}`);
 	}
 }
 
@@ -56,6 +66,7 @@ try {
 try {
 	const llms = await readFile(path.join(distRoot, 'llms.txt'), 'utf8');
 	failures.push(...verifyLlmsAgainstCapabilities(caps, llms));
+	failures.push(...verifyLlmsHasNoAwpWhenDisabled(llms, awpEnabled));
 } catch (error) {
 	failures.push(`llms.txt unreadable: ${error.message}`);
 }
@@ -65,6 +76,16 @@ try {
 	failures.push(...verifyOpenApiAgainstCapabilities(caps, openapi));
 } catch (error) {
 	failures.push(`openapi.json integration verification failed: ${error.message}`);
+}
+
+if (awpEnabled) {
+	try {
+		const rootBody = await readFile(path.join(distRoot, 'agent.json'), 'utf8');
+		const wellKnownBody = await readFile(path.join(distRoot, '.well-known/agent.json'), 'utf8');
+		failures.push(...verifyAwpManifestPair(rootBody, wellKnownBody));
+	} catch (error) {
+		failures.push(`AWP manifest verification failed: ${error.message}`);
+	}
 }
 
 if (caps.ask) {
@@ -140,4 +161,6 @@ if (failures.length > 0) {
 	process.exit(1);
 }
 
-console.log(`verify ok (dist=${distRoot}, mode=${caps.mode}, protocolProfile=${caps.protocolProfile.id})`);
+console.log(
+	`verify ok (dist=${distRoot}, mode=${caps.mode}, protocolProfile=${caps.protocolProfile.id}, awp=${awpEnabled})`,
+);

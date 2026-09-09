@@ -5,6 +5,7 @@ import sitemap from '@astrojs/sitemap';
 import starlight from '@astrojs/starlight';
 import { siteConfig } from './site.config.mjs';
 import { createSeoSitemapOptions } from './scripts/seo-sitemap.mjs';
+import { awpDiscoveryGate } from './scripts/awp-discovery-gate.mjs';
 import { remarkObsidianAssets } from './src/markdown/remark-obsidian-assets.mjs';
 
 // https://astro.build/config
@@ -29,6 +30,7 @@ export default defineConfig({
 		},
 	},
 	integrations: [
+		awpDiscoveryGate(siteConfig),
 		sitemap(createSeoSitemapOptions({ contentRoot: siteConfig.contentRoot, site: siteConfig.site })),
 		starlight({
 			title: siteConfig.title,

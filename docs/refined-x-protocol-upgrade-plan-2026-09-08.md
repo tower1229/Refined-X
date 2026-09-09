@@ -14,7 +14,7 @@
 |---|---|
 | MCP | 接入官方 TypeScript SDK v2 的 Web 标准服务入口，支持 `2026-07-28`，同时保留基于 `initialize` 的旧客户端兼容；两种行为在同一 `/mcp`，共享同一个 `ask` 工具。 |
 | NLWeb | 保留 `0.55` 的受限 `/ask` 子集。当前官网规范仍是该版本，不能因为版本号低而当作废弃实现删除。 |
-| AWP | 本轮不新增代码、配置开关或路由。第 8.2 节保留为独立实验设计，存在具体消费者并单独启动后实施；不影响核心升级完成。 |
+| AWP | 可选发现实验已按 §8.2 / #17 落地：`discovery.awp` 默认关闭；开启后由单一 builder 生成字节一致的 `/agent.json` 与 `/.well-known/agent.json`。不引入 AWP server。核心升级仍不依赖 AWP。 |
 | 历史发现文档 | 停止将旧 MCP Catalog / Server Card 实现称为稳定官方标准；冻结为薄兼容输出，发布弃用说明后退役。 |
 | OpenAPI | 本次优先修正真实接口、条件输出与 schema，保留 3.1.x 兼容输出；不为追新而强制切换到 3.2。 |
 | 安全与成本 | 保留现有 API Key、Turnstile、配额、缓存、审计和保留策略；协议升级不能成为绕过权限或重复推理的路径。 |
@@ -226,20 +226,22 @@ MCP ask 缺省模式  → list
 | `openapi.json` | HTTP API 的实际调用契约 | 保留并修正，不能将静态索引 API 误称为服务器搜索。 |
 | `/.well-known/about.json` | 本项目公开资料与接口索引 | 保留路径，逐步精简重复内容；标为 Refined-X 自有格式，不当作国际标准。 |
 | MCP `server/discover` | 在已知 `/mcp` 上的运行期协议能力发现 | 通过 SDK 实现；不是另一个静态 JSON 文件。 |
-| `/agent.json` 与 `/.well-known/agent.json` | AWP 消费者的可选能力 manifest | 本轮不生成；后续实验采用一个 builder、两个一致输出。 |
+| `/agent.json` 与 `/.well-known/agent.json` | AWP 消费者的可选能力 manifest | **#17 实验：** `discovery.awp` 默认关闭；开启时同一 builder 双路径字节一致输出。 |
 | 旧 MCP catalog/card/mcp.json | 历史草案及兼容探测 | 停止扩展，按第 10 节退役。 |
 
-### 8.2 AWP 最小实现范围（后续独立实验，不属于本次交付）
+### 8.2 AWP 最小实现范围（独立实验，#17）
 
-启动条件：记录一个具体消费者及接入方式、固定其读取的草案版本，并给出通过实际静态 API 完成任务的验收用例；仅为了增加发现文件不启动。启动后新增 `src/lib/awp-manifest.ts` 和两个极薄 Astro route。建议实例配置新增单一开关 `discovery.awp: false`，开启时构建生成。不要增加 AWP server、代理、注册中心、定时同步进程或 Agent 客户端。
+**启动门已记录**（见 [#17 评论](https://github.com/tower1229/Refined-X/issues/17#issuecomment-5596523476)）：消费者 = 官方 `npx agent-json validate` + Claude Code via AWP MCP server；接入 = GET 双路径；草案固定 `awp_version: "0.2"`；验收 = 校验 manifest 后仅用静态 `profile` / `articles` / `topics` / `search-index` API 完成只读任务。
+
+已新增 `src/lib/awp-manifest.ts`、薄路由 `src/pages/agent.json.ts` 与 `src/pages/.well-known/agent.json.ts`，实例开关 `discovery.awp`（默认 `false`）。不增加 AWP server、代理、注册中心、定时同步进程或 Agent 客户端。
 
 规范 §3 要求 `/agent.json`，但官网和 quickstart 示例使用 `/.well-known/agent.json`。在草案阶段双路径是兼容措施，不代表维护两份 manifest；两者必须由同一个序列化结果生成并进行字节一致性测试。正式规范收敛后再评估是否去掉别名。[S10][S11]
 
 Manifest 顶层生成 awp_version、domain、intent、actions；按配置生成 protocols。每个 action 必须包含规范要求的 id、description、auth_required、inputs、outputs，以及适当的 method/endpoint 或 via。官网的极短展示样例不能当作完整验收规则。[S11]
 
-**一期 action 范围建议只镜像明确公开的静态读取 API**，例如 get_profile、list_articles、list_topics、get_search_index。MCP 通过 protocols.mcp 声明，ask 的完整参数与模式条件由 tools/list 提供；暂不将“list 匿名、summarize 需权限”的同一个工具硬压成一个简单 auth_required 布尔值。这既避免授权语义失真，也减少一份重复工具定义。未来仅在有真实 AWP 消费者需求时添加 ask action 投影。
+**一期 action 范围只镜像明确公开的静态读取 API**：get_profile、list_articles、list_topics、get_search_index。MCP 通过 protocols.mcp 声明（仅在 `protocolProfile: dual-era` 且配置了 mcpUrl 时），ask 的完整参数与模式条件由 tools/list 提供；不将“list 匿名、summarize 需权限”的同一个工具硬压成一个简单 auth_required 布尔值。
 
-AWP 的 typed input/output 不是 OpenAPI schema 的原样复制；实现一个范围有限的投影并用实际 JSON API 响应夹具验证。`get_search_index` 返回索引，不是按 query 执行搜索；描述和输出必须如实反映。
+AWP 的 typed input/output 不是 OpenAPI schema 的原样复制；实现范围有限的投影并用实际 JSON API 响应夹具验证。`get_search_index` 返回索引，不是按 query 执行搜索；描述和输出必须如实反映。
 
 protocols.mcp 只声明已通过验收的版本与真实端点。AWP 的单一 version 字段不替代 MCP 协商；不创建 mcp-v1/mcp-v2 两个假“不同协议”，也不把任意新增 supportedVersions 字段当成 AWP 标准字段。
 
@@ -355,10 +357,10 @@ MCP 不发送中途业务通知；若 SDK legacy 使用 SSE，则有界读取到
 | `src/lib/mcp-discovery.ts` | 过渡期改为薄兼容投影，最终随旧入口退役。 | **已完成（#14）。** 不再自成一套身份、版本及能力事实。 |
 | `src/pages/openapi.json.ts` | 条件输出、准确 server/path、共享 schema。 | **已完成（#14）。** 静态模式不虚构动态 endpoint；operationId 稳定。 |
 | `src/pages/.well-known/about.json.ts` | 使用统一模型，保持对既有客户端的迁移窗口。 | **已完成（#14）。** 自有格式定位明确；顶层 legacy URL 保留并标注 `discoveryMaturity`，不偷偷删除兼容字段。 |
-| `src/lib/awp-manifest.ts`（后续实验） | 本轮不创建；启动实验后新增有限 AWP projection。 | 关闭时不输出；开启时符合所固定草案约束。 |
-| `src/pages/agent.json.ts` 与 `src/pages/.well-known/agent.json.ts`（后续实验） | 本轮不创建；启动实验后新增薄路由。 | 同一序列化结果；正确 MIME；实际部署根路径验证通过。 |
+| `src/lib/awp-manifest.ts`（#17 实验） | 有限 AWP 0.2 projection；`discovery.awp` 门控。 | **已完成（#17）。** 关闭时不输出；开启时符合固定草案约束。 |
+| `src/pages/agent.json.ts` 与 `src/pages/.well-known/agent.json.ts`（#17） | 薄路由共用同一序列化结果。 | **已完成（#17）。** 关闭时由 build gate 清理；开启时字节一致。 |
 | `src/pages/llms.txt.ts`、`src/lib/site-copy.ts`、相关 Head/MCP 引导组件 | 更新链接及文案。 | **已完成（#14）。** 不再推荐退役入口为主；仍提供用户可复制的真实 MCP URL；不要求 AWP。 |
-| `scripts/verify.mjs` | 从固定存在清单改为能力驱动检查。 | **已完成（#14）。** 同时验证“应该存在”和“不应该存在”（本迁移阶段 AWP must-not-exist；legacy discovery 文件兼容期仍应存在）。 |
+| `scripts/verify.mjs` | 从固定存在清单改为能力驱动检查。 | **已完成（#14+#17）。** AWP 按 `discovery.awp` 在 must-exist / must-not-exist 间切换；legacy discovery 文件兼容期仍应存在。 |
 | `.github/workflows/ci.yml`、Worker package scripts | 接入批次 0 固定的离线 workerd 集成与 bundle 检查。 | 干净 checkout + 两处 lockfile 安装可复现；不使用 remote AI Search binding 或生产凭据。 |
 | Worker 现有 mcp/protocol 测试和 staging regression 脚本 | 修改错误测试，补充双时代和客户端验收。 | 不以删除失败断言代替修复，不重复触发真实模型。 |
 | README 中英文、部署文档、ROADMAP | 一次性更新支持矩阵及迁移说明。 | 开发计划与已交付功能分开，过时相互矛盾的段落删除。 |

@@ -91,6 +91,13 @@ const defaults = {
 		/** Optional override for Server Card `_meta` namespace; default `${packageIdentifier}/discovery`. */
 		discoveryMetaKey: undefined,
 	},
+	/**
+	 * Optional discovery experiments. AWP manifests (`/agent.json`, `/.well-known/agent.json`)
+	 * are off by default — enable only after the #17 start gate (consumer + draft pin + acceptance case).
+	 */
+	discovery: {
+		awp: false,
+	},
 };
 
 async function loadOverlay() {
@@ -131,6 +138,7 @@ const merged = {
 	comments: resolveCommentsConfig({ ...defaults.comments, ...(overlay.comments ?? {}) }),
 	brand: mergedBrand,
 	mcp: { ...defaults.mcp, ...(overlay.mcp ?? {}) },
+	discovery: { ...defaults.discovery, ...(overlay.discovery ?? {}) },
 	redirects: overlay.redirects ?? defaults.redirects,
 };
 
