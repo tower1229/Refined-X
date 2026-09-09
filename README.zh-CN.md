@@ -68,7 +68,10 @@ flowchart LR
 
 可选的 Public Ask Worker 提供基于公开内容的检索和摘要，
 暴露受限的 NLWeb v0.55 兼容 `/ask` 接口与双代 Streamable HTTP MCP 服务
-（同一 `/mcp` 上一个 `ask` 工具，覆盖 modern `2026-07-28` 与 legacy 2025），
+（同一 `/mcp` 上一个 `ask` 工具，覆盖 modern `2026-07-28` 与 legacy 2025）。
+离线双代集成由 CI 跑通；产品客户端验收见
+[`docs/mcp-client-support-matrix.md`](docs/mcp-client-support-matrix.md)
+（核心：Claude Code modern + Codex CLI legacy，合成 mock 后端；其余客户端保持 `not_run`）。
 并内置配额、限流、浏览器验证、来源链接和明确的能力边界。
 
 ### 为阅读而设计
@@ -312,7 +315,8 @@ Refined-X 不是：
 - 托管式 CMS；
 - 私人 Agent；
 - 长期记忆服务；
-- 对所有 MCP 客户端自动发现能力的承诺。
+- 对所有 MCP 客户端自动发现能力的承诺；
+- 把扩展矩阵里未跑过的客户端写成“已验证支持”（见 [`docs/mcp-client-support-matrix.md`](docs/mcp-client-support-matrix.md)）。
 
 它服务的是“个人愿意公开表达和被外部读取的部分”，
 而不是替个人保存全部私人数据或代表个人执行任意行动。

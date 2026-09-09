@@ -15,6 +15,7 @@ examples/**/.wrangler/
 examples/**/node_modules/
 examples/**/worker-configuration.d.ts
 examples/public-ask-worker/spike/**/.dry-run/
+examples/public-ask-worker/test/product-clients/.acceptance-base-url
 examples/public-ask-worker/wrangler.demo.jsonc
 instance.config.mjs
 node_modules/

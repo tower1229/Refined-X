@@ -1,0 +1,14 @@
+stdout:
+refined_x_ask
+  enabled: true
+  transport: streamable_http
+  url: http://127.0.0.1:63371/mcp
+  bearer_token_env_var: -
+  http_headers: -
+  env_http_headers: -
+  http_headers_helper: -
+  remove: codex mcp remove refined_x_ask
+
+stderr:
+
+status:0

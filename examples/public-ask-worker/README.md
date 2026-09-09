@@ -29,7 +29,10 @@ npm install
 npm test
 npm run typecheck
 npm run test:mcp-protocol
+npm run test:product-client-records
 ```
+
+Optional product-client acceptance (needs local Claude Code + Codex CLIs): see [`docs/mcp-client-support-matrix.md`](../../docs/mcp-client-support-matrix.md).
 
 Set `PUBLIC_MCP_ORIGIN` in `wrangler.jsonc` to the Worker’s absolute origin (not the static site URL). Example: `https://ask.example.com`.
 

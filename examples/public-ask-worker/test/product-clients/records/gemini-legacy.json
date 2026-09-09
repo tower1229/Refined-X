@@ -1,0 +1,16 @@
+{
+  "client": "Gemini CLI",
+  "clientVersion": null,
+  "platform": null,
+  "runtime": null,
+  "negotiation": null,
+  "observedProtocolVersion": null,
+  "toolDiscovery": "not_run",
+  "anonymousList": "not_run",
+  "authenticatedSummarize": "not_run",
+  "errorHandling": "not_run",
+  "testedAt": null,
+  "evidencePath": null,
+  "businessBackend": null,
+  "notes": "Extended/alternate legacy candidate; Codex covered the core legacy gate."
+}

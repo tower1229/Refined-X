@@ -1,0 +1,29 @@
+stdout:
+The tool returned insufficient relevant material to summarize. DONE
+
+stderr:
+Reading additional input from stdin...
+OpenAI Codex v0.153.4
+--------
+workdir: /Users/zangtao/Workspace/tower1229/Refined-X/examples/public-ask-worker/test/product-clients
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: none
+reasoning summaries: none
+session id: 01a08432-51d0-7543-a201-b4373becd926
+--------
+user
+Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"acceptance summarize"},"prefer":{"mode":"summarize"}}. Then reply with one short sentence and the word DONE.
+codex
+I’ll find and call the requested MCP tool.
+
+mcp: refined_x_ask/ask started
+mcp: refined_x_ask/ask (completed)
+codex
+The tool returned insufficient relevant material to summarize. DONE
+tokens used
+7,441
+
+status:0

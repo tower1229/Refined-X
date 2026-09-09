@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "refined-x-ask": {
+      "type": "http",
+      "url": "http://127.0.0.1:63371/mcp",
+      "headers": {
+        "Authorization": "Bearer pask_abcdefghijklmnop_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+      }
+    }
+  }
+}

@@ -120,7 +120,9 @@ npm run test:mcp-protocol
 # npm run test:staging
 ```
 
-`test:mcp-protocol` boots a synthetic workerd Worker over local HTTP and exercises dual-era MCP discover/list/call, version rejects, cancel, and security traverse cases (anonymous list, bad Key, unauthorized summarize, pre-auth rate limit). Product Claude/Codex clients remain `not_run` until a controlled staging pass.
+`test:mcp-protocol` boots a synthetic workerd Worker over local HTTP and exercises dual-era MCP discover/list/call, version rejects, cancel, and security traverse cases (anonymous list, bad Key, unauthorized summarize, pre-auth rate limit).
+
+Product-client acceptance (Claude Code modern + Codex CLI legacy on the same synthetic mock) is recorded in [`docs/mcp-client-support-matrix.md`](mcp-client-support-matrix.md). Extended clients (Cursor, Responses API, Claude platform exceptions, Gemini, …) remain `not_run` and must not be marketed as verified. Controlled staging / real-model smoke is a separate authorized step.
 
 ## Troubleshooting
 

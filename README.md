@@ -70,6 +70,8 @@ articles without a model, database, or runtime bill.
 The optional Public Ask Worker adds grounded retrieval and summarization through
 a restricted NLWeb v0.55-compatible `/ask` endpoint and a dual-era Streamable HTTP MCP
 server (one `ask` tool on `/mcp` for modern `2026-07-28` and legacy 2025 clients).
+Offline dual-era integration runs in CI; product-client verification is recorded in
+[`docs/mcp-client-support-matrix.md`](docs/mcp-client-support-matrix.md) (core: Claude Code modern + Codex CLI legacy on a synthetic mock backend; other clients stay `not_run`).
 It includes quotas, rate limits, browser verification, source links,
 and explicit capability boundaries.
 
@@ -317,7 +319,8 @@ Refined-X is not:
 - a hosted CMS;
 - a private personal agent;
 - a long-term memory service;
-- a promise of automatic MCP discovery in every client.
+- a promise of automatic MCP discovery in every client;
+- a claim that every MCP client in the extended matrix has been product-verified (see [`docs/mcp-client-support-matrix.md`](docs/mcp-client-support-matrix.md)).
 
 ## Contributing
 

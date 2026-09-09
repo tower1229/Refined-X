@@ -1,0 +1,20 @@
+{
+  "client": "Claude Code",
+  "clientVersion": "2.1.228",
+  "platform": "darwin/arm64",
+  "runtime": "v2",
+  "negotiation": "auto",
+  "observedProtocolVersion": "2026-07-28",
+  "toolDiscovery": "passed",
+  "anonymousList": "passed",
+  "authenticatedSummarize": "passed",
+  "errorHandling": "passed",
+  "testedAt": "2026-09-09T03:24:16.478Z",
+  "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/claude-code-modern/",
+  "businessBackend": "synthetic_mock",
+  "featureFlags": {
+    "MCP_SDK_GENERATION": "v2",
+    "MCP_PROTOCOL_NEGOTIATION": "auto"
+  },
+  "notes": "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker uses empty retrieval so summarize stays on the no-reference path (no production AI Search/model)."
+}

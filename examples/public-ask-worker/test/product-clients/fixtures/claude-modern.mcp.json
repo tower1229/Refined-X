@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "refined-x-ask": {
+      "type": "http",
+      "url": "http://127.0.0.1:63371/mcp"
+    }
+  }
+}

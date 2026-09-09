@@ -1,0 +1,19 @@
+{
+  "client": "Codex CLI",
+  "clientVersion": "0.153.4",
+  "platform": "darwin/arm64",
+  "runtime": "v1/legacy-default",
+  "negotiation": "legacy (mcp_2026_07_28=false)",
+  "observedProtocolVersion": "2025-06-18",
+  "toolDiscovery": "passed",
+  "anonymousList": "passed",
+  "authenticatedSummarize": "passed",
+  "errorHandling": "passed",
+  "testedAt": "2026-09-09T03:25:38.509Z",
+  "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/codex-legacy/",
+  "businessBackend": "synthetic_mock",
+  "featureFlags": {
+    "mcp_2026_07_28": false
+  },
+  "notes": "Legacy product path: Codex 0.153.x with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend."
+}
