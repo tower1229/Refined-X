@@ -29,7 +29,7 @@ function digestOf(secret: string): Promise<string> {
   return pending;
 }
 
-function createEnv(options: { rateLimited?: boolean } = {}): Env {
+function createEnv(options: { rateLimited?: boolean; slowSearch?: boolean } = {}): Env {
   const rateOk = !options.rateLimited;
   return {
     ACTOR_HMAC_KEY: "integration-secret",
@@ -90,6 +90,9 @@ function createEnv(options: { rateLimited?: boolean } = {}): Env {
     PUBLIC_CONTENT: {
       async search() {
         counters.searchCalls += 1;
+        if (options.slowSearch) {
+          await new Promise((resolve) => setTimeout(resolve, 5_000));
+        }
         return { chunks: [] };
       },
     },
@@ -109,7 +112,8 @@ export default {
     }
     if (url.pathname === "/mcp") {
       const rateLimited = url.searchParams.get("preauth") === "rate-limited";
-      return handleMcp(request, createEnv({ rateLimited }));
+      const slowSearch = url.searchParams.get("slow") === "1";
+      return handleMcp(request, createEnv({ rateLimited, slowSearch }));
     }
     return new Response("not found", { status: 404 });
   },

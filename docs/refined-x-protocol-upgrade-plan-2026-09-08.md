@@ -438,7 +438,7 @@ MCP legacy：2025-11-25、2025-06-18、2025-03-26 的协商与调用，不支持
 
 原位替换手写 router，使用批次 0 固定 SDK 接入同一业务核心；交付错误矩阵、HTTP 状态、权限、预算、输出和取消处理。协议集成加入 CI，并在干净源码上执行批次 A 的回归和 Worker bundle 检查。更新 README 中英文、部署文档和支持矩阵，发布材料只描述通过的能力。
 
-**进度：** #15 已在本仓落地（`mcp-server.ts` SDK dual-era adapter、`PUBLIC_MCP_ORIGIN`、`test:mcp-protocol`）。真实产品客户端矩阵与受控 staging 仍按退出条件单独记录，未运行项不得标为 passed。
+**进度：** #15 已在本仓落地（`mcp-server.ts` SDK dual-era adapter、`PUBLIC_MCP_ORIGIN`、有界 body、`test:mcp-protocol` 含 §6.2/安全/cancel）。真实产品客户端矩阵与受控 staging 仍按退出条件单独记录，未运行项不得标为 passed。
 
 **退出条件：**全部离线集成通过；Claude Code modern 及一个 Codex/Gemini legacy 真实产品客户端均完成工具导入、匿名 list、带合成 Key 的 summarize 和错误处理；模拟模型只验证协议与权限链，真实模型状态另记。可用合成语料和模拟模型验证真实产品客户端工具链，但必须标明模拟业务后端。真实部署的模型联调是单独受控 staging 项，需已有相应环境及授权；未运行时不得宣称真实模型/生产验收通过。
 

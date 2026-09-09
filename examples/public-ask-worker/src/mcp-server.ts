@@ -21,6 +21,7 @@ import {
   executeAskAction,
 } from "./ask-service.ts";
 import type { RejectionPayload } from "./abuse-guard.ts";
+import { PUBLIC_ASK_CORS_ALLOW_HEADERS, PUBLIC_ASK_CORS_EXPOSE_HEADERS } from "./cors.ts";
 import { resolveInstancePolicy } from "./instance-policy.ts";
 import { runPreAuthChecks } from "./pre-auth.ts";
 import {
@@ -29,11 +30,11 @@ import {
   normalizeAskRequest,
   RequestProblem,
 } from "./protocol.ts";
-import { MAX_REQUEST_BYTES } from "./request-envelope.ts";
+import { JsonBodyProblem, readBoundedBodyBytes } from "./request-envelope.ts";
 
 export const ASK_TOOL_INPUT_SCHEMA = ASK_RAW_INPUT_SCHEMA;
 
-export const MAX_MCP_REQUEST_BYTES = MAX_REQUEST_BYTES;
+export const MAX_MCP_REQUEST_BYTES = 16 * 1024;
 export const MAX_MCP_RESPONSE_BYTES = 128 * 1024;
 /** Inner NLWeb payload budget before structuredContent + text + RPC/SSE wrap. */
 export const MCP_INNER_RESULT_BUDGET = 96 * 1024;
@@ -42,16 +43,6 @@ const ASK_TOOL_DESCRIPTION = `Ask a natural language question through the ${PUBL
 const MCP_SERVER_INFO = { name: "public-ask-worker", version: "1.0.0" } as const;
 const PUBLIC_TOOL_CACHE_TTL_MS = 3_600_000;
 const BEARER_CHALLENGE = 'Bearer realm="public-ask"';
-
-const CORS_ALLOW_HEADERS = [
-  "content-type",
-  "authorization",
-  "accept",
-  "mcp-protocol-version",
-  "mcp-method",
-  "mcp-name",
-  "cf-turnstile-response",
-].join(", ");
 
 export type McpHttpOutcome = {
   status: number;
@@ -160,9 +151,12 @@ async function runAskTool(args: unknown, store: McpRequestStore) {
 
   const result = await executeAskAction(context, store.env, store.runtime);
   if (!result.ok) {
-    store.outcome.status = result.status;
-    if (result.retryAfter !== undefined) {
-      store.outcome.retryAfter = result.retryAfter;
+    // Auth/quota keep HTTP semantics; protocol/tool business failures stay HTTP 200 with isError.
+    if (result.status === 401 || result.status === 403 || result.status === 429) {
+      store.outcome.status = result.status;
+      if (result.retryAfter !== undefined) {
+        store.outcome.retryAfter = result.retryAfter;
+      }
     }
     return toolError(result.code, result.message, result.detail);
   }
@@ -179,6 +173,11 @@ async function runAskTool(args: unknown, store: McpRequestStore) {
     results: fittedResults,
   };
   const text = JSON.stringify(nlwebResponse);
+  // Dual content (text + structuredContent) plus RPC/SSE wrap must stay within the final HTTP cap.
+  const dualEstimate = new TextEncoder().encode(text).byteLength * 2 + 4_096;
+  if (dualEstimate > MAX_MCP_RESPONSE_BYTES) {
+    return toolError("RESPONSE_TOO_LARGE", "bounded");
+  }
   return {
     content: [{ type: "text" as const, text }],
     structuredContent: nlwebResponse,
@@ -216,8 +215,8 @@ function hostAllowed(requestHost: string, allowedHostname: string): boolean {
 
 function mcpCorsHeaders(origin: string | null, allowedOrigin: string): Headers {
   const headers = new Headers();
-  headers.set("access-control-allow-headers", CORS_ALLOW_HEADERS);
-  headers.set("access-control-expose-headers", "retry-after, www-authenticate, x-request-id");
+  headers.set("access-control-allow-headers", PUBLIC_ASK_CORS_ALLOW_HEADERS);
+  headers.set("access-control-expose-headers", PUBLIC_ASK_CORS_EXPOSE_HEADERS);
   headers.set("vary", "origin");
   if (origin === allowedOrigin) {
     headers.set("access-control-allow-origin", origin);
@@ -283,6 +282,35 @@ async function bufferResponse(response: Response): Promise<{
     body,
     byteLength: body.byteLength,
   };
+}
+
+/** Bound a finished SDK HTTP body; used by handleMcp and unit-tested in isolation. */
+export async function boundMcpSdkHttpResponse(
+  sdkResponse: Response,
+  origin: string | null,
+  allowedOrigin: string,
+  requestId: string,
+  outcome: McpHttpOutcome = { status: 200 },
+): Promise<Response> {
+  const buffered = await bufferResponse(sdkResponse);
+  if (buffered.byteLength > MAX_MCP_RESPONSE_BYTES) {
+    return withMcpHeaders(
+      Response.json(
+        { error: { code: "RESPONSE_TOO_LARGE", message: "bounded" } },
+        { status: 500, headers: { "content-type": "application/json; charset=utf-8" } },
+      ),
+      origin,
+      allowedOrigin,
+      requestId,
+    );
+  }
+  return withMcpHeaders(
+    new Response(buffered.body, { status: buffered.status, headers: buffered.headers }),
+    origin,
+    allowedOrigin,
+    requestId,
+    outcome,
+  );
 }
 
 export async function handleMcp(request: Request, env: Env, runtime: AskRuntime = {}): Promise<Response> {
@@ -380,27 +408,36 @@ export async function handleMcp(request: Request, env: Env, runtime: AskRuntime 
     return securityBoundaryResponse(preAuth.rejection, origin, allowedOrigin, requestId);
   }
 
-  const raw = new Uint8Array(await request.arrayBuffer());
-  if (raw.byteLength > MAX_MCP_REQUEST_BYTES) {
-    return withMcpHeaders(
-      new Response("Payload Too Large", { status: 413 }),
-      origin,
-      allowedOrigin,
-      requestId,
-    );
+  let raw: Uint8Array;
+  try {
+    raw = await readBoundedBodyBytes(request, MAX_MCP_REQUEST_BYTES);
+  } catch (error) {
+    if (error instanceof JsonBodyProblem && error.reason === "body_too_large") {
+      return withMcpHeaders(
+        new Response("Payload Too Large", { status: 413 }),
+        origin,
+        allowedOrigin,
+        requestId,
+      );
+    }
+    raw = new Uint8Array();
   }
 
   let parsedBody: unknown;
   try {
-    parsedBody = JSON.parse(new TextDecoder().decode(raw));
+    parsedBody = raw.byteLength === 0
+      ? undefined
+      : JSON.parse(new TextDecoder().decode(raw));
   } catch {
     parsedBody = undefined;
   }
 
+  const bodyCopy = new ArrayBuffer(raw.byteLength);
+  new Uint8Array(bodyCopy).set(raw);
   const rebuilt = new Request(request.url, {
     method: "POST",
     headers: request.headers,
-    body: raw,
+    body: raw.byteLength === 0 ? null : bodyCopy,
     signal: request.signal,
   });
 
@@ -419,24 +456,5 @@ export async function handleMcp(request: Request, env: Env, runtime: AskRuntime 
     sdkHandler.fetch(rebuilt, parsedBody === undefined ? undefined : { parsedBody }),
   );
 
-  const buffered = await bufferResponse(sdkResponse);
-  if (buffered.byteLength > MAX_MCP_RESPONSE_BYTES) {
-    return withMcpHeaders(
-      Response.json(
-        { error: { code: "RESPONSE_TOO_LARGE", message: "bounded" } },
-        { status: 500, headers: { "content-type": "application/json; charset=utf-8" } },
-      ),
-      origin,
-      allowedOrigin,
-      requestId,
-    );
-  }
-
-  return withMcpHeaders(
-    new Response(buffered.body, { status: buffered.status, headers: buffered.headers }),
-    origin,
-    allowedOrigin,
-    requestId,
-    outcome,
-  );
+  return boundMcpSdkHttpResponse(sdkResponse, origin, allowedOrigin, requestId, outcome);
 }

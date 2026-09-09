@@ -15,15 +15,18 @@ export class JsonBodyProblem extends Error {
   }
 }
 
-export async function readJsonBody(
+/**
+ * Stream-read a request body up to maxBytes. Cancels the reader as soon as the
+ * limit is exceeded so oversized payloads are not fully buffered.
+ */
+export async function readBoundedBodyBytes(
   request: Request,
   maxBytes = MAX_REQUEST_BYTES,
-): Promise<unknown> {
+): Promise<Uint8Array> {
   if (!request.body) throw new JsonBodyProblem("missing_body");
   const reader = request.body.getReader();
-  const decoder = new TextDecoder();
+  const chunks: Uint8Array[] = [];
   let bytes = 0;
-  let text = "";
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -33,10 +36,28 @@ export async function readJsonBody(
         await reader.cancel("body_too_large");
         throw new JsonBodyProblem("body_too_large");
       }
-      text += decoder.decode(value, { stream: true });
+      chunks.push(value);
     }
-    text += decoder.decode();
-    return JSON.parse(text);
+  } catch (error) {
+    if (error instanceof JsonBodyProblem) throw error;
+    throw new JsonBodyProblem("invalid_json");
+  }
+  const out = new Uint8Array(bytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+export async function readJsonBody(
+  request: Request,
+  maxBytes = MAX_REQUEST_BYTES,
+): Promise<unknown> {
+  const raw = await readBoundedBodyBytes(request, maxBytes);
+  try {
+    return JSON.parse(new TextDecoder().decode(raw));
   } catch (error) {
     if (error instanceof JsonBodyProblem) throw error;
     throw new JsonBodyProblem("invalid_json");
@@ -48,25 +69,22 @@ export async function readRequestEnvelope(
   maxBytes = MAX_REQUEST_BYTES,
 ): Promise<NlWebRequest> {
   if (!request.body) throw new RequestEnvelopeProblem("request body is required");
-  const reader = request.body.getReader();
-  const decoder = new TextDecoder();
-  let bytes = 0;
-  let text = "";
+  let raw: Uint8Array;
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      bytes += value.byteLength;
-      if (bytes > maxBytes) {
-        await reader.cancel("body_too_large");
-        throw new RequestEnvelopeProblem("request body must not exceed 16 KiB");
-      }
-      text += decoder.decode(value, { stream: true });
-    }
-    text += decoder.decode();
-    return normalizeAskRequest(JSON.parse(text), "http");
+    raw = await readBoundedBodyBytes(request, maxBytes);
   } catch (error) {
-    if (error instanceof RequestEnvelopeProblem || error instanceof RequestProblem) throw error;
+    if (error instanceof JsonBodyProblem && error.reason === "body_too_large") {
+      throw new RequestEnvelopeProblem("request body must not exceed 16 KiB");
+    }
+    if (error instanceof JsonBodyProblem && error.reason === "missing_body") {
+      throw new RequestEnvelopeProblem("request body is required");
+    }
+    throw new RequestEnvelopeProblem("request body must be valid JSON");
+  }
+  try {
+    return normalizeAskRequest(JSON.parse(new TextDecoder().decode(raw)), "http");
+  } catch (error) {
+    if (error instanceof RequestProblem) throw error;
     throw new RequestEnvelopeProblem("request body must be valid JSON");
   }
 }

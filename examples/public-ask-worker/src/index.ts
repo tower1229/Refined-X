@@ -6,6 +6,7 @@ import {
 } from "./protocol.ts";
 import { deriveAnonymousActor } from "./actor.ts";
 import { handleMcp } from "./mcp-server.ts";
+import { PUBLIC_ASK_CORS_ALLOW_HEADERS, PUBLIC_ASK_CORS_EXPOSE_HEADERS } from "./cors.ts";
 import { readRequestEnvelope, readJsonBody } from "./request-envelope.ts";
 import {
   persistQueueEvent,
@@ -42,17 +43,14 @@ function positiveLimit(value: string, name: string) {
   return limit;
 }
 
-const CORS_ALLOW_HEADERS =
-  "content-type, authorization, accept, mcp-protocol-version, mcp-method, mcp-name, cf-turnstile-response";
-
 function corsHeaders(request: Request, env: Env): HeadersInit {
   const origin = request.headers.get("origin");
   return origin === env.ALLOWED_ORIGIN
     ? {
         "access-control-allow-origin": origin,
         "access-control-allow-methods": "POST, OPTIONS",
-        "access-control-allow-headers": CORS_ALLOW_HEADERS,
-        "access-control-expose-headers": "retry-after, www-authenticate, x-request-id",
+        "access-control-allow-headers": PUBLIC_ASK_CORS_ALLOW_HEADERS,
+        "access-control-expose-headers": PUBLIC_ASK_CORS_EXPOSE_HEADERS,
         vary: "origin",
       }
     : {};

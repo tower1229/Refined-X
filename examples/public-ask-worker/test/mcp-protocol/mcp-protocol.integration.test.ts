@@ -97,6 +97,8 @@ async function readRpc(response: Response) {
         _meta?: { response_type?: string };
         results?: unknown[];
       };
+      ttlMs?: number;
+      cacheScope?: string;
       _meta?: Record<string, { name?: string; ttlMs?: number; cacheScope?: string }>;
     };
     error?: { code: number; message?: string };
@@ -132,6 +134,27 @@ test("modern server/discover and tools/list do not invoke ask", async () => {
   const list = await readRpc(await postMcp(modernHeaders("tools/list"), modernBody("tools/list", {})));
   assert.equal(list.status, 200);
   assert.equal(list.body.result?.tools?.[0]?.name, "ask");
+  // Cache hints on discover and tools/list (SDK encodes ttlMs/cacheScope on result).
+  assert.equal(discover.body.result?.ttlMs, 3_600_000);
+  assert.equal(discover.body.result?.cacheScope, "public");
+  assert.equal(list.body.result?.ttlMs, 3_600_000);
+  assert.equal(list.body.result?.cacheScope, "public");
+  assert.equal(await searchCalls(), before);
+
+  // Modern wire has no ping; legacy ping is the required liveness check (§6.2).
+  const legacyPing = await readRpc(
+    await postMcp(
+      {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        "mcp-protocol-version": "2025-11-25",
+        host: PUBLIC_MCP_ORIGIN_HOST,
+      },
+      { jsonrpc: "2.0", id: 99, method: "ping", params: {} },
+    ),
+  );
+  assert.equal(legacyPing.status, 200);
+  assert.deepEqual(legacyPing.body.result, {});
   assert.equal(await searchCalls(), before);
 });
 
@@ -250,6 +273,73 @@ test("unsupported modern version and header/body mismatch reject without ask", a
   assert.equal(mismatch.status, 400);
   assert.equal(mismatch.body.error?.code, -32020);
   assert.equal(await searchCalls(), before);
+});
+
+test("unsupported legacy initialize counter-offers and subsequent bad version header rejects", async () => {
+  await worker.fetch(`${baseUrl}/reset`);
+  const before = await searchCalls();
+  const init = await readRpc(
+    await postMcp(
+      {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        host: PUBLIC_MCP_ORIGIN_HOST,
+      },
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: {
+          protocolVersion: "2099-01-01",
+          capabilities: {},
+          clientInfo: { name: "legacy", version: "1" },
+        },
+      },
+    ),
+  );
+  assert.equal(init.status, 200);
+  assert.equal(init.body.result?.protocolVersion, "2025-11-25");
+  assert.equal(await searchCalls(), before);
+
+  const badHeader = await readRpc(
+    await postMcp(
+      {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        "mcp-protocol-version": "2099-01-01",
+        host: PUBLIC_MCP_ORIGIN_HOST,
+      },
+      {
+        jsonrpc: "2.0",
+        id: 2,
+        method: "tools/call",
+        params: { name: "ask", arguments: { query: { text: "nope" } } },
+      },
+    ),
+  );
+  assert.notEqual(badHeader.status, 200);
+  assert.equal(await searchCalls(), before);
+});
+
+test("cancel aborts in-flight ask without hanging under workerd", async () => {
+  await worker.fetch(`${baseUrl}/reset`);
+  const before = await searchCalls();
+  const controller = new AbortController();
+  const pending = worker.fetch(`${baseUrl}/mcp?slow=1`, {
+    method: "POST",
+    headers: modernHeaders("tools/call", "ask") as Record<string, string>,
+    body: JSON.stringify(
+      modernBody("tools/call", { name: "ask", arguments: { query: { text: "slow" } } }),
+    ),
+    signal: controller.signal,
+  });
+  setTimeout(() => controller.abort(), 50);
+  await assert.rejects(async () => {
+    await pending;
+  });
+  await new Promise((r) => setTimeout(r, 150));
+  const after = await searchCalls();
+  assert.ok(after === before || after === before + 1);
 });
 
 test("security traverse: anonymous list, bad key, unauthorized summarize, pre-auth rate limit", async () => {

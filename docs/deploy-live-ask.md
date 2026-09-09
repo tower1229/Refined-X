@@ -120,7 +120,7 @@ npm run test:mcp-protocol
 # npm run test:staging
 ```
 
-`test:mcp-protocol` boots a synthetic workerd Worker over local HTTP and exercises dual-era MCP discover/list/call, version rejects, and security traverse cases (anonymous list, bad Key, unauthorized summarize, pre-auth rate limit).
+`test:mcp-protocol` boots a synthetic workerd Worker over local HTTP and exercises dual-era MCP discover/list/call, version rejects, cancel, and security traverse cases (anonymous list, bad Key, unauthorized summarize, pre-auth rate limit). Product Claude/Codex clients remain `not_run` until a controlled staging pass.
 
 ## Troubleshooting
 

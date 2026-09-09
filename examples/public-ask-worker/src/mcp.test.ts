@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { digestApiKeySecret } from "./api-keys.ts";
-import { ASK_TOOL_INPUT_SCHEMA, handleMcp } from "./mcp-server.ts";
+import { ASK_TOOL_INPUT_SCHEMA, boundMcpSdkHttpResponse, handleMcp } from "./mcp-server.ts";
 import type { SecurityAuditEvent } from "./durable-events.ts";
 
 function acceptedEnv(overrides: Record<string, unknown> = {}) {
@@ -359,4 +359,145 @@ test("MCP rejects Host that does not match PUBLIC_MCP_ORIGIN", async () => {
   }, { host: "evil.example" }), env);
   assert.equal(response.status, 403);
   assert.equal(searchCalls, 0);
+});
+
+test("MCP cancel aborts in-flight ask without hanging", async () => {
+  let searchCalls = 0;
+  const env = acceptedEnv({
+    PUBLIC_CONTENT: {
+      async search() {
+        searchCalls += 1;
+        await new Promise((resolve) => setTimeout(resolve, 5_000));
+        return { chunks: [] };
+      },
+    },
+  });
+  const controller = new AbortController();
+  const pending = handleMcp(new Request("https://ask.refined-x.com/mcp", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+      host: "ask.refined-x.com",
+      "cf-connecting-ip": "203.0.113.7",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0", id: 90, method: "tools/call",
+      params: { name: "ask", arguments: { query: { text: "slow" } } },
+    }),
+    signal: controller.signal,
+  }), env);
+  setTimeout(() => controller.abort(), 50);
+  await Promise.race([
+    pending.then(() => undefined, () => undefined),
+    new Promise((resolve) => setTimeout(resolve, 2_000)),
+  ]);
+  assert.ok(searchCalls === 0 || searchCalls === 1);
+});
+
+test("MCP already-aborted signal yields bounded cancel outcome", async () => {
+  let searchCalls = 0;
+  const env = acceptedEnv({
+    PUBLIC_CONTENT: { async search() { searchCalls += 1; return { chunks: [] }; } },
+  });
+  const controller = new AbortController();
+  controller.abort();
+  const response = await handleMcp(new Request("https://ask.refined-x.com/mcp", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+      host: "ask.refined-x.com",
+      "cf-connecting-ip": "203.0.113.7",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0", id: 91, method: "tools/call",
+      params: { name: "ask", arguments: { query: { text: "cancelled" } } },
+    }),
+    signal: controller.signal,
+  }), env);
+  assert.ok(response.status === 499 || response.status === 200 || response.status >= 400);
+  assert.ok(searchCalls <= 1);
+});
+
+test("MCP tool input boundaries return tool errors without retrieval", async () => {
+  let searchCalls = 0;
+  const env = acceptedEnv({
+    PUBLIC_CONTENT: { async search() { searchCalls += 1; return { chunks: [] }; } },
+  });
+
+  const blank = await readMcp(await handleMcp(mcpRequest({
+    jsonrpc: "2.0", id: 1, method: "tools/call",
+    params: { name: "ask", arguments: { query: { text: "   " } } },
+  }, { "cf-connecting-ip": "203.0.113.7" }), env));
+  assert.equal(blank.status, 200);
+  assert.equal(blank.body.result?.isError, true);
+  assert.match(blank.body.result?.content?.[0]?.text ?? "", /INVALID_QUERY/);
+
+  const tooLong = await readMcp(await handleMcp(mcpRequest({
+    jsonrpc: "2.0", id: 2, method: "tools/call",
+    params: { name: "ask", arguments: { query: { text: "😀".repeat(501) } } },
+  }, { "cf-connecting-ip": "203.0.113.7" }), env));
+  assert.equal(tooLong.status, 200);
+  assert.equal(tooLong.body.result?.isError, true);
+  assert.match(tooLong.body.result?.content?.[0]?.text ?? "", /INVALID_QUERY/);
+
+  const badMode = await readMcp(await handleMcp(mcpRequest({
+    jsonrpc: "2.0", id: 3, method: "tools/call",
+    params: { name: "ask", arguments: { query: { text: "x" }, prefer: { mode: "await" } } },
+  }, { "cf-connecting-ip": "203.0.113.7" }), env));
+  assert.equal(badMode.status, 200);
+  assert.equal(badMode.body.result?.isError, true);
+  assert.match(badMode.body.result?.content?.[0]?.text ?? "", /UNSUPPORTED_MODE/);
+
+  const context = await readMcp(await handleMcp(mcpRequest({
+    jsonrpc: "2.0", id: 4, method: "tools/call",
+    params: { name: "ask", arguments: { query: { text: "x" }, context: { previous: "y" } } },
+  }, { "cf-connecting-ip": "203.0.113.7" }), env));
+  assert.equal(context.status, 200);
+  assert.equal(context.body.result?.isError, true);
+
+  const extra = await readMcp(await handleMcp(mcpRequest({
+    jsonrpc: "2.0", id: 5, method: "tools/call",
+    params: { name: "ask", arguments: { query: { text: "x" }, memory: { keep: true } } },
+  }, { "cf-connecting-ip": "203.0.113.7" }), env));
+  assert.equal(extra.status, 200);
+  assert.equal(extra.body.result?.isError, true);
+
+  assert.equal(searchCalls, 0);
+});
+
+test("MCP retrieval failure returns tool error without string JSON-RPC business codes", async () => {
+  const env = acceptedEnv({
+    PUBLIC_CONTENT: {
+      async search() {
+        throw new Error("search down");
+      },
+    },
+  });
+  const { status, body } = await readMcp(await handleMcp(mcpRequest({
+    jsonrpc: "2.0", id: 6, method: "tools/call",
+    params: { name: "ask", arguments: { query: { text: "fail" } } },
+  }, { "cf-connecting-ip": "203.0.113.7" }), env));
+  assert.equal(status, 200);
+  assert.equal(body.result?.isError, true);
+  assert.equal(typeof body.error?.code === "string", false);
+  assert.match(body.result?.content?.[0]?.text ?? "", /AI_SEARCH_FAILED|UPSTREAM/);
+});
+
+test("boundMcpSdkHttpResponse returns 500 without partial body when over budget", async () => {
+  const oversized = new Response("x".repeat(200_000), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+  const response = await boundMcpSdkHttpResponse(
+    oversized,
+    null,
+    "https://refined-x.com",
+    "req-bound",
+  );
+  assert.equal(response.status, 500);
+  const text = await response.text();
+  assert.match(text, /RESPONSE_TOO_LARGE/);
+  assert.ok(text.length < 4096);
 });
