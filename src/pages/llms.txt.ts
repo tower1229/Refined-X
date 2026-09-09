@@ -36,9 +36,6 @@ export async function GET() {
 	];
 	if (caps.mcp) {
 		discoveryLines.push(`- MCP endpoint (primary): POST ${caps.mcp.href}`);
-		discoveryLines.push(
-			`- Legacy MCP discovery projections (compatibility only): [catalog](${absoluteUrl('/.well-known/mcp/catalog.json')}), [server card](${absoluteUrl('/.well-known/mcp/server-card.json')}), [mcp.json](${absoluteUrl('/.well-known/mcp.json')})`,
-		);
 	}
 
 	const body = `# ${SITE_BRAND}

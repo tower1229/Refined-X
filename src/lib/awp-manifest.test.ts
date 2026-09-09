@@ -15,10 +15,6 @@ import {
 
 const identity = {
 	title: 'Refined-X',
-	mcp: {
-		packageIdentifier: 'com.example/refined-x-public-ask',
-		airIdentifier: 'urn:air:example.com:public-ask',
-	},
 };
 
 function caps(ask: {
@@ -36,7 +32,6 @@ function caps(ask: {
 			healthUrl: ask.healthUrl ?? '',
 			protocolProfile: ask.protocolProfile,
 		},
-		mcp: identity.mcp,
 	});
 }
 

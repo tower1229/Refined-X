@@ -6,6 +6,7 @@ import {
 	awpPathsMustExist,
 	awpPathsMustNotExist,
 	requiredDiscoveryFilesForStage,
+	retiredLegacyMcpDiscoveryPathsMustNotExist,
 	verifyAwpManifestPair,
 	verifyLlmsAgainstCapabilities,
 	verifyLlmsHasNoAwpWhenDisabled,
@@ -48,6 +49,11 @@ for (const file of requiredFiles) {
 for (const file of awpPathsMustNotExist(awpEnabled)) {
 	if (await builtResourceExists(distRoot, file)) {
 		failures.push(`File must not exist when discovery.awp is off: ${file}`);
+	}
+}
+for (const file of retiredLegacyMcpDiscoveryPathsMustNotExist()) {
+	if (await builtResourceExists(distRoot, file)) {
+		failures.push(`Retired legacy MCP discovery file must not exist: ${file}`);
 	}
 }
 for (const file of awpPathsMustExist(awpEnabled)) {
@@ -100,21 +106,6 @@ if (caps.ask) {
 	} catch (error) {
 		failures.push(`Ask integration verification failed: ${error.message}`);
 	}
-}
-
-try {
-	const catalog = JSON.parse(await readFile(path.join(distRoot, '.well-known/mcp/catalog.json'), 'utf8'));
-	if (/official/i.test(JSON.stringify(catalog))) {
-		failures.push('mcp catalog must not claim Official maturity');
-	}
-	if (caps.mcp && (!Array.isArray(catalog.entries) || catalog.entries.length === 0)) {
-		failures.push('mcp catalog missing entry for configured mcpUrl');
-	}
-	if (!caps.mcp && Array.isArray(catalog.entries) && catalog.entries.length > 0) {
-		failures.push('mcp catalog must not advertise entries without mcpUrl');
-	}
-} catch (error) {
-	failures.push(`mcp catalog verification failed: ${error.message}`);
 }
 
 try {

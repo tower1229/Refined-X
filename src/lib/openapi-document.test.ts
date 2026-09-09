@@ -10,10 +10,6 @@ import {
 const baseInput = {
 	site: 'https://example.com/',
 	title: 'Refined-X',
-	mcp: {
-		packageIdentifier: 'com.example/refined-x-public-ask',
-		airIdentifier: 'urn:air:example.com:public-ask',
-	},
 };
 
 function caps(ask: Record<string, string | undefined> = {}) {

@@ -7,10 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Legacy draft MCP discovery paths `/.well-known/mcp.json`, `/.well-known/mcp/catalog.json`, and `/.well-known/mcp/server-card.json` (builders, fixtures, verify must-exist rules, and llms/about pointers) — **breaking** for clients that still probed those URLs ([#18](https://github.com/tower1229/Refined-X/issues/18); time-boxed early-retirement exception recorded on the issue)
+- Site config keys used only by those shapes: `mcp.serverName`, `mcp.packageIdentifier`, `mcp.airIdentifier`, `mcp.discoveryMetaKey` (and the whole `mcp` config object). Static identity for remaining surfaces is `title` / brand only
+
+### Migration
+
+- Prefer configured `ask.mcpUrl` (primary), `/openapi.json`, and `/.well-known/about.json`
+- Last **tagged** release that still emitted the legacy discovery files: **1.1.0**
+- #14 marked them `legacy-draft-compatibility` on Unreleased/dev only (never tagged); this change removes them under the time-boxed exception on [#18](https://github.com/tower1229/Refined-X/issues/18)
+- No `/.well-known/ai-catalog.json` / SEP-2127 path is added in this change
+- Core dual-era Worker `POST /mcp` and NLWeb `POST /ask` are unchanged
+
 ### Added
 
 - Build-time `public-capabilities` model and `ask.protocolProfile` (`undeclared` default; opt-in `dual-era` after deployment acceptance)
-- Capability-aware OpenAPI (conditional Ask/MCP POSTs, full URL reconstruction including path prefixes) and verify helpers (including AWP must-not-exist checks)
+- Capability-aware OpenAPI (conditional Ask/MCP POSTs, full URL reconstruction including path prefixes) and verify helpers (including AWP must-not-exist checks and retired legacy MCP must-not-exist checks)
 - Dual-era MCP adapter on Public Ask Worker `POST /mcp` via pinned `@modelcontextprotocol/server@2.0.0` (modern + legacy on one handler / one `ask` tool)
 - Worker `PUBLIC_MCP_ORIGIN` Host allowlist for `/mcp`, offline workerd protocol integration (`npm run test:mcp-protocol`)
 - MCP request body stream-capped at 16 KiB; final HTTP body bound with cancel/timeout and §6.2/§7.1 protocol coverage in unit + workerd tests
@@ -20,10 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - AWP #17 follow-up: plan/README sync for `discovery.awp`, shared phase-1 action allowlist, drop unused `search_index` entity, and tighten static-API output-key fixture contract
-
-- Legacy MCP catalog / server-card / `mcp.json` outputs are thin projections from shared capabilities; maturity marked `legacy-draft-compatibility` (not Official)
-- `/.well-known/about.json` keeps top-level `mcpCatalogUrl` / `mcpServerCardUrl` / `mcpJsonUrl` for client compatibility and adds `discoveryMaturity` / `discoveryNotes`
-- llms.txt and Footer stop primary-recommending retired MCP discovery paths; configured MCP URL remains the primary agent entry when present
+- `/.well-known/about.json` no longer exposes retired catalog/server-card/`mcp.json` URL fields
 - Illegal `ask.*` URLs, unknown `protocolProfile`, and Ask/MCP pathnames that collide with static OpenAPI paths fail during site config load
 - Hand-rolled MCP initialize/tools dispatcher removed; domain auth/quota codes live in tool error content with HTTP status remapping (no string JSON-RPC business codes)
 - README ZH/EN and deploy docs distinguish CI-verified dual-era MCP from product-client matrix statuses (`passed` vs `not_run`)

@@ -3,6 +3,8 @@ import test from 'node:test';
 import {
 	awpPathsMustExist,
 	awpPathsMustNotExist,
+	requiredDiscoveryFilesForStage,
+	retiredLegacyMcpDiscoveryPathsMustNotExist,
 	verifyAwpManifestPair,
 	verifyLlmsAgainstCapabilities,
 	verifyLlmsHasNoAwpWhenDisabled,
@@ -16,10 +18,6 @@ import { PROTOCOL_PROFILE_DUAL_ERA, resolvePublicCapabilities } from './public-c
 const base = {
 	site: 'https://example.com/',
 	title: 'Refined-X',
-	mcp: {
-		packageIdentifier: 'com.example/refined-x-public-ask',
-		airIdentifier: 'urn:air:example.com:public-ask',
-	},
 };
 
 function caps(ask = {}) {
@@ -51,19 +49,38 @@ test('verify accepts reconstructed prefixed Ask and MCP URLs', () => {
 	assert.deepEqual(verifyOpenApiAgainstCapabilities(capabilities, doc), []);
 });
 
-test('verify requires llms to expose configured MCP URL and not primary-recommend retired catalog', () => {
+test('verify requires llms to expose configured MCP URL and rejects retired discovery paths', () => {
 	const capabilities = caps({ mcpUrl: 'https://ask.example.com/mcp' });
 	assert.ok(
 		verifyLlmsAgainstCapabilities(capabilities, '# Site\n- [MCP Catalog](https://example.com/.well-known/mcp/catalog.json)\n')
 			.length > 0,
 	);
+	assert.ok(
+		verifyLlmsAgainstCapabilities(
+			capabilities,
+			`# Site\n- MCP endpoint (primary): POST https://ask.example.com/mcp\n- Legacy: https://example.com/.well-known/mcp.json\n`,
+		).length > 0,
+	);
 	assert.deepEqual(
 		verifyLlmsAgainstCapabilities(
 			capabilities,
-			`# Site\n- MCP endpoint (primary): POST https://ask.example.com/mcp\n- Legacy MCP discovery projections (compatibility only): catalog\n`,
+			`# Site\n- MCP endpoint (primary): POST https://ask.example.com/mcp\n- [OpenAPI](https://example.com/openapi.json)\n`,
 		),
 		[],
 	);
+});
+
+test('verify stage requires about/llms/openapi and forbids retired legacy MCP discovery files', () => {
+	assert.deepEqual(requiredDiscoveryFilesForStage(), [
+		'/.well-known/about.json',
+		'/llms.txt',
+		'/openapi.json',
+	]);
+	assert.deepEqual(retiredLegacyMcpDiscoveryPathsMustNotExist(), [
+		'/.well-known/mcp.json',
+		'/.well-known/mcp/catalog.json',
+		'/.well-known/mcp/server-card.json',
+	]);
 });
 
 test('AWP paths are must-not-exist when switch is off and must-exist when on', () => {

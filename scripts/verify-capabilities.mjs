@@ -81,11 +81,9 @@ export function verifyLlmsAgainstCapabilities(caps, llms) {
 		failures.push('llms.txt missing configured Ask URL');
 	}
 
-	// Retired paths must not be primary recommendations (no bare primary bullets without "compatibility").
-	const primaryCatalog = /^\s*-\s*\[MCP Catalog\]/m.test(llms);
-	const primaryShim = /^\s*-\s*\[MCP discovery shim\]/m.test(llms);
-	if (primaryCatalog) failures.push('llms.txt still recommends MCP Catalog as a primary link');
-	if (primaryShim) failures.push('llms.txt still recommends MCP discovery shim as a primary link');
+	if (/\.well-known\/mcp(\/|\.json)/i.test(llms) || /mcp\/catalog\.json|mcp\/server-card\.json/i.test(llms)) {
+		failures.push('llms.txt must not link retired legacy MCP discovery paths');
+	}
 
 	return failures;
 }
@@ -173,14 +171,18 @@ export function verifyLlmsHasNoAwpWhenDisabled(llms, awpEnabled) {
 	return failures;
 }
 
-/** Fixed discovery files for this migration/compatibility stage (not mode-conditional yet). */
+/** Discovery files that must exist after legacy MCP draft-path retirement (#18). */
 export function requiredDiscoveryFilesForStage() {
-	return [
-		'/.well-known/about.json',
-		'/.well-known/mcp.json',
-		'/.well-known/mcp/catalog.json',
-		'/.well-known/mcp/server-card.json',
-		'/llms.txt',
-		'/openapi.json',
-	];
+	return ['/.well-known/about.json', '/llms.txt', '/openapi.json'];
+}
+
+/** Legacy draft MCP discovery paths retired in #18 — must not be regenerated. */
+export const RETIRED_LEGACY_MCP_DISCOVERY_PATHS = [
+	'/.well-known/mcp.json',
+	'/.well-known/mcp/catalog.json',
+	'/.well-known/mcp/server-card.json',
+];
+
+export function retiredLegacyMcpDiscoveryPathsMustNotExist() {
+	return [...RETIRED_LEGACY_MCP_DISCOVERY_PATHS];
 }

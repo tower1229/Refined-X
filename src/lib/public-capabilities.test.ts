@@ -12,10 +12,6 @@ import {
 
 const identity = {
 	title: 'Refined-X',
-	mcp: {
-		packageIdentifier: 'com.example/refined-x-public-ask',
-		airIdentifier: 'urn:air:example.com:public-ask',
-	},
 };
 
 function resolve(ask: {
@@ -33,7 +29,6 @@ function resolve(ask: {
 			healthUrl: ask.healthUrl ?? '',
 			protocolProfile: ask.protocolProfile,
 		},
-		mcp: identity.mcp,
 	});
 }
 
@@ -175,10 +170,6 @@ test('siteConfigToCapabilitiesInput and assertPublicCapabilitiesConfig fail fast
 		site: 'https://example.com/',
 		title: 'Refined-X',
 		ask: { askUrl: '', mcpUrl: '', healthUrl: '', protocolProfile: 'undeclared' },
-		mcp: {
-			packageIdentifier: 'com.example/refined-x-public-ask',
-			airIdentifier: 'urn:air:example.com:public-ask',
-		},
 	};
 	const input = siteConfigToCapabilitiesInput(base);
 	assert.equal(input.ask.protocolProfile, 'undeclared');

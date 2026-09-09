@@ -239,11 +239,13 @@ iframe 会懒加载。访客参与评论需要 GitHub 账号。
 | `/api/search-index.json`            | 静态 Ask 与搜索语料                 |
 | `/openapi.json`                     | API 以及可选 Ask/MCP 契约（仅声明已配置的远程端点） |
 | `/.well-known/about.json`           | 站点能力摘要                        |
-| `/.well-known/mcp/catalog.json`     | 旧版 MCP 发现投影（兼容保留）       |
-| `/.well-known/mcp/server-card.json` | 旧版 MCP server-card 投影（兼容保留） |
 
 这些接口可以降低网站被检索、摄取和连接的成本，
 但不承诺所有 Agent 都会自动发现或主动调用它们。
+
+历史草案 MCP 发现路径（`/.well-known/mcp.json`、
+`/.well-known/mcp/catalog.json`、`/.well-known/mcp/server-card.json`）已在破坏性变更中**移除**。
+请优先使用已配置的 MCP 端点 URL、OpenAPI 与 `about.json`；不要期望 `/.well-known/ai-catalog.json`。
 
 ## 启用 Live Ask
 

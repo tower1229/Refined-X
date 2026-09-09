@@ -38,12 +38,9 @@ export type ProtocolProfile = {
 	declaredProtocolVersions: readonly string[];
 };
 
+/** Minimal static-site identity after legacy MCP draft discovery retirement (#18). */
 export type PublicCapabilitiesIdentity = {
 	brand: string;
-	packageIdentifier: string;
-	airIdentifier: string;
-	discoveryMetaKey: string;
-	serverVersion: string;
 };
 
 export type PublicCapabilities = {
@@ -72,12 +69,6 @@ export type PublicCapabilitiesInput = {
 		healthUrl?: string;
 		protocolProfile?: string;
 	};
-	mcp: {
-		packageIdentifier: string;
-		airIdentifier: string;
-		discoveryMetaKey?: string;
-		serverVersion?: string;
-	};
 };
 
 /** Static OpenAPI path keys that remote Ask/MCP must not overwrite. */
@@ -97,12 +88,6 @@ export type SiteConfigCapabilitiesSource = {
 		healthUrl?: string;
 		protocolProfile?: string;
 	};
-	mcp: {
-		packageIdentifier: string;
-		airIdentifier: string;
-		discoveryMetaKey?: string;
-		serverVersion?: string;
-	};
 };
 
 export function siteConfigToCapabilitiesInput(config: SiteConfigCapabilitiesSource): PublicCapabilitiesInput {
@@ -114,12 +99,6 @@ export function siteConfigToCapabilitiesInput(config: SiteConfigCapabilitiesSour
 			mcpUrl: config.ask.mcpUrl,
 			healthUrl: config.ask.healthUrl,
 			protocolProfile: config.ask.protocolProfile,
-		},
-		mcp: {
-			packageIdentifier: config.mcp.packageIdentifier,
-			airIdentifier: config.mcp.airIdentifier,
-			discoveryMetaKey: config.mcp.discoveryMetaKey,
-			serverVersion: config.mcp.serverVersion,
 		},
 	};
 }
@@ -290,7 +269,6 @@ export function resolvePublicCapabilities(input: PublicCapabilitiesInput): Publi
 
 	const mode = deploymentMode(ask, mcp);
 	const protocolProfile = resolveProtocolProfile(input.ask.protocolProfile);
-	const packageIdentifier = input.mcp.packageIdentifier;
 
 	return {
 		mode,
@@ -302,10 +280,6 @@ export function resolvePublicCapabilities(input: PublicCapabilitiesInput): Publi
 		protocolProfile,
 		identity: {
 			brand: input.title,
-			packageIdentifier,
-			airIdentifier: input.mcp.airIdentifier,
-			discoveryMetaKey: input.mcp.discoveryMetaKey ?? `${packageIdentifier}/discovery`,
-			serverVersion: input.mcp.serverVersion ?? '1.0.0',
 		},
 		nlwebVersion: NLWEB_VERSION,
 		capability: PUBLIC_ASK_CAPABILITY,

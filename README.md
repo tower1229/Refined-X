@@ -243,11 +243,14 @@ Every build exposes a predictable public interface:
 | `/api/search-index.json`            | Static Ask/search corpus                        |
 | `/openapi.json`                     | API and optional Ask/MCP contract (only declares configured remotes) |
 | `/.well-known/about.json`           | Site capability summary                         |
-| `/.well-known/mcp/catalog.json`     | Legacy MCP discovery projection (compatibility) |
-| `/.well-known/mcp/server-card.json` | Legacy MCP server-card projection (compatibility) |
 
 These endpoints make the site easier to ingest and connect. They do not assume
 that every agent automatically discovers or invokes them.
+
+Legacy draft MCP discovery paths (`/.well-known/mcp.json`,
+`/.well-known/mcp/catalog.json`, `/.well-known/mcp/server-card.json`) were
+**removed** in a breaking change. Prefer the configured MCP endpoint URL,
+OpenAPI, and `about.json`. Do not expect `/.well-known/ai-catalog.json`.
 
 ## Enable Live Ask
 
