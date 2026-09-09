@@ -68,8 +68,9 @@ articles without a model, database, or runtime bill.
 ### Live Q&A when you want it
 
 The optional Public Ask Worker adds grounded retrieval and summarization through
-a restricted NLWeb v0.55-compatible `/ask` endpoint and a Streamable HTTP MCP
-server. It includes quotas, rate limits, browser verification, source links,
+a restricted NLWeb v0.55-compatible `/ask` endpoint and a dual-era Streamable HTTP MCP
+server (one `ask` tool on `/mcp` for modern `2026-07-28` and legacy 2025 clients).
+It includes quotas, rate limits, browser verification, source links,
 and explicit capability boundaries.
 
 ### Designed for reading

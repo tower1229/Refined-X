@@ -67,7 +67,8 @@ flowchart LR
 ### 需要时再启用实时问答
 
 可选的 Public Ask Worker 提供基于公开内容的检索和摘要，
-暴露受限的 NLWeb v0.55 兼容 `/ask` 接口与 Streamable HTTP MCP 服务，
+暴露受限的 NLWeb v0.55 兼容 `/ask` 接口与双代 Streamable HTTP MCP 服务
+（同一 `/mcp` 上一个 `ask` 工具，覆盖 modern `2026-07-28` 与 legacy 2025），
 并内置配额、限流、浏览器验证、来源链接和明确的能力边界。
 
 ### 为阅读而设计

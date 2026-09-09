@@ -29,7 +29,9 @@ npm install
 cp wrangler.jsonc wrangler.jsonc.local   # optional; or edit in place carefully
 ```
 
-Replace every `YOUR_*` placeholder in `wrangler.jsonc` (account-related IDs, D1 `database_id`, AI Search instance name, rate-limit binding IDs, `SITE_URL`, `ALLOWED_ORIGIN`, routes/custom domains).
+Replace every `YOUR_*` placeholder in `wrangler.jsonc` (account-related IDs, D1 `database_id`, AI Search instance name, rate-limit binding IDs, `SITE_URL`, `ALLOWED_ORIGIN`, `PUBLIC_MCP_ORIGIN`, routes/custom domains).
+
+`PUBLIC_MCP_ORIGIN` must be the **Worker’s absolute origin** (scheme + host, no path/query/fragment) used for `/mcp` Host allowlist. Do **not** set it to the static site `SITE_URL`. Missing or illegal values make `/mcp` fail closed (HTTP 503) without running tools; other routes are unaffected.
 
 Do **not** commit real account IDs or secrets.
 
@@ -113,9 +115,12 @@ From the worker package (with credentials / staging URLs configured):
 ```sh
 npm test
 npm run typecheck
+npm run test:mcp-protocol
 # optional remote:
 # npm run test:staging
 ```
+
+`test:mcp-protocol` boots a synthetic workerd Worker over local HTTP and exercises dual-era MCP discover/list/call, version rejects, and security traverse cases (anonymous list, bad Key, unauthorized summarize, pre-auth rate limit).
 
 ## Troubleshooting
 

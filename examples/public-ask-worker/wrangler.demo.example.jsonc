@@ -21,6 +21,7 @@
 	"vars": {
 		"SITE_URL": "https://demo.refined-x.com",
 		"ALLOWED_ORIGIN": "https://demo.refined-x.com",
+		"PUBLIC_MCP_ORIGIN": "https://ask-demo.refined-x.com",
 		"DEFAULT_LANGUAGE": "en",
 		"PERSIST_INTERACTIONS": "false",
 		"AI_GATEWAY_ACCOUNT_ID": "YOUR_CLOUDFLARE_ACCOUNT_ID",

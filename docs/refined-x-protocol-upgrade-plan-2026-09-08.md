@@ -2,7 +2,7 @@
 
 **调研截止：2026-09-08**  
 **源码基线：`tower1229/Refined-X@00781cecb0616cf64b27370830d448c1006fa72f`**  
-**状态：实施进行中。批次 0（#12）与批次 A 的 #13/#14 实现已在本仓落地（以对应 issue/PR 关闭为准）；批次 B（双代 `/mcp` adapter、wire 错误形状）仍未完成。不表示已发布或生产升级完成。**
+**状态：实施进行中。批次 0（#12）与批次 A（#13/#14）已完成；批次 B 双代 `/mcp` adapter（#15）代码与离线集成已在本仓落地，issue 关闭与真实产品客户端验收另记。不表示已发布或生产升级完成。**
 
 **本地复核：`a7897f46fc70c5852fa9c986f0327a12a89ec925`，相对上述源码基线仅新增本方案。实施进度以 GitHub Issues #12/#13 及后续提交为准。**
 
@@ -345,8 +345,8 @@ MCP 不发送中途业务通知；若 SDK legacy 使用 SSE，则有界读取到
 |---|---|---|
 | `shared/public-ask-contract.ts` | 新增最小共享契约。 | **已完成（#13）。** 请求/结果约束、版本、模式默认与能力边界只有一个业务来源；不泄漏服务端依赖。 |
 | `examples/public-ask-worker/src/ask-service.ts` | 从 index 提取 executeAskAction 及必要业务实现。 | **已完成（#13）。** index 与 mcp-server 不循环依赖；HTTP/MCP 的权限与业务结果等价。 |
-| `examples/public-ask-worker/src/mcp-server.ts` | 原位改为 SDK v2 adapter。 | 同路径 modern+legacy；只有一个 ask 注册及业务调用；删除旧分发器。 |
-| `examples/public-ask-worker/src/index.ts` | 保留 Worker 路由、queue、scheduled；统一 HTTP 边界。 | `/ask`、`/mcp`、health、内部路由不混淆；错误响应也有正确头。 |
+| `examples/public-ask-worker/src/mcp-server.ts` | 原位改为 SDK v2 adapter。 | **#15 落地（待 issue 关闭确认）。** 同路径 modern+legacy；只有一个 ask 注册及业务调用；删除旧分发器。 |
+| `examples/public-ask-worker/src/index.ts` | 保留 Worker 路由、queue、scheduled；统一 HTTP 边界。 | **#15 落地（待 issue 关闭确认）。** `/ask`、`/mcp`、health、内部路由不混淆；错误响应也有正确头。 |
 | `examples/public-ask-worker/src/protocol.ts` | 保留 NLWeb 编码与流格式，引用 shared 契约。 | 0.55 受限行为与前端不退化；入口默认模式差异不丢失。 |
 | `examples/public-ask-worker/src/access-guard.ts` 等现有边界模块 | 复用／小幅重构。 | 鉴权只执行预期次数；SDK metadata 不能伪造访问类别。 |
 | Worker `wrangler.jsonc`、Env 类型与部署说明 | 声明 PUBLIC_MCP_ORIGIN 并指导各实例配置真实 Worker origin；测试配置独立。 | Host 校验不误用静态站域名；缺配置 fail closed；示例不绑定真实实例。 |
@@ -437,6 +437,8 @@ MCP legacy：2025-11-25、2025-06-18、2025-03-26 的协商与调用，不支持
 ### 批次 B：双代 MCP 核心交付
 
 原位替换手写 router，使用批次 0 固定 SDK 接入同一业务核心；交付错误矩阵、HTTP 状态、权限、预算、输出和取消处理。协议集成加入 CI，并在干净源码上执行批次 A 的回归和 Worker bundle 检查。更新 README 中英文、部署文档和支持矩阵，发布材料只描述通过的能力。
+
+**进度：** #15 已在本仓落地（`mcp-server.ts` SDK dual-era adapter、`PUBLIC_MCP_ORIGIN`、`test:mcp-protocol`）。真实产品客户端矩阵与受控 staging 仍按退出条件单独记录，未运行项不得标为 passed。
 
 **退出条件：**全部离线集成通过；Claude Code modern 及一个 Codex/Gemini legacy 真实产品客户端均完成工具导入、匿名 list、带合成 Key 的 summarize 和错误处理；模拟模型只验证协议与权限链，真实模型状态另记。可用合成语料和模拟模型验证真实产品客户端工具链，但必须标明模拟业务后端。真实部署的模型联调是单独受控 staging 项，需已有相应环境及授权；未运行时不得宣称真实模型/生产验收通过。
 

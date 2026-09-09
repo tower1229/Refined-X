@@ -14,6 +14,7 @@
 	"vars": {
 		"SITE_URL": "https://example.com",
 		"ALLOWED_ORIGIN": "https://example.com",
+		"PUBLIC_MCP_ORIGIN": "https://ask.example.com",
 		"DEFAULT_LANGUAGE": "en",
 		"PERSIST_INTERACTIONS": "true",
 		"AI_GATEWAY_ACCOUNT_ID": "YOUR_CLOUDFLARE_ACCOUNT_ID",
