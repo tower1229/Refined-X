@@ -1,6 +1,10 @@
 import { siteConfig } from '../../site.config.mjs';
 import { absoluteUrl } from './public-data';
-import { resolvePublicCapabilities, type PublicCapabilities } from './public-capabilities.ts';
+import {
+	resolvePublicCapabilities,
+	siteConfigToCapabilitiesInput,
+	type PublicCapabilities,
+} from './public-capabilities.ts';
 import { SITE_DESCRIPTION } from './site-copy';
 import {
 	projectAboutDiscovery,
@@ -28,27 +32,8 @@ export const MCP_SERVER_NAME = siteConfig.mcp.packageIdentifier;
 /** @deprecated Prefer capabilities.identity.serverVersion. */
 export const MCP_SERVER_VERSION = '1.0.0';
 
-/**
- * @deprecated Prefer capabilities.protocolProfile — hardcoded 2024 declaration removed.
- */
-export const MCP_PROTOCOL_VERSION = undefined;
-
 export function resolveSitePublicCapabilities(config = siteConfig): PublicCapabilities {
-	return resolvePublicCapabilities({
-		site: config.site,
-		title: config.title,
-		ask: {
-			askUrl: config.ask.askUrl,
-			mcpUrl: config.ask.mcpUrl,
-			healthUrl: config.ask.healthUrl,
-			protocolProfile: config.ask.protocolProfile,
-		},
-		mcp: {
-			packageIdentifier: config.mcp.packageIdentifier,
-			airIdentifier: config.mcp.airIdentifier,
-			discoveryMetaKey: config.mcp.discoveryMetaKey,
-		},
-	});
+	return resolvePublicCapabilities(siteConfigToCapabilitiesInput(config));
 }
 
 export function getPublicCapabilities(): PublicCapabilities {

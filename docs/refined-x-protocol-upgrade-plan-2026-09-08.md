@@ -80,12 +80,12 @@ Refined-X 仍是静态优先的个人发布模板。HTML、文章 Markdown、公
 | F02 | `mcp-server.ts` | `notifications/initialized` 没有独立处理，会落入 Method not found 并返回 id:null 的响应。 | legacy 已接受通知应按协议返回 202 空响应，不伪造 JSON-RPC 调用响应。 |
 | F03 | `mcp-server.ts`；`mcp.test.ts` | rejectionResponse 将 FORBIDDEN 等字符串放进 JSON-RPC `error.code`；测试断言同一错误形状。 | 由 SDK 生成合法协议错误；业务码保留在工具错误数据或 error.data，不放进应为整数的 code。旧错误测试同步更正。 |
 | F04 | `index.ts` 的 OPTIONS/CORS 与 `/mcp` 分支 | CORS 只放行 content-type、authorization、Turnstile；`/mcp` 直接返回 handleMcp，未像统一出口一样附加跨域处理。 | 成功和失败响应统一处理 CORS；允许需要的 MCP 头；将 Origin 校验与浏览器 CORS 明确分开。 |
-| F05 | `src/pages/openapi.json.ts` | ask/mcp 未配置时仍生成对应 POST path，回落到静态站点 origin。 | 纯静态模式不声明远程 Ask/MCP；静态 `/ask/` UI 不是 POST API。 |
-| F06 | `openapi.json.ts`；`scripts/verify.mjs` | 外部端点仅取 `.origin` 并固定 `/ask` 或 `/mcp`；验证脚本也仅核对 origin。 | 支持带路径前缀的真实 URL；验证 server+path 重建结果等于配置的完整端点。 |
-| F07 | `protocol.ts`、`mcp-server.ts`、`openapi.json.ts`、`site-copy.ts` | schema、版本、能力文案多处重复；工具 query.text 未声明运行时已有的 1–500 字符边界。 | 统一契约；保留既有 Unicode 计数、trim 和默认 mode 的语义，不以简单复制 Zod max 代替原行为。**部分完成（#13）：** 已新增 `shared/public-ask-contract.ts` 并接线 Worker/OpenAPI/site-copy；完整能力模型投影仍待 `public-capabilities.ts`。 |
+| F05 | `src/pages/openapi.json.ts` | ask/mcp 未配置时仍生成对应 POST path，回落到静态站点 origin。 | 纯静态模式不声明远程 Ask/MCP；静态 `/ask/` UI 不是 POST API。**已完成（#14）。** |
+| F06 | `openapi.json.ts`；`scripts/verify.mjs` | 外部端点仅取 `.origin` 并固定 `/ask` 或 `/mcp`；验证脚本也仅核对 origin。 | 支持带路径前缀的真实 URL；验证 server+path 重建结果等于配置的完整端点。**已完成（#14）。** |
+| F07 | `protocol.ts`、`mcp-server.ts`、`openapi.json.ts`、`site-copy.ts` | schema、版本、能力文案多处重复；工具 query.text 未声明运行时已有的 1–500 字符边界。 | 统一契约；保留既有 Unicode 计数、trim 和默认 mode 的语义，不以简单复制 Zod max 代替原行为。**已完成（#13+#14）：** `shared/public-ask-contract.ts` 与 `src/lib/public-capabilities.ts` 投影。 |
 | F08 | `index.ts` ↔ `mcp-server.ts` | 相互导入：入口导入协议处理器，协议处理器又从入口导入 executeAskAction。 | 抽出独立 ask-service；入口、HTTP 和 MCP adapter 单向依赖它。**已完成（#13）：** `examples/public-ask-worker/src/ask-service.ts`；`index`/`mcp-server` 单向依赖。 |
-| F09 | `mcp-discovery.ts` | 将草案 Catalog 标为 Official；Catalog / Card / mcp.json / about.json 同时重复身份与发现信息。 | 更正成熟度，保留少量有用途的输出；历史草案输出通过同一数据源投影，随后退役。 |
-| F10 | `llms.txt.ts`；`scripts/verify.mjs` | llms 无条件列出三份 MCP 发现文档，构建验证强制要求它们存在。 | 验证按部署能力与迁移阶段变化；新增“必须不存在”的断言，防止删除后又被脚本补回。 |
+| F09 | `mcp-discovery.ts` | 将草案 Catalog 标为 Official；Catalog / Card / mcp.json / about.json 同时重复身份与发现信息。 | 更正成熟度，保留少量有用途的输出；历史草案输出通过同一数据源投影，随后退役。**已完成（#14）：** 薄投影 + `legacy-draft-compatibility`；about 保留顶层 legacy URL 并标注 maturity。 |
+| F10 | `llms.txt.ts`；`scripts/verify.mjs` | llms 无条件列出三份 MCP 发现文档，构建验证强制要求它们存在。 | 验证按部署能力与迁移阶段变化；新增“必须不存在”的断言，防止删除后又被脚本补回。**已完成（#14）：** llms 降级推荐；verify 能力化 + AWP must-not-exist；兼容期仍保留 legacy 文件。 |
 
 依据：[R03–R11]。这些是源码层结论，不是本次已复现的生产端故障清单。Streamable HTTP 从 MCP 2025-03-26 起出现，2024 的 HTTP+SSE 是另一种传输模型；不能仅改发现文档中的传输字符串来掩盖差异。[S14]
 
@@ -351,14 +351,14 @@ MCP 不发送中途业务通知；若 SDK legacy 使用 SSE，则有界读取到
 | `examples/public-ask-worker/src/access-guard.ts` 等现有边界模块 | 复用／小幅重构。 | 鉴权只执行预期次数；SDK metadata 不能伪造访问类别。 |
 | Worker `wrangler.jsonc`、Env 类型与部署说明 | 声明 PUBLIC_MCP_ORIGIN 并指导各实例配置真实 Worker origin；测试配置独立。 | Host 校验不误用静态站域名；缺配置 fail closed；示例不绑定真实实例。 |
 | Worker `package.json`、lockfile、tsconfig | 添加经过验收的 SDK 与契约所需依赖，校准 shared 引用。 | Node 单测、workerd/Miniflare 集成、Wrangler bundle 都通过；无不适合 Worker 的动态代码执行依赖路径。 |
-| `src/lib/public-capabilities.ts` | 新增构建期能力模型。 | 条件远程能力、完整 URL、身份和来源统一；site.config 的协议 profile 缺省不宣称 modern，实例仅在部署验收后启用双代声明。 |
-| `src/lib/mcp-discovery.ts` | 过渡期改为薄兼容投影，最终随旧入口退役。 | 不再自成一套身份、版本及能力事实。 |
-| `src/pages/openapi.json.ts` | 条件输出、准确 server/path、共享 schema。 | 静态模式不虚构动态 endpoint；operationId 稳定。 |
-| `src/pages/.well-known/about.json.ts` | 使用统一模型，保持对既有客户端的迁移窗口。 | 自有格式定位明确，旧字段删除有说明，不偷偷改变语义。 |
+| `src/lib/public-capabilities.ts` | 新增构建期能力模型。 | **已完成（#14）。** 条件远程能力、完整 URL、身份和来源统一；site.config 的协议 profile 缺省不宣称 modern，实例仅在部署验收后启用双代声明。 |
+| `src/lib/mcp-discovery.ts` | 过渡期改为薄兼容投影，最终随旧入口退役。 | **已完成（#14）。** 不再自成一套身份、版本及能力事实。 |
+| `src/pages/openapi.json.ts` | 条件输出、准确 server/path、共享 schema。 | **已完成（#14）。** 静态模式不虚构动态 endpoint；operationId 稳定。 |
+| `src/pages/.well-known/about.json.ts` | 使用统一模型，保持对既有客户端的迁移窗口。 | **已完成（#14）。** 自有格式定位明确；顶层 legacy URL 保留并标注 `discoveryMaturity`，不偷偷删除兼容字段。 |
 | `src/lib/awp-manifest.ts`（后续实验） | 本轮不创建；启动实验后新增有限 AWP projection。 | 关闭时不输出；开启时符合所固定草案约束。 |
 | `src/pages/agent.json.ts` 与 `src/pages/.well-known/agent.json.ts`（后续实验） | 本轮不创建；启动实验后新增薄路由。 | 同一序列化结果；正确 MIME；实际部署根路径验证通过。 |
-| `src/pages/llms.txt.ts`、`src/lib/site-copy.ts`、相关 Head/MCP 引导组件 | 更新链接及文案。 | 不再推荐退役入口；仍提供用户可复制的真实 MCP URL；不要求 AWP。 |
-| `scripts/verify.mjs` | 从固定存在清单改为能力驱动检查。 | 同时验证“应该存在”和“不应该存在”，检测旧 URL/常量重新出现。 |
+| `src/pages/llms.txt.ts`、`src/lib/site-copy.ts`、相关 Head/MCP 引导组件 | 更新链接及文案。 | **已完成（#14）。** 不再推荐退役入口为主；仍提供用户可复制的真实 MCP URL；不要求 AWP。 |
+| `scripts/verify.mjs` | 从固定存在清单改为能力驱动检查。 | **已完成（#14）。** 同时验证“应该存在”和“不应该存在”（本迁移阶段 AWP must-not-exist；legacy discovery 文件兼容期仍应存在）。 |
 | `.github/workflows/ci.yml`、Worker package scripts | 接入批次 0 固定的离线 workerd 集成与 bundle 检查。 | 干净 checkout + 两处 lockfile 安装可复现；不使用 remote AI Search binding 或生产凭据。 |
 | Worker 现有 mcp/protocol 测试和 staging regression 脚本 | 修改错误测试，补充双时代和客户端验收。 | 不以删除失败断言代替修复，不重复触发真实模型。 |
 | README 中英文、部署文档、ROADMAP | 一次性更新支持矩阵及迁移说明。 | 开发计划与已交付功能分开，过时相互矛盾的段落删除。 |

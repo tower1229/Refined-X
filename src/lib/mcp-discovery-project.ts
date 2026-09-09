@@ -120,15 +120,6 @@ export function projectAboutDiscovery(
 	caps: PublicCapabilities,
 	urls: DiscoveryUrlContext & { profile: AboutDiscoveryProfile },
 ) {
-	const legacyDiscovery = caps.mcp
-		? {
-				maturity: 'legacy-draft-compatibility',
-				mcpCatalogUrl: urls.catalogUrl,
-				mcpServerCardUrl: urls.serverCardUrl,
-				mcpJsonUrl: urls.mcpJsonUrl,
-			}
-		: undefined;
-
 	return {
 		schemaVersion: '1.0',
 		format: 'refined-x-about',
@@ -141,8 +132,14 @@ export function projectAboutDiscovery(
 		openapiUrl: urls.openapiUrl,
 		llmsTxtUrl: urls.absoluteUrl('/llms.txt'),
 		llmsFullTxtUrl: urls.absoluteUrl('/llms-full.txt'),
+		/** Kept at top level for existing clients during the compatibility window. */
+		mcpCatalogUrl: urls.catalogUrl,
+		mcpServerCardUrl: urls.serverCardUrl,
+		mcpJsonUrl: urls.mcpJsonUrl,
+		discoveryMaturity: 'legacy-draft-compatibility',
+		discoveryNotes:
+			'MCP catalog / server-card / mcp.json are legacy draft compatibility projections. Prefer OpenAPI, this about index, and the configured MCP endpoint URL when present.',
 		...(caps.mcp ? { mcpUrl: caps.mcp.href } : {}),
-		...(legacyDiscovery ? { legacyDiscovery } : {}),
 		nlweb: {
 			version: caps.nlwebVersion,
 			capability: caps.capability,

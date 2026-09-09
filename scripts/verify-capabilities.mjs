@@ -91,12 +91,8 @@ export function verifyLlmsAgainstCapabilities(caps, llms) {
 /** Paths that must not exist during this migration stage (AWP not in scope). */
 export const MUST_NOT_EXIST_PATHS = ['/agent.json', '/.well-known/agent.json'];
 
-/**
- * Legacy discovery files remain during the compatibility window.
- * @param {object} caps
- * @returns {string[]}
- */
-export function requiredDiscoveryFilesForStage(_caps) {
+/** Fixed discovery files for this migration/compatibility stage (not mode-conditional yet). */
+export function requiredDiscoveryFilesForStage() {
 	return [
 		'/.well-known/about.json',
 		'/.well-known/mcp.json',

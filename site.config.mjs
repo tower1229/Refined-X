@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveCommentsConfig } from './src/lib/comments.mjs';
+import { assertPublicCapabilitiesConfig } from './src/lib/public-capabilities.ts';
 
 function findPackageRoot() {
 	let dir = process.cwd();
@@ -137,6 +138,9 @@ const contentRoot = resolvePath(merged.contentRoot);
 const publicDir = resolvePath(merged.publicDir);
 const outDir = resolvePath(merged.outDir);
 const assetSource = resolvePath(merged.assetSource);
+
+/** Fail fast on illegal ask/mcp URLs, protocolProfile, or OpenAPI path collisions. */
+assertPublicCapabilitiesConfig(merged);
 
 /** Resolved site configuration (paths are absolute). */
 export const siteConfig = {

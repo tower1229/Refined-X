@@ -80,7 +80,57 @@ export type PublicCapabilitiesInput = {
 	};
 };
 
+/** Static OpenAPI path keys that remote Ask/MCP must not overwrite. */
+export const STATIC_OPENAPI_PATHS = [
+	'/api/profile.json',
+	'/api/articles.json',
+	'/api/topics.json',
+	'/api/search-index.json',
+] as const;
+
+export type SiteConfigCapabilitiesSource = {
+	site: string;
+	title: string;
+	ask: {
+		askUrl?: string;
+		mcpUrl?: string;
+		healthUrl?: string;
+		protocolProfile?: string;
+	};
+	mcp: {
+		packageIdentifier: string;
+		airIdentifier: string;
+		discoveryMetaKey?: string;
+		serverVersion?: string;
+	};
+};
+
+export function siteConfigToCapabilitiesInput(config: SiteConfigCapabilitiesSource): PublicCapabilitiesInput {
+	return {
+		site: config.site,
+		title: config.title,
+		ask: {
+			askUrl: config.ask.askUrl,
+			mcpUrl: config.ask.mcpUrl,
+			healthUrl: config.ask.healthUrl,
+			protocolProfile: config.ask.protocolProfile,
+		},
+		mcp: {
+			packageIdentifier: config.mcp.packageIdentifier,
+			airIdentifier: config.mcp.airIdentifier,
+			discoveryMetaKey: config.mcp.discoveryMetaKey,
+			serverVersion: config.mcp.serverVersion,
+		},
+	};
+}
+
+/** Resolve capabilities or throw — used at site.config load for fail-fast. */
+export function assertPublicCapabilitiesConfig(config: SiteConfigCapabilitiesSource): PublicCapabilities {
+	return resolvePublicCapabilities(siteConfigToCapabilitiesInput(config));
+}
+
 const LOCAL_HTTP_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const STATIC_OPENAPI_PATH_SET = new Set<string>(STATIC_OPENAPI_PATHS);
 
 function isLocalHostname(hostname: string) {
 	const normalized = hostname.toLowerCase();
@@ -225,6 +275,16 @@ export function resolvePublicCapabilities(input: PublicCapabilitiesInput): Publi
 	if (ask && mcp && ask.pathname === mcp.pathname) {
 		throw new Error(
 			`askUrl and mcpUrl cannot share the same pathname (${ask.pathname}); OpenAPI cannot express two POST operations on one path`,
+		);
+	}
+	if (ask && STATIC_OPENAPI_PATH_SET.has(ask.pathname)) {
+		throw new Error(
+			`askUrl pathname ${ask.pathname} collides with a static OpenAPI path; choose a distinct remote path`,
+		);
+	}
+	if (mcp && STATIC_OPENAPI_PATH_SET.has(mcp.pathname)) {
+		throw new Error(
+			`mcpUrl pathname ${mcp.pathname} collides with a static OpenAPI path; choose a distinct remote path`,
 		);
 	}
 

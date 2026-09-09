@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Build-time `public-capabilities` model and `ask.protocolProfile` (`undeclared` default; opt-in `dual-era` after deployment acceptance)
+- Capability-aware OpenAPI (conditional Ask/MCP POSTs, full URL reconstruction including path prefixes) and verify helpers (including AWP must-not-exist checks)
+
+### Changed
+
+- Legacy MCP catalog / server-card / `mcp.json` outputs are thin projections from shared capabilities; maturity marked `legacy-draft-compatibility` (not Official)
+- `/.well-known/about.json` keeps top-level `mcpCatalogUrl` / `mcpServerCardUrl` / `mcpJsonUrl` for client compatibility and adds `discoveryMaturity` / `discoveryNotes`
+- llms.txt and Footer stop primary-recommending retired MCP discovery paths; configured MCP URL remains the primary agent entry when present
+- Illegal `ask.*` URLs, unknown `protocolProfile`, and Ask/MCP pathnames that collide with static OpenAPI paths fail during site config load
+
 ## [1.1.0] - 2026-09-01
 
 ### Added

@@ -85,10 +85,13 @@ export default {
     askUrl: "https://ask.example.com/ask",
     mcpUrl: "https://ask.example.com/mcp",
     healthUrl: "https://ask.example.com/health",
+    // Default undeclared — do not claim modern dual-era until the Worker + static docs combo is accepted.
+    // protocolProfile: "dual-era",
   },
 };
 ```
 
+`ask.protocolProfile` controls public discovery/OpenAPI claims only (not Worker auth). Leave it at the default `undeclared` until dual-era MCP acceptance is recorded for that deployment.
 At **Astro build** time, set the public Turnstile site key:
 
 ```sh

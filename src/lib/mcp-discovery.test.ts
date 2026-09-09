@@ -81,15 +81,20 @@ test('mcp.json is a thin projection of the server card', () => {
 	assert.equal(json.name, card.name);
 });
 
-test('about.nlweb omits remote URLs when not configured and stays capability-truthful', () => {
+test('about keeps top-level legacy discovery URLs for clients and marks maturity', () => {
 	const staticAbout = projectAboutDiscovery(caps(), {
 		...urls,
 		profile: { name: 'Demo', canonicalUrl: 'https://example.com/about' },
 	});
 	assert.equal(staticAbout.nlweb.askUrl, '');
 	assert.equal(staticAbout.nlweb.mcpUrl, '');
-	assert.equal(staticAbout.legacyDiscovery, undefined);
-	assert.ok(!('mcpCatalogUrl' in staticAbout));
+	assert.equal(staticAbout.mcpCatalogUrl, urls.catalogUrl);
+	assert.equal(staticAbout.mcpServerCardUrl, urls.serverCardUrl);
+	assert.equal(staticAbout.mcpJsonUrl, urls.mcpJsonUrl);
+	assert.equal(staticAbout.discoveryMaturity, 'legacy-draft-compatibility');
+	assert.match(staticAbout.discoveryNotes, /compatibility/);
+	assert.ok(!('mcpUrl' in staticAbout));
+	assert.ok(!('legacyDiscovery' in staticAbout));
 	assert.deepEqual(staticAbout.nlweb.supported, []);
 	assert.ok(!staticAbout.nlweb.notes.some((note: string) => /Supports POST \/ask/.test(note)));
 
@@ -106,7 +111,8 @@ test('about.nlweb omits remote URLs when not configured and stays capability-tru
 	);
 	assert.equal(both.nlweb.askUrl, 'https://ask.example.com/ask');
 	assert.equal(both.mcpUrl, 'https://ask.example.com/mcp');
-	assert.equal(both.legacyDiscovery?.maturity, 'legacy-draft-compatibility');
+	assert.equal(both.mcpCatalogUrl, urls.catalogUrl);
+	assert.equal(both.discoveryMaturity, 'legacy-draft-compatibility');
 	assert.ok(both.nlweb.supported.includes('MCP ask'));
 });
 

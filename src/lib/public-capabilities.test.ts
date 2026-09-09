@@ -3,9 +3,11 @@ import test from 'node:test';
 import {
 	PROTOCOL_PROFILE_DUAL_ERA,
 	PROTOCOL_PROFILE_UNDECLARED,
+	assertPublicCapabilitiesConfig,
 	parseAbsoluteHttpUrl,
 	reconstructEndpointUrl,
 	resolvePublicCapabilities,
+	siteConfigToCapabilitiesInput,
 } from './public-capabilities.ts';
 
 const identity = {
@@ -154,5 +156,39 @@ test('ask and mcp sharing the same pathname with different origins fail', () => 
 				mcpUrl: 'https://b.example.com/rpc',
 			}),
 		/same pathname/,
+	);
+});
+
+test('ask or mcp pathname colliding with static OpenAPI paths fails', () => {
+	assert.throws(
+		() => resolve({ askUrl: 'https://ask.example.com/api/profile.json' }),
+		/collides with a static OpenAPI path/,
+	);
+	assert.throws(
+		() => resolve({ mcpUrl: 'https://ask.example.com/api/search-index.json' }),
+		/collides with a static OpenAPI path/,
+	);
+});
+
+test('siteConfigToCapabilitiesInput and assertPublicCapabilitiesConfig fail fast on illegal URLs', () => {
+	const base = {
+		site: 'https://example.com/',
+		title: 'Refined-X',
+		ask: { askUrl: '', mcpUrl: '', healthUrl: '', protocolProfile: 'undeclared' },
+		mcp: {
+			packageIdentifier: 'com.example/refined-x-public-ask',
+			airIdentifier: 'urn:air:example.com:public-ask',
+		},
+	};
+	const input = siteConfigToCapabilitiesInput(base);
+	assert.equal(input.ask.protocolProfile, 'undeclared');
+	assert.equal(assertPublicCapabilitiesConfig(base).mode, 'static');
+	assert.throws(
+		() =>
+			assertPublicCapabilitiesConfig({
+				...base,
+				ask: { ...base.ask, askUrl: 'https://ask.example.com/ask#x' },
+			}),
+		/askUrl/,
 	);
 });

@@ -6,8 +6,6 @@ import {
 import type { PublicCapabilities } from './public-capabilities.ts';
 import { openApiServerAndPath, siteOpenApiServerUrl } from './public-capabilities.ts';
 
-export type OpenApiDocumentOptions = Record<string, never>;
-
 type JsonSchema = Record<string, unknown>;
 
 function response(description: string, schema: JsonSchema) {
@@ -85,10 +83,7 @@ export type OpenApiDocument = {
 	};
 };
 
-export function buildOpenApiDocument(
-	caps: PublicCapabilities,
-	_options: OpenApiDocumentOptions = {},
-): OpenApiDocument {
+export function buildOpenApiDocument(caps: PublicCapabilities): OpenApiDocument {
 	const schemas = buildSchemas();
 	const paths: OpenApiDocument['paths'] = {
 		'/api/profile.json': {

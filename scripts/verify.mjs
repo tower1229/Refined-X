@@ -8,7 +8,7 @@ import {
 	verifyLlmsAgainstCapabilities,
 	verifyOpenApiAgainstCapabilities,
 } from './verify-capabilities.mjs';
-import { resolvePublicCapabilities } from '../src/lib/public-capabilities.ts';
+import { resolvePublicCapabilities, siteConfigToCapabilitiesInput } from '../src/lib/public-capabilities.ts';
 
 const distRoot = siteConfig.outDir;
 const requiredPages = ['/', '/about/', '/projects/', '/writing/', '/ask/', '/answers/', '/friends/'];
@@ -22,21 +22,7 @@ const requiredFiles = [
 
 const failures = [];
 
-const caps = resolvePublicCapabilities({
-	site: siteConfig.site,
-	title: siteConfig.title,
-	ask: {
-		askUrl: siteConfig.ask.askUrl,
-		mcpUrl: siteConfig.ask.mcpUrl,
-		healthUrl: siteConfig.ask.healthUrl,
-		protocolProfile: siteConfig.ask.protocolProfile,
-	},
-	mcp: {
-		packageIdentifier: siteConfig.mcp.packageIdentifier,
-		airIdentifier: siteConfig.mcp.airIdentifier,
-		discoveryMetaKey: siteConfig.mcp.discoveryMetaKey,
-	},
-});
+const caps = resolvePublicCapabilities(siteConfigToCapabilitiesInput(siteConfig));
 
 async function listHtmlFiles(directory) {
 	const files = [];
