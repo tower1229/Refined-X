@@ -9,12 +9,12 @@
   "anonymousList": "passed",
   "authenticatedSummarize": "passed",
   "errorHandling": "passed",
-  "testedAt": "2026-09-10T01:42:48.670Z",
+  "testedAt": "2026-09-10T03:16:35.143Z",
   "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/codex-legacy/",
   "businessBackend": "synthetic_mock",
-  "gitSha": "7b2f00f78fe166006247132c63792d7f57f2d09f",
+  "gitSha": "837ba03fe965958c451c5dbde22559d23bfae851",
   "featureFlags": {
     "mcp_2026_07_28": false
   },
-  "notes": "Legacy product path: Codex with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend. Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase."
+  "notes": "Legacy product path: Codex with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend — not production AI Search or model acceptance. Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase; summarize gate does not assert answer text."
 }

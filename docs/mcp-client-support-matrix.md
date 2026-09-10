@@ -14,6 +14,7 @@ Acceptance gates now require:
 - `observedProtocolVersion` from successful business `tools/call` only (probe/discover is not enough)
 - `offlineIntegration.status` from an actual `npm run test:mcp-protocol` run in the acceptance script, with `gitSha`
 - Non-zero process exit when any core gate or offline integration fails
+- Summarize gate does **not** assert answer text — only auth + successful tool result on the synthetic mock
 
 **Credential safety:** `run-acceptance.mjs` does **not** default `ANTHROPIC_BASE_URL` to a third-party host. Use your normal Anthropic/Claude auth, or set `ANTHROPIC_BASE_URL` + matching token/model env vars **explicitly** if you intentionally use another Anthropic-compatible endpoint. Temporary MCP/config dirs use mode `0700` / files `0600` and are removed in `finally`.
 
@@ -30,8 +31,8 @@ Clean checkout reproduction: root `npm ci` (site job) + Worker `npm ci` (worker 
 
 **Status layers (do not conflate):**
 
-1. Harness hardened (predicate unit tests + credential defaults) — this change set
-2. Synthetic product-client records re-run under hardened gates — see core table / `gitSha` on records
+1. Harness hardened (predicate unit tests + credential defaults)
+2. Synthetic product-client records re-run under hardened gates — see core table / `gitSha` on records (`837ba03…` as of 2026-09-10 re-run)
 3. Staging / production model smoke — still separate; never rewrite absence as `passed`
 
 ## Core product-client gates
@@ -41,7 +42,7 @@ Clean checkout reproduction: root `npm ci` (site job) + Worker `npm ci` (worker 
 | Claude Code `2.1.228` | modern (`MCP_SDK_GENERATION=v2`, `MCP_PROTOCOL_NEGOTIATION=auto`) → observed `2026-07-28` | [claude-code-modern.json](../examples/public-ask-worker/test/product-clients/records/claude-code-modern.json) | passed | passed | passed | passed |
 | Codex CLI `0.153.4` | legacy (`features.mcp_2026_07_28=false`) → observed `2025-06-18` | [codex-legacy.json](../examples/public-ask-worker/test/product-clients/records/codex-legacy.json) | passed | passed | passed | passed |
 
-Core records re-validated **2026-09-10** under hardened gates (`toolIsError === false`, auth 401/403, `gitSha` bound). Synthetic mock Worker backend — empty retrieval / no-reference summarize; **not** production model acceptance.
+Core records re-validated **2026-09-10** on `gitSha` `837ba03fe965958c451c5dbde22559d23bfae851` under hardened gates. Synthetic mock Worker backend — empty retrieval / no-reference summarize; **not** production model acceptance. The Claude Code agent loop in checked-in evidence used `deepseek-v4-pro` via local Claude settings; that does **not** change the MCP server-trace gates and must not be marketed as Anthropic first-party model verification.
 
 - `examples/public-ask-worker/test/product-clients/evidence/claude-code-modern/` — per-phase `01/02/03-server-trace.json` plus stream transcripts
 - `examples/public-ask-worker/test/product-clients/evidence/codex-legacy/` — per-phase `04/05/06-server-trace.json` plus CLI transcripts
@@ -78,5 +79,6 @@ npm run test:product-clients
 
 - Worker dual-era `/mcp` behavior is proven by offline CI integration.
 - Product marketing may cite Claude Code modern and Codex CLI legacy only as recorded above, with the synthetic-mock backend label and matching `gitSha`.
+- Do not claim Anthropic first-party agent-model verification from a run whose evidence shows another model (e.g. DeepSeek).
 - Staging / production model smoke remains a separate controlled item; absence of that run must not be rewritten as `passed`.
 - Set `ask.protocolProfile: "dual-era"` on an instance only after that instance’s Worker + static docs combo is accepted.

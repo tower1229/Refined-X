@@ -2,7 +2,7 @@
 
 **调研截止：2026-09-08**  
 **源码基线：`tower1229/Refined-X@00781cecb0616cf64b27370830d448c1006fa72f`**  
-**状态：实施进行中。批次 0（#12）与批次 A（#13/#14）已完成；批次 B 双代 `/mcp` adapter（#15）与离线 CI 集成、产品客户端矩阵记录（#16：Claude Code modern + Codex legacy，合成 mock）已在本仓落地；独立后续项 AWP 发现实验（#17）已落地且 `discovery.awp` 默认关闭；历史 MCP 发现入口退役（#18）已落地（有期限提前退役例外见 issue 评论）。2026-09-10 起验收 harness 已硬化（toolIsError / 错误拒绝 / 协议观测 / 凭证默认 / 非零退出 / gitSha），OpenAPI 补齐 Ask SSE 与 MCP 条件头，子路径 `absoluteUrl`+Astro `base` 对齐。受控 staging / 真实模型与实例部署另记。不表示已发布或生产升级完成。**
+**状态：实施进行中。批次 0（#12）与批次 A（#13/#14）已完成；批次 B 双代 `/mcp` adapter（#15）与离线 CI 集成、产品客户端矩阵记录（#16：Claude Code modern + Codex legacy，合成 mock）已在本仓落地；独立后续项 AWP 发现实验（#17）已落地且 `discovery.awp` 默认关闭；历史 MCP 发现入口退役（#18）已落地（有期限提前退役例外见 issue 评论）。2026-09-10 起验收 harness 已硬化（toolIsError / 错误拒绝 / 协议观测 / 凭证默认 / 非零退出 / gitSha），OpenAPI 补齐 Ask SSE 与 MCP 条件头，子路径 `absoluteUrl`+Astro `base` 对齐；合成客户端记录已在 `837ba03` 重验。受控 staging / 真实模型与实例部署另记。不表示已发布或生产升级完成。**
 
 **本地复核：`a7897f46fc70c5852fa9c986f0327a12a89ec925`，相对上述源码基线仅新增本方案。实施进度以 GitHub Issues #12/#13 及后续提交为准。**
 

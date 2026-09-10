@@ -32,6 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Product-client acceptance harness hardened: bind gates to `tools/call` + `toolIsError`, require HTTP 401/403 for error handling (no CLI-text false positives), record `gitSha`, run `test:mcp-protocol` for `offlineIntegration`, fail the script on core gate failure; stop defaulting Claude acceptance to a third-party Anthropic-compatible base URL
+- OpenAPI Ask documents buffered SSE (`text/event-stream`) alongside JSON; MCP documents conditional protocol headers and `202`/`401` without making modern headers globally required
+- Site absolute URLs and Astro `base` derive from `site` pathname so subpath deployments keep Profile / Markdown / OpenAPI / AWP prefixes consistent
 - AWP #17 follow-up: plan/README sync for `discovery.awp`, shared phase-1 action allowlist, drop unused `search_index` entity, and tighten static-API output-key fixture contract
 - Instance overlays that still set retired `mcp` keys are ignored with a console warning (#18 follow-up)
 - Verify forbids `/.well-known/ai-catalog.json` in dist alongside retired legacy MCP discovery paths

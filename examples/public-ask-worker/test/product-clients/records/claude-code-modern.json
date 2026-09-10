@@ -9,13 +9,13 @@
   "anonymousList": "passed",
   "authenticatedSummarize": "passed",
   "errorHandling": "passed",
-  "testedAt": "2026-09-10T01:41:39.448Z",
+  "testedAt": "2026-09-10T03:15:28.241Z",
   "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/claude-code-modern/",
   "businessBackend": "synthetic_mock",
-  "gitSha": "7b2f00f78fe166006247132c63792d7f57f2d09f",
+  "gitSha": "837ba03fe965958c451c5dbde22559d23bfae851",
   "featureFlags": {
     "MCP_SDK_GENERATION": "v2",
     "MCP_PROTOCOL_NEGOTIATION": "auto"
   },
-  "notes": "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker uses empty retrieval so summarize stays on the no-reference path (no production AI Search/model). Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase."
+  "notes": "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker (empty retrieval / no-reference summarize) — not production AI Search or model acceptance. Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase; summarize gate does not assert answer text. Agent CLI model in this evidence run was deepseek-v4-pro via local Claude settings (script did not default ANTHROPIC_BASE_URL); MCP protocol gates are from server-trace, not the agent model brand."
 }
