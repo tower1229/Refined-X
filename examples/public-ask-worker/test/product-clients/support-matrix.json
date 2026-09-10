@@ -1,10 +1,12 @@
 {
   "issue": "#16",
-  "updatedAt": "2026-09-09",
+  "updatedAt": "2026-09-10",
   "offlineIntegration": {
     "command": "npm run test:mcp-protocol",
     "ciJob": "worker / MCP protocol integration",
-    "status": "passed"
+    "status": "passed",
+    "gitSha": "7b2f00f78fe166006247132c63792d7f57f2d09f",
+    "testedAt": "2026-09-10T01:40:10.043Z"
   },
   "rows": [
     {

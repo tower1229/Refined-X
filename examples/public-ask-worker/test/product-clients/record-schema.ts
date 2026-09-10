@@ -32,6 +32,8 @@ export type ProductClientRecord = {
   evidencePath: string | null;
   /** Backend under test: synthetic mock vs staging/production. */
   businessBackend: "synthetic_mock" | "staging" | "production" | null;
+  /** Full git SHA of the tree under test when any gate is passed/failed. */
+  gitSha: string | null;
   notes?: string;
   featureFlags?: Record<string, string | boolean | null>;
 };
@@ -52,6 +54,8 @@ export type SupportMatrix = {
     command: string;
     ciJob: string;
     status: GateStatus;
+    gitSha?: string | null;
+    testedAt?: string | null;
   };
   rows: SupportMatrixRow[];
 };
@@ -79,6 +83,7 @@ export function validateProductClientRecord(raw: unknown): string[] {
     "observedProtocolVersion",
     "testedAt",
     "evidencePath",
+    "gitSha",
   ] as const) {
     const value = record[key];
     if (value !== null && typeof value !== "string") {
@@ -134,6 +139,13 @@ export function validateProductClientRecord(raw: unknown): string[] {
     ) {
       errors.push("businessBackend required when any gate is passed/failed");
     }
+    if (typeof record.gitSha !== "string" || !/^[0-9a-f]{40}$/i.test(record.gitSha)) {
+      errors.push("gitSha required (40-char hex) when any gate is passed/failed");
+    }
+  } else if (record.gitSha !== null && record.gitSha !== undefined) {
+    if (typeof record.gitSha !== "string") {
+      errors.push("gitSha must be string or null");
+    }
   }
 
   return errors;
@@ -150,6 +162,15 @@ export function validateSupportMatrix(raw: unknown): string[] {
   }
   if (!matrix.offlineIntegration || !isGateStatus(matrix.offlineIntegration.status)) {
     errors.push("offlineIntegration.status invalid");
+  }
+  if (
+    matrix.offlineIntegration &&
+    (matrix.offlineIntegration.status === "passed" || matrix.offlineIntegration.status === "failed")
+  ) {
+    const sha = matrix.offlineIntegration.gitSha;
+    if (typeof sha !== "string" || !/^[0-9a-f]{40}$/i.test(sha)) {
+      errors.push("offlineIntegration.gitSha required when status is passed/failed");
+    }
   }
   if (!Array.isArray(matrix.rows)) {
     errors.push("rows must be an array");

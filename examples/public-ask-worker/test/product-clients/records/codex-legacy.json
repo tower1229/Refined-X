@@ -9,11 +9,12 @@
   "anonymousList": "passed",
   "authenticatedSummarize": "passed",
   "errorHandling": "passed",
-  "testedAt": "2026-09-09T05:39:06.553Z",
+  "testedAt": "2026-09-10T01:42:48.670Z",
   "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/codex-legacy/",
   "businessBackend": "synthetic_mock",
+  "gitSha": "7b2f00f78fe166006247132c63792d7f57f2d09f",
   "featureFlags": {
     "mcp_2026_07_28": false
   },
-  "notes": "Legacy product path: Codex 0.153.x with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend."
+  "notes": "Legacy product path: Codex with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend. Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase."
 }

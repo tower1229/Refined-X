@@ -1,11 +1,11 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { siteConfig } from '../../site.config.mjs';
-import { sitePath } from './paths';
+import { absoluteUrlFromSite, sitePath } from './paths';
 
 export type PublicDocEntry = CollectionEntry<'docs'>;
 
 export function absoluteUrl(pathname: string) {
-	return new URL(pathname, siteConfig.site).href;
+	return absoluteUrlFromSite(siteConfig.site, pathname);
 }
 
 export function docPath(entry: PublicDocEntry) {

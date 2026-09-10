@@ -4,6 +4,9 @@
  *
  * Prerequisites: `node test/product-clients/serve.mjs` already running
  * (or this script boots one). Uses local product CLIs only.
+ *
+ * Auth: does not rewrite ANTHROPIC_BASE_URL to a third-party host by default.
+ * Set ANTHROPIC_BASE_URL (and matching token/model env) explicitly when needed.
  */
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
@@ -13,14 +16,26 @@ import {
   writeFileSync,
   existsSync,
   rmSync,
+  chmodSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { trustedBearer, badBearer } from "../mcp-protocol/fixtures.ts";
-import { validateProductClientRecord } from "./record-schema.ts";
+import { validateProductClientRecord, validateSupportMatrix } from "./record-schema.ts";
+import {
+  coreGatesPassed,
+  judgeAnonymousList,
+  judgeErrorHandling,
+  judgeLegacyDiscovery,
+  judgeModernDiscovery,
+  judgeObservedProtocol,
+  judgeSummarize,
+} from "./acceptance-predicates.mjs";
 
 const dir = dirname(fileURLToPath(import.meta.url));
+const workerRoot = join(dir, "../..");
+const repoRoot = join(workerRoot, "../..");
 const urlFile = join(dir, ".acceptance-base-url");
 const evidenceRoot = join(dir, "evidence");
 const recordsDir = join(dir, "records");
@@ -29,8 +44,66 @@ const CODEX =
   process.env.CODEX_BIN ||
   join(process.env.HOME || "", ".codex/plugins/.plugin-appserver/codex");
 
+const gitSha = (() => {
+  const result = spawnSync("git", ["rev-parse", "HEAD"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+  });
+  const sha = (result.stdout || "").trim();
+  if (result.status !== 0 || !/^[0-9a-f]{40}$/i.test(sha)) {
+    throw new Error("unable to resolve git rev-parse HEAD for acceptance records");
+  }
+  return sha;
+})();
+
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+function writeSecureFile(path, content) {
+  writeFileSync(path, content, { mode: 0o600 });
+  try {
+    chmodSync(path, 0o600);
+  } catch {
+    // best-effort on platforms that ignore mode
+  }
+}
+
+function mkdirSecure(path) {
+  mkdirSync(path, { recursive: true, mode: 0o700 });
+  try {
+    chmodSync(path, 0o700);
+  } catch {
+    // best-effort
+  }
+}
+
+/**
+ * Build Claude settings env without defaulting credentials to a third-party host.
+ * Only injects ANTHROPIC_* when the caller already set them (or AUTH_TOKEN/API_KEY for token).
+ */
+function buildClaudeSettingsEnv() {
+  const env = {
+    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
+  };
+  if (process.env.ANTHROPIC_BASE_URL) {
+    env.ANTHROPIC_BASE_URL = process.env.ANTHROPIC_BASE_URL;
+  }
+  const token = process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_API_KEY;
+  if (token) {
+    env.ANTHROPIC_AUTH_TOKEN = token;
+  }
+  for (const key of [
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL",
+  ]) {
+    if (process.env[key]) {
+      env[key] = process.env[key];
+    }
+  }
+  return env;
 }
 
 async function waitForUrlFile(timeoutMs = 60_000) {
@@ -60,7 +133,7 @@ async function ensureServer() {
     process.execPath,
     ["--experimental-strip-types", join(dir, "serve.mjs")],
     {
-      cwd: join(dir, "../.."),
+      cwd: workerRoot,
       stdio: ["ignore", "pipe", "pipe"],
       env: process.env,
     },
@@ -84,7 +157,7 @@ async function reset(baseUrl) {
 
 async function readTrace(baseUrl) {
   const res = await fetch(`${baseUrl}/trace`);
-  return (await res.json());
+  return await res.json();
 }
 
 function writeEvidence(clientId, name, content) {
@@ -117,6 +190,25 @@ function runCapture(cmd, args, env, cwd, options = {}) {
     stdout: result.stdout || "",
     stderr: result.stderr || "",
     error: result.error ? String(result.error) : null,
+  };
+}
+
+function runOfflineIntegration() {
+  const result = spawnSync("npm", ["run", "test:mcp-protocol"], {
+    cwd: workerRoot,
+    encoding: "utf8",
+    env: process.env,
+    timeout: 600_000,
+  });
+  const status = result.status === 0 ? "passed" : "failed";
+  return {
+    command: "npm run test:mcp-protocol",
+    ciJob: "worker / MCP protocol integration",
+    status,
+    gitSha,
+    testedAt: new Date().toISOString(),
+    stdout: result.stdout || "",
+    stderr: result.stderr || "",
   };
 }
 
@@ -164,135 +256,107 @@ async function runClaudeModern(baseUrl) {
   };
 
   const configDir = join(tmpdir(), `claude-acceptance-mcp-${process.pid}`);
-  mkdirSync(configDir, { recursive: true });
+  mkdirSecure(configDir);
   const configPath = join(configDir, "claude-modern.mcp.json");
   const configAuthPath = join(configDir, "claude-modern-auth.mcp.json");
   const configBadPath = join(configDir, "claude-modern-bad.mcp.json");
   const settingsPath = join(configDir, "claude-acceptance.settings.json");
-  writeFileSync(configPath, JSON.stringify(mcpConfig, null, 2) + "\n");
-  writeFileSync(configAuthPath, JSON.stringify(mcpConfigAuth, null, 2) + "\n");
-  writeFileSync(configBadPath, JSON.stringify(mcpConfigBad, null, 2) + "\n");
-  writeFileSync(
+  writeSecureFile(configPath, JSON.stringify(mcpConfig, null, 2) + "\n");
+  writeSecureFile(configAuthPath, JSON.stringify(mcpConfigAuth, null, 2) + "\n");
+  writeSecureFile(configBadPath, JSON.stringify(mcpConfigBad, null, 2) + "\n");
+  writeSecureFile(
     settingsPath,
-    JSON.stringify(
-      {
-        env: {
-          ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL || "https://api.deepseek.com/anthropic",
-          ANTHROPIC_AUTH_TOKEN: process.env.ANTHROPIC_AUTH_TOKEN || process.env.ANTHROPIC_API_KEY,
-          ANTHROPIC_MODEL: "DeepSeek-V4-Flash",
-          ANTHROPIC_DEFAULT_SONNET_MODEL: "DeepSeek-V4-Flash",
-          ANTHROPIC_DEFAULT_OPUS_MODEL: "DeepSeek-V4-Flash",
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: "DeepSeek-V4-Flash",
-          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
-        },
-      },
-      null,
-      2,
-    ) + "\n",
+    JSON.stringify({ env: buildClaudeSettingsEnv() }, null, 2) + "\n",
   );
 
-  await reset(baseUrl);
+  try {
+    await reset(baseUrl);
 
-  const envModern = {
-    MCP_SDK_GENERATION: "v2",
-    MCP_PROTOCOL_NEGOTIATION: "auto",
-  };
-
-  function claudeArgs(mcpConfigFile, prompt) {
-    return [
-      "-p",
-      prompt,
-      "--bare",
-      "--settings",
-      settingsPath,
-      "--verbose",
-      "--strict-mcp-config",
-      "--mcp-config",
-      mcpConfigFile,
-      "--allowedTools",
-      "mcp__refined-x-ask__ask",
-      "--dangerously-skip-permissions",
-      "--output-format",
-      "stream-json",
-    ];
-  }
-
-  const listPrompt =
-    'Call mcp__refined-x-ask__ask with {"query":{"text":"acceptance list"},"prefer":{"mode":"list"}} then say DONE';
-  const listRun = runCapture("claude", claudeArgs(configPath, listPrompt), envModern, dir, {
-    stdin: "ignore",
-  });
-  writeEvidence(clientId, "01-discover-and-list.stream.jsonl", listRun.stdout);
-  writeEvidence(clientId, "01-discover-and-list.stderr.txt", `${listRun.stderr}\nstatus:${listRun.status}`);
-  const listTrace = await readTrace(baseUrl);
-  writeEvidence(clientId, "01-server-trace.json", listTrace);
-
-  await reset(baseUrl);
-  const summarizePrompt =
-    'Call mcp__refined-x-ask__ask with {"query":{"text":"acceptance summarize"},"prefer":{"mode":"summarize"}} then say DONE';
-  const summarizeRun = runCapture("claude", claudeArgs(configAuthPath, summarizePrompt), envModern, dir, {
-    stdin: "ignore",
-  });
-  writeEvidence(clientId, "02-auth-summarize.stream.jsonl", summarizeRun.stdout);
-  writeEvidence(clientId, "02-auth-summarize.stderr.txt", `${summarizeRun.stderr}\nstatus:${summarizeRun.status}`);
-  const summarizeTrace = await readTrace(baseUrl);
-  writeEvidence(clientId, "02-server-trace.json", summarizeTrace);
-
-  await reset(baseUrl);
-  const errorPrompt =
-    'Call mcp__refined-x-ask__ask with {"query":{"text":"should fail auth"},"prefer":{"mode":"summarize"}} then report the error and say DONE';
-  const errorRun = runCapture("claude", claudeArgs(configBadPath, errorPrompt), envModern, dir, {
-    stdin: "ignore",
-  });
-  writeEvidence(clientId, "03-error-handling.stream.jsonl", errorRun.stdout);
-  writeEvidence(clientId, "03-error-handling.stderr.txt", `${errorRun.stderr}\nstatus:${errorRun.status}`);
-  const errorTrace = await readTrace(baseUrl);
-  writeEvidence(clientId, "03-server-trace.json", errorTrace);
-
-  const modernSeen = [...(listTrace.trace || []), ...(summarizeTrace.trace || []), ...(errorTrace.trace || [])].some(
-    (e) => e.mcpProtocolVersion === "2026-07-28" || e.jsonRpcMethod === "server/discover",
-  );
-  const discovered =
-    (listTrace.trace || []).some((e) => e.jsonRpcMethod === "server/discover") &&
-    (listTrace.trace || []).some((e) => e.jsonRpcMethod === "tools/list");
-  const listOk =
-    (listTrace.searchCalls ?? 0) >= 1 &&
-    (listTrace.trace || []).some(
-      (e) => e.jsonRpcMethod === "tools/call" && e.status === 200 && e.authorizationPresent === false,
-    );
-  const summarizeOk = (summarizeTrace.trace || []).some(
-    (e) => e.authorizationPresent && e.jsonRpcMethod === "tools/call" && e.status === 200,
-  );
-  const errorOk =
-    /401|Unauthorized|invalid|API_KEY|forbidden|error|UNAUTHORIZED/i.test(
-      errorRun.stdout + errorRun.stderr,
-    ) ||
-    (errorTrace.trace || []).some((e) => e.authorizationPresent && (e.status === 401 || e.status === 403));
-
-  const record = {
-    client: "Claude Code",
-    clientVersion,
-    platform,
-    runtime: "v2",
-    negotiation: "auto",
-    observedProtocolVersion: modernSeen ? "2026-07-28" : null,
-    toolDiscovery: discovered ? "passed" : "failed",
-    anonymousList: listOk ? "passed" : "failed",
-    authenticatedSummarize: summarizeOk ? "passed" : "failed",
-    errorHandling: errorOk ? "passed" : "failed",
-    testedAt: new Date().toISOString(),
-    evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
-    businessBackend: "synthetic_mock",
-    featureFlags: {
+    const envModern = {
       MCP_SDK_GENERATION: "v2",
       MCP_PROTOCOL_NEGOTIATION: "auto",
-    },
-    notes:
-      "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker uses empty retrieval so summarize stays on the no-reference path (no production AI Search/model).",
-  };
+    };
 
-  writeRecord("claude-code-modern.json", record);
-  return record;
+    function claudeArgs(mcpConfigFile, prompt) {
+      return [
+        "-p",
+        prompt,
+        "--bare",
+        "--settings",
+        settingsPath,
+        "--verbose",
+        "--strict-mcp-config",
+        "--mcp-config",
+        mcpConfigFile,
+        "--allowedTools",
+        "mcp__refined-x-ask__ask",
+        "--dangerously-skip-permissions",
+        "--output-format",
+        "stream-json",
+      ];
+    }
+
+    const listPrompt =
+      'Call mcp__refined-x-ask__ask with {"query":{"text":"acceptance list"},"prefer":{"mode":"list"}} then say DONE';
+    const listRun = runCapture("claude", claudeArgs(configPath, listPrompt), envModern, dir, {
+      stdin: "ignore",
+    });
+    writeEvidence(clientId, "01-discover-and-list.stream.jsonl", listRun.stdout);
+    writeEvidence(clientId, "01-discover-and-list.stderr.txt", `${listRun.stderr}\nstatus:${listRun.status}`);
+    const listTrace = await readTrace(baseUrl);
+    writeEvidence(clientId, "01-server-trace.json", listTrace);
+
+    await reset(baseUrl);
+    const summarizePrompt =
+      'Call mcp__refined-x-ask__ask with {"query":{"text":"acceptance summarize"},"prefer":{"mode":"summarize"}} then say DONE';
+    const summarizeRun = runCapture("claude", claudeArgs(configAuthPath, summarizePrompt), envModern, dir, {
+      stdin: "ignore",
+    });
+    writeEvidence(clientId, "02-auth-summarize.stream.jsonl", summarizeRun.stdout);
+    writeEvidence(clientId, "02-auth-summarize.stderr.txt", `${summarizeRun.stderr}\nstatus:${summarizeRun.status}`);
+    const summarizeTrace = await readTrace(baseUrl);
+    writeEvidence(clientId, "02-server-trace.json", summarizeTrace);
+
+    await reset(baseUrl);
+    const errorPrompt =
+      'Call mcp__refined-x-ask__ask with {"query":{"text":"should fail auth"},"prefer":{"mode":"summarize"}} then report the error and say DONE';
+    const errorRun = runCapture("claude", claudeArgs(configBadPath, errorPrompt), envModern, dir, {
+      stdin: "ignore",
+    });
+    writeEvidence(clientId, "03-error-handling.stream.jsonl", errorRun.stdout);
+    writeEvidence(clientId, "03-error-handling.stderr.txt", `${errorRun.stderr}\nstatus:${errorRun.status}`);
+    const errorTrace = await readTrace(baseUrl);
+    writeEvidence(clientId, "03-server-trace.json", errorTrace);
+
+    const observed = judgeObservedProtocol(listTrace, summarizeTrace);
+    const record = {
+      client: "Claude Code",
+      clientVersion,
+      platform,
+      runtime: "v2",
+      negotiation: "auto",
+      observedProtocolVersion: observed,
+      toolDiscovery: judgeModernDiscovery(listTrace),
+      anonymousList: judgeAnonymousList(listTrace),
+      authenticatedSummarize: judgeSummarize(summarizeTrace),
+      errorHandling: judgeErrorHandling(errorTrace),
+      testedAt: new Date().toISOString(),
+      evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
+      businessBackend: "synthetic_mock",
+      gitSha,
+      featureFlags: {
+        MCP_SDK_GENERATION: "v2",
+        MCP_PROTOCOL_NEGOTIATION: "auto",
+      },
+      notes:
+        "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker uses empty retrieval so summarize stays on the no-reference path (no production AI Search/model). Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase.",
+    };
+
+    writeRecord("claude-code-modern.json", record);
+    return record;
+  } finally {
+    rmSync(configDir, { recursive: true, force: true });
+  }
 }
 
 async function runCodexLegacy(baseUrl) {
@@ -305,9 +369,11 @@ async function runCodexLegacy(baseUrl) {
   const platform = `${process.platform}/${process.arch}`;
 
   const codexHome = join(tmpdir(), `refined-x-codex-acceptance-${process.pid}`);
-  mkdirSync(codexHome, { recursive: true });
-  // Minimal isolated config: legacy path = mcp_2026_07_28 disabled (product default).
-  const configToml = `
+  mkdirSecure(codexHome);
+
+  try {
+    // Minimal isolated config: legacy path = mcp_2026_07_28 disabled (product default).
+    const configToml = `
 model = "gpt-6-astra"
 approval_policy = "never"
 sandbox_mode = "read-only"
@@ -318,42 +384,40 @@ mcp_2026_07_28 = false
 [mcp_servers.refined_x_ask]
 url = "${mcpUrl}"
 `;
-  writeFileSync(join(codexHome, "config.toml"), configToml);
-  // Reuse ChatGPT login from the user home if present.
-  const userAuth = join(process.env.HOME || "", ".codex/auth.json");
-  if (existsSync(userAuth)) {
-    writeFileSync(join(codexHome, "auth.json"), readFileSync(userAuth));
-  }
+    writeSecureFile(join(codexHome, "config.toml"), configToml);
+    const userAuth = join(process.env.HOME || "", ".codex/auth.json");
+    if (existsSync(userAuth)) {
+      writeSecureFile(join(codexHome, "auth.json"), readFileSync(userAuth));
+    }
 
-  await reset(baseUrl);
+    await reset(baseUrl);
 
-  const env = { CODEX_HOME: codexHome };
+    const env = { CODEX_HOME: codexHome };
 
-  const listServers = runCapture(CODEX, ["mcp", "list"], env, dir);
-  writeEvidence(clientId, "01-mcp-list.txt", `stdout:\n${listServers.stdout}\nstderr:\n${listServers.stderr}\nstatus:${listServers.status}`);
+    const listServers = runCapture(CODEX, ["mcp", "list"], env, dir);
+    writeEvidence(clientId, "01-mcp-list.txt", `stdout:\n${listServers.stdout}\nstderr:\n${listServers.stderr}\nstatus:${listServers.status}`);
 
-  const getServer = runCapture(CODEX, ["mcp", "get", "refined_x_ask"], env, dir);
-  writeEvidence(clientId, "02-mcp-get.txt", `stdout:\n${getServer.stdout}\nstderr:\n${getServer.stderr}\nstatus:${getServer.status}`);
+    const getServer = runCapture(CODEX, ["mcp", "get", "refined_x_ask"], env, dir);
+    writeEvidence(clientId, "02-mcp-get.txt", `stdout:\n${getServer.stdout}\nstderr:\n${getServer.stderr}\nstatus:${getServer.status}`);
 
-  const features = runCapture(CODEX, ["features", "list"], env, dir);
-  writeEvidence(clientId, "03-features.txt", features.stdout + features.stderr);
+    const features = runCapture(CODEX, ["features", "list"], env, dir);
+    writeEvidence(clientId, "03-features.txt", features.stdout + features.stderr);
 
-  await reset(baseUrl);
-  const listPrompt =
-    'Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"acceptance list"},"prefer":{"mode":"list"}}. Then reply with one short sentence and the word DONE.';
-  const listResult = runCapture(
-    CODEX,
-    ["exec", "--skip-git-repo-check", "-s", "read-only", listPrompt],
-    env,
-    dir,
-    { stdin: "ignore" },
-  );
-  writeEvidence(clientId, "04-anonymous-list.txt", `stdout:\n${listResult.stdout}\nstderr:\n${listResult.stderr}\nstatus:${listResult.status}`);
-  const listTrace = await readTrace(baseUrl);
-  writeEvidence(clientId, "04-server-trace.json", listTrace);
+    await reset(baseUrl);
+    const listPrompt =
+      'Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"acceptance list"},"prefer":{"mode":"list"}}. Then reply with one short sentence and the word DONE.';
+    const listResult = runCapture(
+      CODEX,
+      ["exec", "--skip-git-repo-check", "-s", "read-only", listPrompt],
+      env,
+      dir,
+      { stdin: "ignore" },
+    );
+    writeEvidence(clientId, "04-anonymous-list.txt", `stdout:\n${listResult.stdout}\nstderr:\n${listResult.stderr}\nstatus:${listResult.status}`);
+    const listTrace = await readTrace(baseUrl);
+    writeEvidence(clientId, "04-server-trace.json", listTrace);
 
-  // Authenticated summarize via http_headers in a second config overlay.
-  const authConfig = `
+    const authConfig = `
 model = "gpt-6-astra"
 approval_policy = "never"
 sandbox_mode = "read-only"
@@ -365,22 +429,22 @@ mcp_2026_07_28 = false
 url = "${mcpUrl}"
 http_headers = { Authorization = "${trustedBearer()}" }
 `;
-  writeFileSync(join(codexHome, "config.toml"), authConfig);
-  await reset(baseUrl);
-  const summarizePrompt =
-    'Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"acceptance summarize"},"prefer":{"mode":"summarize"}}. Then reply with one short sentence and the word DONE.';
-  const summarizeRun = runCapture(
-    CODEX,
-    ["exec", "--skip-git-repo-check", "-s", "read-only", summarizePrompt],
-    env,
-    dir,
-    { stdin: "ignore" },
-  );
-  writeEvidence(clientId, "05-auth-summarize.txt", `stdout:\n${summarizeRun.stdout}\nstderr:\n${summarizeRun.stderr}\nstatus:${summarizeRun.status}`);
-  const summarizeTrace = await readTrace(baseUrl);
-  writeEvidence(clientId, "05-server-trace.json", summarizeTrace);
+    writeSecureFile(join(codexHome, "config.toml"), authConfig);
+    await reset(baseUrl);
+    const summarizePrompt =
+      'Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"acceptance summarize"},"prefer":{"mode":"summarize"}}. Then reply with one short sentence and the word DONE.';
+    const summarizeRun = runCapture(
+      CODEX,
+      ["exec", "--skip-git-repo-check", "-s", "read-only", summarizePrompt],
+      env,
+      dir,
+      { stdin: "ignore" },
+    );
+    writeEvidence(clientId, "05-auth-summarize.txt", `stdout:\n${summarizeRun.stdout}\nstderr:\n${summarizeRun.stderr}\nstatus:${summarizeRun.status}`);
+    const summarizeTrace = await readTrace(baseUrl);
+    writeEvidence(clientId, "05-server-trace.json", summarizeTrace);
 
-  const badConfig = `
+    const badConfig = `
 model = "gpt-6-astra"
 approval_policy = "never"
 sandbox_mode = "read-only"
@@ -392,69 +456,58 @@ mcp_2026_07_28 = false
 url = "${mcpUrl}"
 http_headers = { Authorization = "${badBearer()}" }
 `;
-  writeFileSync(join(codexHome, "config.toml"), badConfig);
-  await reset(baseUrl);
-  const errorPrompt =
-    'Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"should fail auth"},"prefer":{"mode":"summarize"}}. Report the error text, then DONE.';
-  const errorRun = runCapture(
-    CODEX,
-    ["exec", "--skip-git-repo-check", "-s", "read-only", errorPrompt],
-    env,
-    dir,
-    { stdin: "ignore" },
-  );
-  writeEvidence(clientId, "06-error-handling.txt", `stdout:\n${errorRun.stdout}\nstderr:\n${errorRun.stderr}\nstatus:${errorRun.status}`);
-  const errorTrace = await readTrace(baseUrl);
-  writeEvidence(clientId, "06-server-trace.json", errorTrace);
-
-  const allTrace = [...(listTrace.trace || []), ...(summarizeTrace.trace || []), ...(errorTrace.trace || [])];
-  const legacyVersion =
-    allTrace.map((e) => e.mcpProtocolVersion).find((v) => typeof v === "string" && v.startsWith("2025-")) || null;
-  const modernForced = allTrace.some((e) => e.mcpProtocolVersion === "2026-07-28");
-
-  const discoveryOk =
-    listServers.status === 0 &&
-    /refined_x_ask/i.test(listServers.stdout + getServer.stdout) &&
-    (listTrace.trace || []).some((e) => e.jsonRpcMethod === "tools/list" || e.jsonRpcMethod === "initialize");
-  const listOk =
-    (listTrace.searchCalls ?? 0) >= 1 &&
-    (listTrace.trace || []).some(
-      (e) => e.jsonRpcMethod === "tools/call" && e.status === 200 && e.authorizationPresent === false,
+    writeSecureFile(join(codexHome, "config.toml"), badConfig);
+    await reset(baseUrl);
+    const errorPrompt =
+      'Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"should fail auth"},"prefer":{"mode":"summarize"}}. Report the error text, then DONE.';
+    const errorRun = runCapture(
+      CODEX,
+      ["exec", "--skip-git-repo-check", "-s", "read-only", errorPrompt],
+      env,
+      dir,
+      { stdin: "ignore" },
     );
-  const summarizeOk = (summarizeTrace.trace || []).some(
-    (e) => e.authorizationPresent && e.jsonRpcMethod === "tools/call" && e.status === 200,
-  );
-  const errorOk =
-    /401|Unauthorized|invalid|API_KEY|forbidden|error|fail|UNAUTHORIZED/i.test(errorRun.stdout + errorRun.stderr) ||
-    (errorTrace.trace || []).some((e) => e.authorizationPresent && (e.status === 401 || e.status === 403));
+    writeEvidence(clientId, "06-error-handling.txt", `stdout:\n${errorRun.stdout}\nstderr:\n${errorRun.stderr}\nstatus:${errorRun.status}`);
+    const errorTrace = await readTrace(baseUrl);
+    writeEvidence(clientId, "06-server-trace.json", errorTrace);
 
-  const observed = modernForced
-    ? "2026-07-28 (unexpected — feature should be off)"
-    : legacyVersion;
+    const observed = judgeObservedProtocol(listTrace, summarizeTrace);
+    const modernOnSuccess = observed === "2026-07-28";
 
-  const record = {
-    client: "Codex CLI",
-    clientVersion,
-    platform,
-    runtime: "v1/legacy-default",
-    negotiation: "legacy (mcp_2026_07_28=false)",
-    observedProtocolVersion: observed,
-    toolDiscovery: discoveryOk ? "passed" : "failed",
-    anonymousList: listOk ? "passed" : "failed",
-    authenticatedSummarize: summarizeOk ? "passed" : "failed",
-    errorHandling: errorOk ? "passed" : "failed",
-    testedAt: new Date().toISOString(),
-    evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
-    businessBackend: "synthetic_mock",
-    featureFlags: {
-      mcp_2026_07_28: false,
-    },
-    notes:
-      "Legacy product path: Codex 0.153.x with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend.",
-  };
+    const record = {
+      client: "Codex CLI",
+      clientVersion,
+      platform,
+      runtime: "v1/legacy-default",
+      negotiation: "legacy (mcp_2026_07_28=false)",
+      observedProtocolVersion: modernOnSuccess
+        ? "2026-07-28 (unexpected — feature should be off)"
+        : observed,
+      toolDiscovery: judgeLegacyDiscovery({
+        listServersStatus: listServers.status,
+        listServersText: listServers.stdout + listServers.stderr,
+        getServerText: getServer.stdout + getServer.stderr,
+        listTrace,
+      }),
+      anonymousList: judgeAnonymousList(listTrace),
+      authenticatedSummarize: judgeSummarize(summarizeTrace),
+      errorHandling: judgeErrorHandling(errorTrace),
+      testedAt: new Date().toISOString(),
+      evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
+      businessBackend: "synthetic_mock",
+      gitSha,
+      featureFlags: {
+        mcp_2026_07_28: false,
+      },
+      notes:
+        "Legacy product path: Codex with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend. Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase.",
+    };
 
-  writeRecord("codex-legacy.json", record);
-  return record;
+    writeRecord("codex-legacy.json", record);
+    return record;
+  } finally {
+    rmSync(codexHome, { recursive: true, force: true });
+  }
 }
 
 function notRunExtended(client, fileName, extra = {}) {
@@ -472,6 +525,7 @@ function notRunExtended(client, fileName, extra = {}) {
     testedAt: null,
     evidencePath: null,
     businessBackend: null,
+    gitSha: null,
     ...extra,
   });
 }
@@ -479,7 +533,19 @@ function notRunExtended(client, fileName, extra = {}) {
 const { baseUrl, child } = await ensureServer();
 console.log(`Using acceptance server ${baseUrl}`);
 
+let exitCode = 0;
+
 try {
+  console.log("Running offline MCP protocol integration…");
+  const offline = runOfflineIntegration();
+  if (offline.status !== "passed") {
+    console.error("offlineIntegration failed");
+    console.error(offline.stderr || offline.stdout);
+    exitCode = 1;
+  } else {
+    console.log("offlineIntegration: passed");
+  }
+
   const claude = await runClaudeModern(baseUrl);
   console.log("Claude Code modern:", JSON.stringify(claude, null, 2));
   const codex = await runCodexLegacy(baseUrl);
@@ -498,82 +564,86 @@ try {
     notes: "Extended matrix — default v1 runtime environments not exercised in this acceptance pass.",
   });
 
-  writeFileSync(
-    join(dir, "support-matrix.json"),
-    JSON.stringify(
+  if (!coreGatesPassed(claude) || !coreGatesPassed(codex)) {
+    exitCode = 1;
+  }
+  if (offline.status !== "passed") {
+    exitCode = 1;
+  }
+
+  const matrix = {
+    issue: "#16",
+    updatedAt: new Date().toISOString().slice(0, 10),
+    offlineIntegration: {
+      command: offline.command,
+      ciJob: offline.ciJob,
+      status: offline.status,
+      gitSha: offline.gitSha,
+      testedAt: offline.testedAt,
+    },
+    rows: [
       {
-        issue: "#16",
-        updatedAt: new Date().toISOString().slice(0, 10),
-        offlineIntegration: {
-          command: "npm run test:mcp-protocol",
-          ciJob: "worker / MCP protocol integration",
-          status: "passed",
-        },
-        rows: [
-          {
-            id: "claude-code-modern",
-            client: "Claude Code",
-            path: "modern",
-            role: "core",
-            recordFile: "records/claude-code-modern.json",
-            marketingClaimAllowed:
-              claude.toolDiscovery === "passed" &&
-              claude.anonymousList === "passed" &&
-              claude.authenticatedSummarize === "passed" &&
-              claude.errorHandling === "passed",
-          },
-          {
-            id: "codex-legacy",
-            client: "Codex CLI",
-            path: "legacy",
-            role: "core",
-            recordFile: "records/codex-legacy.json",
-            marketingClaimAllowed:
-              codex.toolDiscovery === "passed" &&
-              codex.anonymousList === "passed" &&
-              codex.authenticatedSummarize === "passed" &&
-              codex.errorHandling === "passed",
-          },
-          {
-            id: "gemini-legacy",
-            client: "Gemini CLI",
-            path: "legacy",
-            role: "extended",
-            recordFile: "records/gemini-legacy.json",
-            marketingClaimAllowed: false,
-          },
-          {
-            id: "cursor",
-            client: "Cursor",
-            path: "unknown",
-            role: "extended",
-            recordFile: "records/cursor.json",
-            marketingClaimAllowed: false,
-          },
-          {
-            id: "openai-responses-api",
-            client: "OpenAI Responses API remote MCP",
-            path: "unknown",
-            role: "extended",
-            recordFile: "records/openai-responses-api.json",
-            marketingClaimAllowed: false,
-          },
-          {
-            id: "claude-platform-exceptions",
-            client: "Claude Code platform exceptions",
-            path: "legacy",
-            role: "extended",
-            recordFile: "records/claude-platform-exceptions.json",
-            marketingClaimAllowed: false,
-          },
-        ],
+        id: "claude-code-modern",
+        client: "Claude Code",
+        path: "modern",
+        role: "core",
+        recordFile: "records/claude-code-modern.json",
+        marketingClaimAllowed: coreGatesPassed(claude) && offline.status === "passed",
       },
-      null,
-      2,
-    ) + "\n",
-  );
+      {
+        id: "codex-legacy",
+        client: "Codex CLI",
+        path: "legacy",
+        role: "core",
+        recordFile: "records/codex-legacy.json",
+        marketingClaimAllowed: coreGatesPassed(codex) && offline.status === "passed",
+      },
+      {
+        id: "gemini-legacy",
+        client: "Gemini CLI",
+        path: "legacy",
+        role: "extended",
+        recordFile: "records/gemini-legacy.json",
+        marketingClaimAllowed: false,
+      },
+      {
+        id: "cursor",
+        client: "Cursor",
+        path: "unknown",
+        role: "extended",
+        recordFile: "records/cursor.json",
+        marketingClaimAllowed: false,
+      },
+      {
+        id: "openai-responses-api",
+        client: "OpenAI Responses API remote MCP",
+        path: "unknown",
+        role: "extended",
+        recordFile: "records/openai-responses-api.json",
+        marketingClaimAllowed: false,
+      },
+      {
+        id: "claude-platform-exceptions",
+        client: "Claude Code platform exceptions",
+        path: "legacy",
+        role: "extended",
+        recordFile: "records/claude-platform-exceptions.json",
+        marketingClaimAllowed: false,
+      },
+    ],
+  };
+  const matrixErrors = validateSupportMatrix(matrix);
+  if (matrixErrors.length) {
+    throw new Error(`invalid support matrix: ${matrixErrors.join("; ")}`);
+  }
+  writeFileSync(join(dir, "support-matrix.json"), JSON.stringify(matrix, null, 2) + "\n");
+} catch (err) {
+  console.error(err);
+  exitCode = 1;
 } finally {
   if (child) {
     child.kill("SIGTERM");
   }
 }
+
+process.exit(exitCode);

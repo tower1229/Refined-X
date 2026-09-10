@@ -1,5 +1,5 @@
 stdout:
-The tool reported that the query appears outside the current public corpus. DONE
+The tool returned no reliable source for the query. DONE
 
 stderr:
 Reading additional input from stdin...
@@ -12,7 +12,7 @@ approval: never
 sandbox: read-only
 reasoning effort: none
 reasoning summaries: none
-session id: 01a084ac-9d32-78a0-a34d-058335f4761f
+session id: 01a088fa-baea-7da0-b920-1bdf78b8913c
 --------
 user
 Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"acceptance summarize"},"prefer":{"mode":"summarize"}}. Then reply with one short sentence and the word DONE.
@@ -22,8 +22,8 @@ I’ll find and call the requested MCP tool.
 mcp: refined_x_ask/ask started
 mcp: refined_x_ask/ask (completed)
 codex
-The tool reported that the query appears outside the current public corpus. DONE
+The tool returned no reliable source for the query. DONE
 tokens used
-7,443
+7,378
 
 status:0

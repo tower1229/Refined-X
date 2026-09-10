@@ -2,7 +2,7 @@ stdout:
 refined_x_ask
   enabled: true
   transport: streamable_http
-  url: http://127.0.0.1:62576/mcp
+  url: http://127.0.0.1:51027/mcp
   bearer_token_env_var: -
   http_headers: -
   env_http_headers: -

@@ -12,5 +12,6 @@
   "testedAt": null,
   "evidencePath": null,
   "businessBackend": null,
+  "gitSha": null,
   "notes": "Extended/alternate legacy candidate; Codex covered the core legacy gate."
 }

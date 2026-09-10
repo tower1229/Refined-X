@@ -7,10 +7,12 @@ import { siteConfig } from './site.config.mjs';
 import { createSeoSitemapOptions } from './scripts/seo-sitemap.mjs';
 import { awpDiscoveryGate } from './scripts/awp-discovery-gate.mjs';
 import { remarkObsidianAssets } from './src/markdown/remark-obsidian-assets.mjs';
+import { astroBaseFromSite } from './src/lib/paths.ts';
 
 // https://astro.build/config
 export default defineConfig({
 	site: siteConfig.site,
+	base: astroBaseFromSite(siteConfig.site),
 	trailingSlash: 'ignore',
 	build: {
 		format: 'directory',

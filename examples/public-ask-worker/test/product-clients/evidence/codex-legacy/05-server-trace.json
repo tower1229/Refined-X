@@ -2,44 +2,48 @@
   "searchCalls": 1,
   "trace": [
     {
-      "at": "2026-09-09T05:38:20.337Z",
+      "at": "2026-09-10T01:42:08.467Z",
       "method": "POST",
       "mcpProtocolVersion": null,
       "mcpMethod": null,
       "mcpName": null,
       "jsonRpcMethod": "initialize",
       "authorizationPresent": true,
-      "status": 200
+      "status": 200,
+      "toolIsError": null
     },
     {
-      "at": "2026-09-09T05:38:20.413Z",
+      "at": "2026-09-10T01:42:08.474Z",
       "method": "POST",
       "mcpProtocolVersion": "2025-06-18",
       "mcpMethod": null,
       "mcpName": null,
       "jsonRpcMethod": "notifications/initialized",
       "authorizationPresent": true,
-      "status": 202
+      "status": 202,
+      "toolIsError": null
     },
     {
-      "at": "2026-09-09T05:38:20.427Z",
+      "at": "2026-09-10T01:42:08.490Z",
       "method": "POST",
       "mcpProtocolVersion": "2025-06-18",
       "mcpMethod": null,
       "mcpName": null,
       "jsonRpcMethod": "tools/list",
       "authorizationPresent": true,
-      "status": 200
+      "status": 200,
+      "toolIsError": null
     },
     {
-      "at": "2026-09-09T05:38:33.712Z",
+      "at": "2026-09-10T01:42:19.338Z",
       "method": "POST",
       "mcpProtocolVersion": "2025-06-18",
       "mcpMethod": null,
       "mcpName": null,
       "jsonRpcMethod": "tools/call",
       "authorizationPresent": true,
-      "status": 200
+      "status": 200,
+      "toolIsError": false
     }
   ]
 }

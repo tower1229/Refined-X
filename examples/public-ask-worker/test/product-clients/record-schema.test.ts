@@ -40,11 +40,12 @@ test("not_run template matches plan §12.2 shape", () => {
     testedAt: null,
     evidencePath: null,
     businessBackend: null,
+    gitSha: null,
   };
   assert.deepEqual(validateProductClientRecord(record), []);
 });
 
-test("passed gates require version, platform, evidence, and backend label", () => {
+test("passed gates require version, platform, evidence, backend, and gitSha", () => {
   const incomplete = {
     client: "Claude Code",
     clientVersion: null,
@@ -59,11 +60,13 @@ test("passed gates require version, platform, evidence, and backend label", () =
     testedAt: null,
     evidencePath: null,
     businessBackend: null,
+    gitSha: null,
   };
   const errors = validateProductClientRecord(incomplete);
   assert.ok(errors.some((e) => e.includes("clientVersion")));
   assert.ok(errors.some((e) => e.includes("evidencePath")));
   assert.ok(errors.some((e) => e.includes("businessBackend")));
+  assert.ok(errors.some((e) => e.includes("gitSha")));
 });
 
 test("support matrix forbids marketing claims on extended not_run rows", () => {
@@ -74,6 +77,7 @@ test("support matrix forbids marketing claims on extended not_run rows", () => {
       command: "npm run test:mcp-protocol",
       ciJob: "worker / MCP protocol integration",
       status: "passed",
+      gitSha: "a".repeat(40),
     },
     rows: [
       {

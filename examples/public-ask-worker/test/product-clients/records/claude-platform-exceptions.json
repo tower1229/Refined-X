@@ -12,5 +12,6 @@
   "testedAt": null,
   "evidencePath": null,
   "businessBackend": null,
+  "gitSha": null,
   "notes": "Extended matrix — default v1 runtime environments not exercised in this acceptance pass."
 }

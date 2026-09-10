@@ -12,5 +12,6 @@
   "testedAt": null,
   "evidencePath": null,
   "businessBackend": null,
+  "gitSha": null,
   "notes": "Extended matrix — not_run. Do not market as verified."
 }

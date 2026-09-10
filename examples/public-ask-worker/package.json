@@ -10,7 +10,7 @@
     "pretest": "npm run sync:persona",
     "test": "node --test src/*.test.ts scripts/*.test.mjs",
     "test:mcp-protocol": "node --test --test-concurrency=1 test/mcp-protocol/mcp-protocol.integration.test.ts",
-    "test:product-client-records": "node --test test/product-clients/record-schema.test.ts",
+    "test:product-client-records": "node --experimental-strip-types --test test/product-clients/record-schema.test.ts test/product-clients/acceptance-predicates.test.ts",
     "serve:product-clients": "node --experimental-strip-types test/product-clients/serve.mjs",
     "test:product-clients": "node --experimental-strip-types test/product-clients/run-acceptance.mjs",
     "test:mcp-sdk-spike": "node --test --test-concurrency=1 spike/mcp-dual-era/mcp-dual-era.integration.test.ts",

@@ -12,6 +12,7 @@ import {
   TRUSTED_KEY_ID,
   TRUSTED_SECRET,
 } from "../mcp-protocol/fixtures.ts";
+import { interpretToolsCallBody } from "./tools-call-body.ts";
 
 type TraceEntry = {
   at: string;
@@ -22,7 +23,22 @@ type TraceEntry = {
   jsonRpcMethod: string | null;
   authorizationPresent: boolean;
   status: number;
+  /** tools/call only: MCP tool result isError; null when not applicable / unparsed. */
+  toolIsError: boolean | null;
 };
+
+async function extractToolIsError(
+  response: Response,
+  jsonRpcMethod: string | null,
+): Promise<boolean | null> {
+  if (jsonRpcMethod !== "tools/call") return null;
+  try {
+    const text = await response.clone().text();
+    return interpretToolsCallBody(text, response.headers.get("content-type"));
+  } catch {
+    return null;
+  }
+}
 
 const counters = { searchCalls: 0 };
 const trace: TraceEntry[] = [];
@@ -139,6 +155,7 @@ export default {
           })
         : request;
       const response = await handleMcp(proxied, createEnv());
+      const toolIsError = await extractToolIsError(response, jsonRpcMethod);
       trace.push({
         at: new Date().toISOString(),
         method: request.method,
@@ -148,6 +165,7 @@ export default {
         jsonRpcMethod,
         authorizationPresent: Boolean(request.headers.get("authorization")),
         status: response.status,
+        toolIsError,
       });
       return response;
     }

@@ -15,6 +15,23 @@ function response(description: string, schema: JsonSchema) {
 	};
 }
 
+function askSuccessResponse() {
+	return {
+		description:
+			'NLWeb answer or failure. Buffered JSON by default; when prefer.streaming is true or Accept includes text/event-stream, the Worker may return buffered SSE (events: start, result, complete).',
+		content: {
+			'application/json': { schema: { $ref: '#/components/schemas/NlWebResponse' } },
+			'text/event-stream': {
+				schema: {
+					type: 'string',
+					description:
+						'Server-Sent Events stream. event:start (meta), event:result (index + item), event:complete (meta). Each event data payload is JSON.',
+				},
+			},
+		},
+	};
+}
+
 function buildSchemas() {
 	return {
 		Profile: {
@@ -83,6 +100,41 @@ export type OpenApiDocument = {
 	};
 };
 
+const mcpConditionalHeaders = [
+	{
+		name: 'MCP-Protocol-Version',
+		in: 'header' as const,
+		required: false,
+		description:
+			'Optional. Modern (2026-07-28) clients send this with the negotiated protocol version. Legacy initialize clients may omit it or send a 2025-* version after handshake. Do not require this header for all requests.',
+		schema: { type: 'string', examples: ['2026-07-28', '2025-06-18'] },
+	},
+	{
+		name: 'MCP-Method',
+		in: 'header' as const,
+		required: false,
+		description:
+			'Optional modern routing header (e.g. tools/call, tools/list, server/discover). Required only for modern Streamable HTTP self-describing calls, not for legacy initialize sessions.',
+		schema: { type: 'string' },
+	},
+	{
+		name: 'MCP-Name',
+		in: 'header' as const,
+		required: false,
+		description:
+			'Optional modern tool name header for tools/call (e.g. ask). Aligns with request _meta when present. Not required for legacy clients.',
+		schema: { type: 'string', examples: ['ask'] },
+	},
+	{
+		name: 'Accept',
+		in: 'header' as const,
+		required: false,
+		description:
+			'Streamable HTTP clients typically send application/json, text/event-stream. Not all responses are SSE.',
+		schema: { type: 'string', examples: ['application/json, text/event-stream'] },
+	},
+];
+
 export function buildOpenApiDocument(caps: PublicCapabilities): OpenApiDocument {
 	const schemas = buildSchemas();
 	const paths: OpenApiDocument['paths'] = {
@@ -117,10 +169,18 @@ export function buildOpenApiDocument(caps: PublicCapabilities): OpenApiDocument 
 		paths[path] = {
 			post: {
 				operationId: 'askPublicContent',
-				description: `Query public content via ${caps.capability}. Anonymous clients are limited to list; browser summarize modes may require Turnstile. ${caps.unsupportedNotes}`,
+				description: `Query public content via ${caps.capability}. Anonymous clients are limited to list; browser summarize modes may require Turnstile. Streaming: set prefer.streaming=true and/or Accept: text/event-stream for buffered SSE. ${caps.unsupportedNotes}`,
 				servers: [{ url: serverUrl }],
 				security: [{}, { PublicAskApiKey: [] }],
 				parameters: [
+					{
+						name: 'Accept',
+						in: 'header',
+						required: false,
+						description:
+							'Include text/event-stream to request buffered SSE when prefer.streaming is also honored by the Worker.',
+						schema: { type: 'string', examples: ['application/json', 'text/event-stream'] },
+					},
 					{
 						name: 'cf-turnstile-response',
 						in: 'header',
@@ -134,7 +194,7 @@ export function buildOpenApiDocument(caps: PublicCapabilities): OpenApiDocument 
 					content: { 'application/json': { schema: { $ref: '#/components/schemas/NlWebAskRequest' } } },
 				},
 				responses: {
-					200: response('NLWeb answer or failure', { $ref: '#/components/schemas/NlWebResponse' }),
+					200: askSuccessResponse(),
 					400: response('Invalid NLWeb request', { $ref: '#/components/schemas/NlWebResponse' }),
 					401: response('Missing, invalid, or revoked machine API key', {
 						$ref: '#/components/schemas/NlWebResponse',
@@ -148,9 +208,21 @@ export function buildOpenApiDocument(caps: PublicCapabilities): OpenApiDocument 
 
 	if (caps.mcp) {
 		const { serverUrl, path } = openApiServerAndPath(caps.mcp);
-		const mcpDescription = caps.protocolProfile.claimsModernDualEra
-			? `Model Context Protocol Streamable HTTP endpoint (dual-era profile accepted). Exposes ask tool aligned with ${caps.capability}. Anonymous clients default to list; summarize may require Bearer API Key. Endpoint: ${caps.mcp.href}. ${caps.unsupportedNotes}`
-			: `Model Context Protocol Streamable HTTP endpoint. Protocol profile is undeclared until deployment acceptance; do not assume modern dual-era. Exposes ask tool aligned with ${caps.capability}. Anonymous clients default to list; summarize may require Bearer API Key. Endpoint: ${caps.mcp.href}. ${caps.unsupportedNotes}`;
+		const profileNote = caps.protocolProfile.claimsModernDualEra
+			? 'dual-era profile accepted'
+			: 'protocol profile undeclared until deployment acceptance; do not assume modern dual-era';
+		const mcpDescription = [
+			`Model Context Protocol Streamable HTTP endpoint (${profileNote}).`,
+			`Exposes ask tool aligned with ${caps.capability}. Anonymous clients default to list; summarize may require Bearer API Key.`,
+			`Endpoint: ${caps.mcp.href}.`,
+			'This OpenAPI path is an endpoint map for humans and generators — prefer an MCP SDK for wire protocol details.',
+			'Legacy example: JSON-RPC initialize then tools/list / tools/call without modern MCP-* headers.',
+			'Modern example: MCP-Protocol-Version: 2026-07-28 with MCP-Method / MCP-Name as required by the 2026-07-28 Streamable HTTP transport, plus matching request _meta when applicable.',
+			'Modern protocol headers are conditional — they must not be treated as required for every POST.',
+			caps.unsupportedNotes,
+		]
+			.filter(Boolean)
+			.join(' ');
 
 		paths[path] = {
 			...(paths[path] ?? {}),
@@ -160,6 +232,7 @@ export function buildOpenApiDocument(caps: PublicCapabilities): OpenApiDocument 
 				description: mcpDescription,
 				servers: [{ url: serverUrl }],
 				security: [{}, { PublicAskApiKey: [] }],
+				parameters: mcpConditionalHeaders,
 				requestBody: {
 					required: true,
 					content: {
@@ -178,7 +251,11 @@ export function buildOpenApiDocument(caps: PublicCapabilities): OpenApiDocument 
 					},
 				},
 				responses: {
-					200: response('JSON-RPC result 或 error', { type: 'object' }),
+					200: response('JSON-RPC result 或 error（含工具 result.isError）', { type: 'object' }),
+					202: {
+						description: 'Accepted notification (e.g. notifications/initialized); empty body per Streamable HTTP.',
+					},
+					401: response('Missing, invalid, or revoked machine API key', { type: 'object' }),
 					403: response('未授权的模式或凭据', { type: 'object' }),
 					429: response('请求或预算限流', { type: 'object' }),
 				},
@@ -202,7 +279,7 @@ export function buildOpenApiDocument(caps: PublicCapabilities): OpenApiDocument 
 		openapi: '3.1.0',
 		info: {
 			title: `${caps.identity.brand} Public APIs`,
-			version: '1.3.0',
+			version: '1.3.1',
 			description: `Build-time read-only JSON APIs plus ${caps.capability}. Static JSON is for indexing and mirrors; Ask/MCP are optional remote endpoints when configured. ${caps.supportedNotes} ${caps.unsupportedNotes}`,
 		},
 		servers: [{ url: siteOpenApiServerUrl(caps) }],
