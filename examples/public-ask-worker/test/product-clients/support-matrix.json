@@ -5,8 +5,8 @@
     "command": "npm run test:mcp-protocol",
     "ciJob": "worker / MCP protocol integration",
     "status": "passed",
-    "gitSha": "837ba03fe965958c451c5dbde22559d23bfae851",
-    "testedAt": "2026-09-10T03:14:00.369Z"
+    "gitSha": "d89bb29442b568de8d2b0e53bde16f5a6f7a0af4",
+    "testedAt": "2026-09-10T07:09:08.111Z"
   },
   "rows": [
     {

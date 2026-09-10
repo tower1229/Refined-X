@@ -2,6 +2,7 @@
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { UI } from '../../lib/site-copy';
 import { breadcrumbJsonLd, collectionPageJsonLd, getTopics } from '../../lib/public-data';
+import { withBase } from '../../lib/paths';
 
 const topics = await getTopics();
 const topicsDescription = UI.topics.indexDescription;
@@ -34,13 +35,13 @@ topics.sort((a, b) => b.articles.length - a.articles.length);
     <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
   ))}
   <div class="wrap page">
-    <div class="crumbs"><a href="/">{UI.topics.homeCrumb}</a><span class="sep">/</span><span>{UI.topics.directory}</span></div>
+    <div class="crumbs"><a href={withBase('/')}>{UI.topics.homeCrumb}</a><span class="sep">/</span><span>{UI.topics.directory}</span></div>
     <h1 id="_top" class="display page-heading">{UI.topics.allHeading}</h1>
     <p class="lede page-lede">{UI.topics.indexLede}</p>
     
     <div class="tagrow topic-cloud">
       {topics.map(topic => (
-        <a href={`/topics/${topic.slug}/`} class="tag topic-tag">
+        <a href={withBase(`/topics/${topic.slug}/`)} class="tag topic-tag">
           {topic.name} <span class="topic-count">{topic.articles.length}</span>
         </a>
       ))}

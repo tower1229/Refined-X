@@ -1,5 +1,5 @@
 stdout:
-The tool returned no reliable source for the query. DONE
+The tool returned insufficient public content for a confident answer. DONE
 
 stderr:
 Reading additional input from stdin...
@@ -12,18 +12,18 @@ approval: never
 sandbox: read-only
 reasoning effort: none
 reasoning summaries: none
-session id: 01a08950-8c32-7071-864c-5e77830f418a
+session id: 01a08a27-d0a9-72a0-9aad-5def0766aad9
 --------
 user
 Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"acceptance summarize"},"prefer":{"mode":"summarize"}}. Then reply with one short sentence and the word DONE.
 codex
-I’ll locate the MCP tool and call it with the supplied arguments.
+I’ll find the MCP tool and call it with the supplied arguments.
 
 mcp: refined_x_ask/ask started
 mcp: refined_x_ask/ask (completed)
 codex
-The tool returned no reliable source for the query. DONE
+The tool returned insufficient public content for a confident answer. DONE
 tokens used
-10,564
+7,411
 
 status:0

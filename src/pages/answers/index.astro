@@ -3,6 +3,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { UI } from '../../lib/site-copy';
 import Icon from '../../components/Icon.astro';
 import { absoluteUrl, breadcrumbJsonLd, collectionPageJsonLd, getAnswers } from '../../lib/public-data';
+import { withBase } from '../../lib/paths';
 
 const answers = await getAnswers();
 const answersDescription = UI.answers.indexLede;
@@ -44,13 +45,13 @@ const structuredData = [
 		<script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
 	))}
 	<div class="wrap page">
-		<div class="crumbs"><a href="/">{UI.answers.homeCrumb}</a><span class="sep">/</span><span>{UI.answers.label}</span></div>
+		<div class="crumbs"><a href={withBase('/')}>{UI.answers.homeCrumb}</a><span class="sep">/</span><span>{UI.answers.label}</span></div>
 		<h1 id="_top" class="display page-heading">{UI.answers.label}</h1>
 		<p class="lede page-lede">{UI.answers.indexLede}</p>
 
 		<div class="faq-list answers-index">
 			{answers.map((entry) => (
-				<a class="answer-index-item" href={`/answers/${entry.data.slug}/`}>
+				<a class="answer-index-item" href={withBase(`/answers/${entry.data.slug}/`)}>
 					<span class="answer-index-q">{entry.data.question}</span>
 					<span class="answer-index-a">{entry.data.shortAnswer}</span>
 					<span class="answer-index-arrow" aria-hidden="true">
@@ -61,7 +62,7 @@ const structuredData = [
 		</div>
 
 		<div class="article-return">
-			<a class="btn btn-solid" href="/ask/">
+			<a class="btn btn-solid" href={withBase('/ask/')}>
 				<Icon name="spark" size={15} />
 				{UI.answers.askCta}
 			</a>

@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import Icon from './Icon.astro';
 import { SERIES_ORDER, seriesNumber } from '../lib/articles';
+import { withBase } from '../lib/paths';
 import { UI } from '../lib/site-copy';
 
 const allSeries = await getCollection('series');
@@ -10,7 +11,7 @@ const seriesList = SERIES_ORDER.map((slug) => allSeries.find((entry) => entry.id
 
 <div class="pillars">
 	{seriesList.map((entry) => entry && (
-		<a class="pillar" href={`/writing/${entry.id}/`}>
+		<a class="pillar" href={withBase(`/writing/${entry.id}/`)}>
 			<div class="pillar-no">{seriesNumber(entry.id)} / {UI.writing.seriesLabel}</div>
 			<div class="pillar-name">{entry.data.title}</div>
 			<div class="pillar-desc">{entry.data.description}</div>

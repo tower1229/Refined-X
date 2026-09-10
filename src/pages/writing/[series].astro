@@ -6,6 +6,7 @@ import ArticleFeed from '../../components/ArticleFeed.astro';
 import Icon from '../../components/Icon.astro';
 import { SERIES_ORDER, formatArticleDate, seriesNumber } from '../../lib/articles';
 import { absoluteUrl, breadcrumbJsonLd } from '../../lib/public-data';
+import { withBase } from '../../lib/paths';
 
 export async function getStaticPaths() {
   const allSeries = await getCollection('series');
@@ -88,8 +89,8 @@ const structuredData = [
   ))}
   <div class="wrap page page-writing">
     <div class="crumbs">
-      <a href="/">{UI.writing.homeCrumb}</a><span class="sep">/</span>
-      <a href="/writing/">{UI.writing.label}</a><span class="sep">/</span><span>{seriesData.title}</span>
+      <a href={withBase('/')}>{UI.writing.homeCrumb}</a><span class="sep">/</span>
+      <a href={withBase('/writing/')}>{UI.writing.label}</a><span class="sep">/</span><span>{seriesData.title}</span>
     </div>
     <p class="eyebrow">{UI.writing.seriesEyebrow(no)}</p>
     <h1 id="_top" class="display pillar-heading">{seriesData.title}</h1>
@@ -101,7 +102,7 @@ const structuredData = [
     </div>
     <div class="feat-grid">
       {featuredArticles.map(a => (
-        <a class="feat" href={`/${a.id}/`}>
+        <a class="feat" href={withBase(`/${a.id}/`)}>
           <div class="feat-meta">
             <span>{seriesData.title}</span>
             <span>{formatArticleDate(a.data.pubDate!)}</span>

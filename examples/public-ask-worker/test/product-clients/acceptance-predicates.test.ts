@@ -1,75 +1,98 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  coreGatesPassed,
   judgeAnonymousList,
   judgeErrorHandling,
-  judgeObservedProtocol,
+  judgeModernDiscovery,
+  judgeProtocolPath,
   judgeSummarize,
 } from "./acceptance-predicates.mjs";
-import { interpretToolsCallBody } from "./tools-call-body.ts";
+import { interpretToolsCallBody, parseToolsCallRequest } from "./tools-call-body.ts";
 
-test("interpretToolsCallBody treats omitted isError as success", () => {
-  assert.equal(
-    interpretToolsCallBody(
-      JSON.stringify({ jsonrpc: "2.0", id: 1, result: { content: [{ type: "text", text: "{}" }] } }),
-      "application/json",
-    ),
-    false,
+test("interpretToolsCallBody treats omitted isError as final success", () => {
+  const ok = interpretToolsCallBody(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      result: {
+        content: [{ type: "text", text: JSON.stringify({ results: [{ "@type": "SearchSummary", text: "x" }] }) }],
+        structuredContent: { results: [{ "@type": "SearchSummary", text: "x" }] },
+      },
+    }),
+    "application/json",
   );
-  assert.equal(
-    interpretToolsCallBody(
-      JSON.stringify({ jsonrpc: "2.0", id: 1, result: { isError: true, content: [] } }),
-      "application/json",
-    ),
-    true,
-  );
+  assert.equal(ok.toolIsError, false);
+  assert.equal(ok.resultKind, "final");
+  assert.equal(ok.hasSearchSummary, true);
 });
 
-test("interpretToolsCallBody reads SSE tool results without explicit isError", () => {
-  const sse = [
-    "event: message",
-    'data: {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"{}"}]}}',
-    "",
-    "",
-  ].join("\n");
-  assert.equal(interpretToolsCallBody(sse, "text/event-stream"), false);
-  assert.equal(
-    interpretToolsCallBody(
-      'event: message\ndata: {"jsonrpc":"2.0","id":1,"result":{"isError":true,"content":[]}}\n\n',
-      "text/event-stream",
-    ),
-    true,
+test("interpretToolsCallBody marks input_required as incomplete not success", () => {
+  const incomplete = interpretToolsCallBody(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      result: { resultType: "input_required", content: [] },
+    }),
+    "application/json",
   );
+  assert.equal(incomplete.resultKind, "incomplete");
+  assert.equal(incomplete.toolIsError, false);
+});
+
+test("parseToolsCallRequest extracts summarize mode", () => {
+  const parsed = parseToolsCallRequest(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: "ask",
+        arguments: { query: { text: "x" }, prefer: { mode: "summarize" } },
+      },
+    }),
+  );
+  assert.equal(parsed.askMode, "summarize");
+  assert.equal(parsed.toolName, "ask");
 });
 
 test("errorHandling fails when CLI has error text but no MCP rejection", () => {
-  const errorTrace = {
-    searchCalls: 0,
-    trace: [],
-  };
-  // Counterexample: model connection error, no MCP call — must not pass.
-  assert.equal(judgeErrorHandling(errorTrace), "failed");
+  assert.equal(judgeErrorHandling({ searchCalls: 0, trace: [] }), "failed");
 });
 
-test("errorHandling passes only on HTTP 401/403 with auth and no retrieval", () => {
+test("errorHandling requires tools/call 401/403 not discover rejection", () => {
   assert.equal(
     judgeErrorHandling({
       searchCalls: 0,
-      trace: [{ jsonRpcMethod: "tools/call", authorizationPresent: true, status: 401, toolIsError: null }],
+      trace: [
+        {
+          jsonRpcMethod: "server/discover",
+          authorizationPresent: true,
+          status: 401,
+          toolIsError: null,
+        },
+      ],
     }),
-    "passed",
+    "failed",
   );
   assert.equal(
     judgeErrorHandling({
-      searchCalls: 1,
-      trace: [{ jsonRpcMethod: "tools/call", authorizationPresent: true, status: 401, toolIsError: null }],
+      searchCalls: 0,
+      trace: [
+        {
+          jsonRpcMethod: "tools/call",
+          authorizationPresent: true,
+          status: 401,
+          toolIsError: null,
+          askMode: "summarize",
+        },
+      ],
     }),
-    "failed",
+    "passed",
   );
 });
 
 test("summarize fails on HTTP 200 with toolIsError true", () => {
-  // Counterexample: business tool failure returned as HTTP 200 + isError.
   assert.equal(
     judgeSummarize({
       searchCalls: 1,
@@ -79,12 +102,19 @@ test("summarize fails on HTTP 200 with toolIsError true", () => {
           authorizationPresent: true,
           status: 200,
           toolIsError: true,
+          resultKind: "error",
+          askMode: "summarize",
+          hasSearchSummary: false,
+          toolName: "ask",
           mcpProtocolVersion: "2026-07-28",
         },
       ],
     }),
     "failed",
   );
+});
+
+test("summarize fails when authenticated call used list mode", () => {
   assert.equal(
     judgeSummarize({
       searchCalls: 1,
@@ -94,6 +124,32 @@ test("summarize fails on HTTP 200 with toolIsError true", () => {
           authorizationPresent: true,
           status: 200,
           toolIsError: false,
+          resultKind: "final",
+          askMode: "list",
+          hasSearchSummary: false,
+          toolName: "ask",
+          mcpProtocolVersion: "2026-07-28",
+        },
+      ],
+    }),
+    "failed",
+  );
+});
+
+test("summarize requires SearchSummary on final result", () => {
+  assert.equal(
+    judgeSummarize({
+      searchCalls: 0,
+      trace: [
+        {
+          jsonRpcMethod: "tools/call",
+          authorizationPresent: true,
+          status: 200,
+          toolIsError: false,
+          resultKind: "final",
+          askMode: "summarize",
+          hasSearchSummary: true,
+          toolName: "ask",
           mcpProtocolVersion: "2026-07-28",
         },
       ],
@@ -102,40 +158,129 @@ test("summarize fails on HTTP 200 with toolIsError true", () => {
   );
 });
 
-test("observed protocol uses successful business call, not probe-only modern", () => {
-  // Counterexample: modern probe failed; successful call used legacy.
+test("modern path gates fail when successful calls used legacy protocol", () => {
   const listTrace = {
     searchCalls: 1,
     trace: [
-      { jsonRpcMethod: "server/discover", status: 400, mcpProtocolVersion: "2026-07-28", toolIsError: null },
+      { jsonRpcMethod: "server/discover", status: 400, mcpProtocolVersion: "2026-07-28" },
+      { jsonRpcMethod: "tools/list", status: 200, mcpProtocolVersion: "2025-06-18" },
       {
         jsonRpcMethod: "tools/call",
         status: 200,
         authorizationPresent: false,
         toolIsError: false,
+        resultKind: "final",
+        askMode: "list",
+        toolName: "ask",
+        hasSearchSummary: false,
         mcpProtocolVersion: "2025-06-18",
       },
     ],
   };
-  const summarizeTrace = { searchCalls: 0, trace: [] };
-  assert.equal(judgeObservedProtocol(listTrace, summarizeTrace), "2025-06-18");
+  const summarizeTrace = {
+    searchCalls: 0,
+    trace: [
+      {
+        jsonRpcMethod: "tools/call",
+        status: 200,
+        authorizationPresent: true,
+        toolIsError: false,
+        resultKind: "final",
+        askMode: "summarize",
+        hasSearchSummary: true,
+        toolName: "ask",
+        mcpProtocolVersion: "2025-06-18",
+      },
+    ],
+  };
+  const protocol = judgeProtocolPath(listTrace, summarizeTrace, "modern");
+  assert.equal(protocol.observedProtocolVersion, "2025-06-18");
+  assert.equal(protocol.protocolPathOk, false);
+
+  const record = {
+    toolDiscovery: judgeModernDiscovery(listTrace),
+    anonymousList: judgeAnonymousList(listTrace),
+    authenticatedSummarize: judgeSummarize(summarizeTrace),
+    errorHandling: "passed",
+    observedProtocolVersion: protocol.observedProtocolVersion,
+    protocolPathOk: protocol.protocolPathOk,
+  };
+  // Discovery may still "pass" if tools/list 200 exists — but marketing must fail on protocol path.
+  assert.equal(coreGatesPassed(record, "modern"), false);
+  assert.equal(
+    coreGatesPassed(
+      {
+        toolDiscovery: "passed",
+        anonymousList: "passed",
+        authenticatedSummarize: "passed",
+        errorHandling: "passed",
+        observedProtocolVersion: "2026-07-28",
+        protocolPathOk: true,
+      },
+      "modern",
+    ),
+    true,
+  );
 });
 
-test("anonymousList requires successful unauthenticated tools/call and search", () => {
-  assert.equal(
-    judgeAnonymousList({
+test("mixed list/summarize protocol versions fail protocol path", () => {
+  const protocol = judgeProtocolPath(
+    {
+      searchCalls: 1,
+      trace: [
+        {
+          jsonRpcMethod: "tools/call",
+          status: 200,
+          toolIsError: false,
+          resultKind: "final",
+          askMode: "list",
+          mcpProtocolVersion: "2026-07-28",
+          authorizationPresent: false,
+        },
+      ],
+    },
+    {
       searchCalls: 0,
       trace: [
         {
           jsonRpcMethod: "tools/call",
           status: 200,
-          authorizationPresent: false,
           toolIsError: false,
+          resultKind: "final",
+          askMode: "summarize",
+          hasSearchSummary: true,
+          mcpProtocolVersion: "2025-06-18",
+          authorizationPresent: true,
         },
+      ],
+    },
+    "modern",
+  );
+  assert.equal(protocol.protocolPathOk, false);
+});
+
+test("modern discovery requires HTTP 200 on discover and tools/list", () => {
+  assert.equal(
+    judgeModernDiscovery({
+      trace: [
+        { jsonRpcMethod: "server/discover", status: 400 },
+        { jsonRpcMethod: "tools/list", status: 200 },
       ],
     }),
     "failed",
   );
+  assert.equal(
+    judgeModernDiscovery({
+      trace: [
+        { jsonRpcMethod: "server/discover", status: 200 },
+        { jsonRpcMethod: "tools/list", status: 200 },
+      ],
+    }),
+    "passed",
+  );
+});
+
+test("anonymousList requires successful unauthenticated tools/call and search", () => {
   assert.equal(
     judgeAnonymousList({
       searchCalls: 1,
@@ -145,9 +290,53 @@ test("anonymousList requires successful unauthenticated tools/call and search", 
           status: 200,
           authorizationPresent: false,
           toolIsError: false,
+          resultKind: "final",
+          askMode: "list",
+          toolName: "ask",
         },
       ],
     }),
     "passed",
+  );
+  assert.equal(
+    judgeAnonymousList(
+      {
+        searchCalls: 1,
+        trace: [
+          {
+            jsonRpcMethod: "tools/call",
+            status: 200,
+            authorizationPresent: false,
+            toolIsError: false,
+            resultKind: "final",
+            askMode: "list",
+            toolName: "ask",
+          },
+        ],
+      },
+      { cliStatus: 1 },
+    ),
+    "failed",
+  );
+});
+
+test("incomplete tool result is not a successful tools/call", () => {
+  assert.equal(
+    judgeSummarize({
+      searchCalls: 0,
+      trace: [
+        {
+          jsonRpcMethod: "tools/call",
+          status: 200,
+          authorizationPresent: true,
+          toolIsError: false,
+          resultKind: "incomplete",
+          askMode: "summarize",
+          hasSearchSummary: false,
+          toolName: "ask",
+        },
+      ],
+    }),
+    "failed",
   );
 });

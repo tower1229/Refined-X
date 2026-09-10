@@ -13,6 +13,7 @@ import {
 } from '../lib/articles';
 import { selectRelatedArticles } from '../lib/related-articles';
 import { extractTocFromMarkdown, shouldShowToc } from '../lib/article-toc';
+import { withBase } from '../lib/paths';
 import { getPublicProfile, topicSlug } from '../lib/public-data';
 
 const entry = Astro.locals.starlightRoute.entry;
@@ -50,12 +51,12 @@ const showToc = shouldShowToc(tocItems);
 ) : (
   <article class="wrap page page-article">
     <nav class="crumbs" aria-label={UI.common.breadcrumbAria}>
-      <a href="/">{UI.common.home}</a><span class="sep">/</span>
-      <a href="/writing/">{UI.nav.writing}</a>
+      <a href={withBase('/')}>{UI.common.home}</a><span class="sep">/</span>
+      <a href={withBase('/writing/')}>{UI.nav.writing}</a>
       {seriesMeta && series && (
         <>
           <span class="sep">/</span>
-          <a href={`/writing/${series}/`}>{seriesMeta.title}</a>
+          <a href={withBase(`/writing/${series}/`)}>{seriesMeta.title}</a>
         </>
       )}
     </nav>
@@ -83,7 +84,7 @@ const showToc = shouldShowToc(tocItems);
       {tags.length > 0 && (
         <div class="tagrow article-tags">
           {tags.map((t: string) => (
-            <a href={`/topics/${topicSlug(t)}/`} class="tag">{t}</a>
+            <a href={withBase(`/topics/${topicSlug(t)}/`)} class="tag">{t}</a>
           ))}
         </div>
       )}
@@ -110,7 +111,7 @@ const showToc = shouldShowToc(tocItems);
     <footer class="article-foot">
       {seriesMeta && series && (
         <div class="article-return">
-          <a class="btn btn-ghost" href={`/writing/${series}/`}>
+          <a class="btn btn-ghost" href={withBase(`/writing/${series}/`)}>
             <Icon name="return" size={15} />
             {UI.writing.backToSeries} · {seriesMeta.title}
           </a>
@@ -127,7 +128,7 @@ const showToc = shouldShowToc(tocItems);
           </div>
           <div class="related">
             {rel.map((r) => (
-              <a class="related-card" href={`/${r.id}/`}>
+              <a class="related-card" href={withBase(`/${r.id}/`)}>
                 <div class="feat-meta">
                   <span>{seriesName(r.data.series)}</span>
                   <span>{formatArticleDate(r.data.pubDate!)}</span>

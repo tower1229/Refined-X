@@ -5,17 +5,19 @@
   "runtime": "v2",
   "negotiation": "auto",
   "observedProtocolVersion": "2026-07-28",
+  "protocolPathOk": true,
+  "expectedProtocolPath": "modern",
   "toolDiscovery": "passed",
   "anonymousList": "passed",
   "authenticatedSummarize": "passed",
   "errorHandling": "passed",
-  "testedAt": "2026-09-10T03:15:28.241Z",
+  "testedAt": "2026-09-10T07:10:35.753Z",
   "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/claude-code-modern/",
   "businessBackend": "synthetic_mock",
-  "gitSha": "837ba03fe965958c451c5dbde22559d23bfae851",
+  "gitSha": "d89bb29442b568de8d2b0e53bde16f5a6f7a0af4",
   "featureFlags": {
     "MCP_SDK_GENERATION": "v2",
     "MCP_PROTOCOL_NEGOTIATION": "auto"
   },
-  "notes": "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker (empty retrieval / no-reference summarize) — not production AI Search or model acceptance. Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase; summarize gate does not assert answer text. Agent CLI model in this evidence run was deepseek-v4-pro via local Claude settings (script did not default ANTHROPIC_BASE_URL); MCP protocol gates are from server-trace, not the agent model brand."
+  "notes": "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker (empty retrieval / no-reference summarize). Gates require expected protocol 2026-07-28 on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI status 0 on success phases, and final (not incomplete) tool results."
 }

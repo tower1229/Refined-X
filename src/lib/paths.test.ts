@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { absoluteUrlFromSite, astroBaseFromSite } from './paths.ts';
+import {
+	absoluteUrlFromSite,
+	askPageUrl,
+	astroBaseFromSite,
+	resolveDeployBase,
+	stripBase,
+	withBase,
+} from './paths.ts';
 
 test('absoluteUrlFromSite preserves site base path', () => {
 	assert.equal(
@@ -33,12 +40,23 @@ test('astroBaseFromSite derives Astro base from site pathname', () => {
 	assert.equal(astroBaseFromSite('https://example.com/refined-x/'), '/refined-x');
 });
 
+test('withBase prefixes once and askPageUrl includes base', () => {
+	assert.equal(resolveDeployBase('/blog'), '/blog/');
+	assert.equal(withBase('/', '/blog/'), '/blog/');
+	assert.equal(withBase('/writing/', '/blog/'), '/blog/writing/');
+	assert.equal(withBase('/blog/writing/', '/blog/'), '/blog/writing/');
+	assert.equal(withBase('/api/search-index.json', '/blog/'), '/blog/api/search-index.json');
+	assert.equal(askPageUrl('hello', '/blog/'), '/blog/ask/?q=hello');
+	assert.equal(askPageUrl('', '/'), '/ask/');
+	assert.equal(stripBase('/blog/writing/', '/blog/'), '/writing/');
+	assert.equal(stripBase('/blog/', '/blog/'), '/');
+});
+
 test('absoluteUrlFromSite aligns with OpenAPI static server and AWP-style api prefix', () => {
 	const site = 'https://example.com/blog/';
 	const profile = absoluteUrlFromSite(site, '/api/profile.json');
 	assert.equal(profile, 'https://example.com/blog/api/profile.json');
 	assert.equal(astroBaseFromSite(site), '/blog');
-	// AWP staticApiEndpoint style: base without trailing slash + api path
 	const awpEndpoint = `${astroBaseFromSite(site)}/api/profile.json`;
 	assert.equal(awpEndpoint, '/blog/api/profile.json');
 	assert.ok(profile.endsWith(awpEndpoint));

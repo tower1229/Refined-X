@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Product-client acceptance final gates: expected protocol path (`modern`/`legacy`) must match all successful business calls; summarize requires `askMode=summarize` + `SearchSummary`; error handling requires `tools/call` 401/403; incomplete/`input_required` results are not success; success phases require CLI exit 0
+- Site-relative navigation, Ask search (`/api/search-index.json`), and page links use `withBase()` / Astro `BASE_URL` so subpath deploys stay under the configured prefix
 - Product-client acceptance harness hardened: bind gates to `tools/call` + `toolIsError`, require HTTP 401/403 for error handling (no CLI-text false positives), record `gitSha`, run `test:mcp-protocol` for `offlineIntegration`, fail the script on core gate failure; stop defaulting Claude acceptance to a third-party Anthropic-compatible base URL
 - OpenAPI Ask documents buffered SSE (`text/event-stream`) alongside JSON; MCP documents conditional protocol headers and `202`/`401` without making modern headers globally required
 - Site absolute URLs and Astro `base` derive from `site` pathname so subpath deployments keep Profile / Markdown / OpenAPI / AWP prefixes consistent

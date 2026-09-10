@@ -5,16 +5,18 @@
   "runtime": "v1/legacy-default",
   "negotiation": "legacy (mcp_2026_07_28=false)",
   "observedProtocolVersion": "2025-06-18",
+  "protocolPathOk": true,
+  "expectedProtocolPath": "legacy",
   "toolDiscovery": "passed",
   "anonymousList": "passed",
   "authenticatedSummarize": "passed",
   "errorHandling": "passed",
-  "testedAt": "2026-09-10T03:16:35.143Z",
+  "testedAt": "2026-09-10T07:11:44.983Z",
   "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/codex-legacy/",
   "businessBackend": "synthetic_mock",
-  "gitSha": "837ba03fe965958c451c5dbde22559d23bfae851",
+  "gitSha": "d89bb29442b568de8d2b0e53bde16f5a6f7a0af4",
   "featureFlags": {
     "mcp_2026_07_28": false
   },
-  "notes": "Legacy product path: Codex with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend — not production AI Search or model acceptance. Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase; summarize gate does not assert answer text."
+  "notes": "Legacy product path: Codex with features.mcp_2026_07_28 left disabled. Synthetic mock Worker. Gates require allowed 2025-* protocol on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI status 0 on success phases, and final tool results."
 }

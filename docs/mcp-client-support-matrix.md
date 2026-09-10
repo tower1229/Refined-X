@@ -9,12 +9,13 @@ This matrix separates **offline dual-era integration** (CI) from **product-clien
 
 Acceptance gates now require:
 
-- Successful `tools/call` with HTTP 200 **and** `toolIsError === false` (business failures are not “passed”)
-- Error handling: HTTP 401/403 on an authorized request **and** no retrieval (`searchCalls === 0`); CLI text alone never passes
-- `observedProtocolVersion` from successful business `tools/call` only (probe/discover is not enough)
-- `offlineIntegration.status` from an actual `npm run test:mcp-protocol` run in the acceptance script, with `gitSha`
-- Non-zero process exit when any core gate or offline integration fails
-- Summarize gate does **not** assert answer text — only auth + successful tool result on the synthetic mock
+- Successful `tools/call` with HTTP 200, `toolIsError === false`, and `resultKind === final` (incomplete / `input_required` is not success)
+- **Expected protocol path**: modern core row requires all successful business calls on `2026-07-28`; legacy requires an allowed `2025-*` version — mixed or wrong-era success fails `marketingClaimAllowed`
+- Summarize: `askMode === summarize` **and** `hasSearchSummary === true` (not merely an authenticated list call)
+- Error handling: HTTP 401/403 on **`tools/call`** with Authorization and `searchCalls === 0`
+- Success phases require CLI exit status `0`
+- `offlineIntegration.status` from an actual `npm run test:mcp-protocol` run, with `gitSha`
+- Non-zero process exit when core path gates or offline integration fail
 
 **Credential safety:** `run-acceptance.mjs` does **not** default `ANTHROPIC_BASE_URL` to a third-party host. Use your normal Anthropic/Claude auth, or set `ANTHROPIC_BASE_URL` + matching token/model env vars **explicitly** if you intentionally use another Anthropic-compatible endpoint. Temporary MCP/config dirs use mode `0700` / files `0600` and are removed in `finally`.
 
@@ -32,7 +33,7 @@ Clean checkout reproduction: root `npm ci` (site job) + Worker `npm ci` (worker 
 **Status layers (do not conflate):**
 
 1. Harness hardened (predicate unit tests + credential defaults)
-2. Synthetic product-client records re-run under hardened gates — see core table / `gitSha` on records (`837ba03…` as of 2026-09-10 re-run)
+2. Synthetic product-client records re-run under hardened gates — see core table / `gitSha` on records (`d89bb294…` tree + this follow-up harness/subpath patch)
 3. Staging / production model smoke — still separate; never rewrite absence as `passed`
 
 ## Core product-client gates

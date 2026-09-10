@@ -3,6 +3,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getCollection } from 'astro:content';
 import Icon from '../components/Icon.astro';
 import { breadcrumbJsonLd, collectionPageJsonLd, getPublicProfile } from '../lib/public-data';
+import { withBase } from '../lib/paths';
 import { SITE_BRAND, SITE_PERSONA, UI } from '../lib/site-copy';
 import { siteConfig } from '../../site.config.mjs';
 
@@ -64,14 +65,14 @@ const structuredData = [
   <div class="wrap page projects-wrap">
     <div class="projects-page">
       <section class="projects-hero" aria-labelledby="_top">
-        <div class="crumbs projects-crumbs"><a href="/">{UI.common.home}</a><span class="sep">/</span><span>{copy.heading}</span></div>
+        <div class="crumbs projects-crumbs"><a href={withBase('/')}>{UI.common.home}</a><span class="sep">/</span><span>{copy.heading}</span></div>
         <div class="projects-hero-copy">
           <h1 id="_top" class="display projects-heading">{copy.heading}</h1>
           <p class="lede projects-lede">
             {copy.lede}
           </p>
           <div class="projects-hero-actions">
-            <a class="btn btn-solid" href="/about/">{UI.nav.about}</a>
+            <a class="btn btn-solid" href={withBase('/about/')}>{UI.nav.about}</a>
             {publicProfile.github && (
               <a class="btn btn-ghost" href={publicProfile.github} target="_blank" rel="noreferrer">GitHub</a>
             )}
@@ -146,7 +147,7 @@ const structuredData = [
               return (
                 <div class="course-exhibit course-exhibit-empty" aria-label={UI.projects.courseEmptyAria}>
                   <div class="course-object course-object-full">
-                    <img src="/projects/courses/next-course-cover.png" alt={UI.projects.courseCoverAlt} loading="lazy" />
+                    <img src={withBase('/projects/courses/next-course-cover.png')} alt={UI.projects.courseCoverAlt} loading="lazy" />
                   </div>
                   <div class="course-plaque">
                     <span>{UI.projects.slot(index + 1)}</span>

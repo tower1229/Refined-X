@@ -1,7 +1,7 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import Icon from '../components/Icon.astro';
-import { askPageUrl } from '../lib/paths';
+import { askPageUrl, withBase } from '../lib/paths';
 import { ASK_OVERLAY_PLACEHOLDER, UI } from '../lib/site-copy';
 ---
 
@@ -34,9 +34,9 @@ import { ASK_OVERLAY_PLACEHOLDER, UI } from '../lib/site-copy';
 			</div>
 		</form>
 		<div class="not-found-links">
-			<a class="btn btn-ghost" href="/">{UI.common.backHome}</a>
-			<a class="btn btn-ghost" href="/writing/">{UI.common.browseWriting}</a>
-			<a class="btn btn-ghost" href="/answers/">{UI.answers.label}</a>
+			<a class="btn btn-ghost" href={withBase('/')}>{UI.common.backHome}</a>
+			<a class="btn btn-ghost" href={withBase('/writing/')}>{UI.common.browseWriting}</a>
+			<a class="btn btn-ghost" href={withBase('/answers/')}>{UI.answers.label}</a>
 		</div>
 	</div>
 </StarlightPage>

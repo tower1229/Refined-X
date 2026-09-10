@@ -12,7 +12,7 @@ import {
   TRUSTED_KEY_ID,
   TRUSTED_SECRET,
 } from "../mcp-protocol/fixtures.ts";
-import { interpretToolsCallBody } from "./tools-call-body.ts";
+import { interpretToolsCallBody, parseToolsCallRequest } from "./tools-call-body.ts";
 
 type TraceEntry = {
   at: string;
@@ -23,22 +23,12 @@ type TraceEntry = {
   jsonRpcMethod: string | null;
   authorizationPresent: boolean;
   status: number;
-  /** tools/call only: MCP tool result isError; null when not applicable / unparsed. */
   toolIsError: boolean | null;
+  toolName: string | null;
+  askMode: "list" | "summarize" | null;
+  resultKind: "final" | "incomplete" | "error" | null;
+  hasSearchSummary: boolean | null;
 };
-
-async function extractToolIsError(
-  response: Response,
-  jsonRpcMethod: string | null,
-): Promise<boolean | null> {
-  if (jsonRpcMethod !== "tools/call") return null;
-  try {
-    const text = await response.clone().text();
-    return interpretToolsCallBody(text, response.headers.get("content-type"));
-  } catch {
-    return null;
-  }
-}
 
 const counters = { searchCalls: 0 };
 const trace: TraceEntry[] = [];
@@ -113,8 +103,6 @@ function createEnv(): Env {
     PUBLIC_CONTENT: {
       async search() {
         counters.searchCalls += 1;
-        // Empty retrieval keeps summarize on the no-reference path (no real model),
-        // matching mcp-protocol integration; still proves Key/mode auth + list retrieval.
         return { chunks: [] };
       },
     },
@@ -138,8 +126,11 @@ export default {
     }
     if (url.pathname === "/mcp") {
       const rawBody = request.method === "POST" ? await request.text() : "";
-      let jsonRpcMethod: string | null = null;
-      if (rawBody) {
+      const parsedReq = rawBody
+        ? parseToolsCallRequest(rawBody)
+        : { jsonRpcMethod: null, toolName: null, askMode: null };
+      let jsonRpcMethod = parsedReq.jsonRpcMethod;
+      if (!jsonRpcMethod && rawBody) {
         try {
           const parsed = JSON.parse(rawBody) as { method?: unknown };
           if (typeof parsed.method === "string") jsonRpcMethod = parsed.method;
@@ -155,17 +146,35 @@ export default {
           })
         : request;
       const response = await handleMcp(proxied, createEnv());
-      const toolIsError = await extractToolIsError(response, jsonRpcMethod);
+      let toolIsError: boolean | null = null;
+      let resultKind: TraceEntry["resultKind"] = null;
+      let hasSearchSummary: boolean | null = null;
+      if (jsonRpcMethod === "tools/call") {
+        try {
+          const text = await response.clone().text();
+          const interpreted = interpretToolsCallBody(text, response.headers.get("content-type"));
+          toolIsError = interpreted.toolIsError;
+          resultKind = interpreted.resultKind;
+          hasSearchSummary = interpreted.hasSearchSummary;
+        } catch {
+          // leave nulls
+        }
+      }
+      const mcpName = request.headers.get("mcp-name");
       trace.push({
         at: new Date().toISOString(),
         method: request.method,
         mcpProtocolVersion: request.headers.get("mcp-protocol-version"),
         mcpMethod: request.headers.get("mcp-method"),
-        mcpName: request.headers.get("mcp-name"),
+        mcpName,
         jsonRpcMethod,
         authorizationPresent: Boolean(request.headers.get("authorization")),
         status: response.status,
         toolIsError,
+        toolName: parsedReq.toolName ?? mcpName,
+        askMode: parsedReq.askMode,
+        resultKind,
+        hasSearchSummary,
       });
       return response;
     }

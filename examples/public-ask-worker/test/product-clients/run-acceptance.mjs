@@ -29,7 +29,7 @@ import {
   judgeErrorHandling,
   judgeLegacyDiscovery,
   judgeModernDiscovery,
-  judgeObservedProtocol,
+  judgeProtocolPath,
   judgeSummarize,
 } from "./acceptance-predicates.mjs";
 
@@ -328,17 +328,19 @@ async function runClaudeModern(baseUrl) {
     const errorTrace = await readTrace(baseUrl);
     writeEvidence(clientId, "03-server-trace.json", errorTrace);
 
-    const observed = judgeObservedProtocol(listTrace, summarizeTrace);
+    const protocol = judgeProtocolPath(listTrace, summarizeTrace, "modern");
     const record = {
       client: "Claude Code",
       clientVersion,
       platform,
       runtime: "v2",
       negotiation: "auto",
-      observedProtocolVersion: observed,
-      toolDiscovery: judgeModernDiscovery(listTrace),
-      anonymousList: judgeAnonymousList(listTrace),
-      authenticatedSummarize: judgeSummarize(summarizeTrace),
+      observedProtocolVersion: protocol.observedProtocolVersion,
+      protocolPathOk: protocol.protocolPathOk,
+      expectedProtocolPath: "modern",
+      toolDiscovery: judgeModernDiscovery(listTrace, { cliStatus: listRun.status }),
+      anonymousList: judgeAnonymousList(listTrace, { cliStatus: listRun.status }),
+      authenticatedSummarize: judgeSummarize(summarizeTrace, { cliStatus: summarizeRun.status }),
       errorHandling: judgeErrorHandling(errorTrace),
       testedAt: new Date().toISOString(),
       evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
@@ -349,7 +351,7 @@ async function runClaudeModern(baseUrl) {
         MCP_PROTOCOL_NEGOTIATION: "auto",
       },
       notes:
-        "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker uses empty retrieval so summarize stays on the no-reference path (no production AI Search/model). Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase.",
+        "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker (empty retrieval / no-reference summarize). Gates require expected protocol 2026-07-28 on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI status 0 on success phases, and final (not incomplete) tool results.",
     };
 
     writeRecord("claude-code-modern.json", record);
@@ -471,8 +473,8 @@ http_headers = { Authorization = "${badBearer()}" }
     const errorTrace = await readTrace(baseUrl);
     writeEvidence(clientId, "06-server-trace.json", errorTrace);
 
-    const observed = judgeObservedProtocol(listTrace, summarizeTrace);
-    const modernOnSuccess = observed === "2026-07-28";
+    const protocol = judgeProtocolPath(listTrace, summarizeTrace, "legacy");
+    const modernOnSuccess = protocol.observedProtocolVersion === "2026-07-28";
 
     const record = {
       client: "Codex CLI",
@@ -482,15 +484,18 @@ http_headers = { Authorization = "${badBearer()}" }
       negotiation: "legacy (mcp_2026_07_28=false)",
       observedProtocolVersion: modernOnSuccess
         ? "2026-07-28 (unexpected — feature should be off)"
-        : observed,
+        : protocol.observedProtocolVersion,
+      protocolPathOk: protocol.protocolPathOk && !modernOnSuccess,
+      expectedProtocolPath: "legacy",
       toolDiscovery: judgeLegacyDiscovery({
         listServersStatus: listServers.status,
         listServersText: listServers.stdout + listServers.stderr,
         getServerText: getServer.stdout + getServer.stderr,
         listTrace,
+        cliStatus: listResult.status,
       }),
-      anonymousList: judgeAnonymousList(listTrace),
-      authenticatedSummarize: judgeSummarize(summarizeTrace),
+      anonymousList: judgeAnonymousList(listTrace, { cliStatus: listResult.status }),
+      authenticatedSummarize: judgeSummarize(summarizeTrace, { cliStatus: summarizeRun.status }),
       errorHandling: judgeErrorHandling(errorTrace),
       testedAt: new Date().toISOString(),
       evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
@@ -500,7 +505,7 @@ http_headers = { Authorization = "${badBearer()}" }
         mcp_2026_07_28: false,
       },
       notes:
-        "Legacy product path: Codex with features.mcp_2026_07_28 left disabled (UnderDevelopment default). Synthetic mock Worker backend. Gates require successful tools/call (HTTP 200 and toolIsError=false) and auth rejection on the error phase.",
+        "Legacy product path: Codex with features.mcp_2026_07_28 left disabled. Synthetic mock Worker. Gates require allowed 2025-* protocol on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI status 0 on success phases, and final tool results.",
     };
 
     writeRecord("codex-legacy.json", record);
@@ -564,7 +569,7 @@ try {
     notes: "Extended matrix — default v1 runtime environments not exercised in this acceptance pass.",
   });
 
-  if (!coreGatesPassed(claude) || !coreGatesPassed(codex)) {
+  if (!coreGatesPassed(claude, "modern") || !coreGatesPassed(codex, "legacy")) {
     exitCode = 1;
   }
   if (offline.status !== "passed") {
@@ -588,7 +593,7 @@ try {
         path: "modern",
         role: "core",
         recordFile: "records/claude-code-modern.json",
-        marketingClaimAllowed: coreGatesPassed(claude) && offline.status === "passed",
+        marketingClaimAllowed: coreGatesPassed(claude, "modern") && offline.status === "passed",
       },
       {
         id: "codex-legacy",
@@ -596,7 +601,7 @@ try {
         path: "legacy",
         role: "core",
         recordFile: "records/codex-legacy.json",
-        marketingClaimAllowed: coreGatesPassed(codex) && offline.status === "passed",
+        marketingClaimAllowed: coreGatesPassed(codex, "legacy") && offline.status === "passed",
       },
       {
         id: "gemini-legacy",

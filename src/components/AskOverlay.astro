@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import { withBase } from '../lib/paths';
 import { ASK_OVERLAY_PLACEHOLDER, UI } from '../lib/site-copy';
 
 const askSearchLabels = JSON.stringify(UI.askSearch);
@@ -20,7 +21,7 @@ const askOverlayNote = UI.answers.label;
 		<div id="ask-results" class="overlay-results" aria-live="polite"></div>
 		<div class="overlay-foot">
 			<span class="agent-note"><Icon name="spark" size={12} /> {askOverlayNote}</span>
-			<span><span class="kbd">Esc</span> {UI.common.close} · <a href="/ask/">{UI.ask.pageTitle}</a></span>
+			<span><span class="kbd">Esc</span> {UI.common.close} · <a href={withBase('/ask/')}>{UI.ask.pageTitle}</a></span>
 		</div>
 	</div>
 </dialog>

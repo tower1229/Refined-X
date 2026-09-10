@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import { FOOTER_TAGLINE, SITE_BRAND, SITE_PERSONA, UI } from '../lib/site-copy';
 import { SERIES_ORDER } from '../lib/articles';
 import { siteConfig } from '../../site.config.mjs';
+import { withBase } from '../lib/paths';
 
 const allSeries = await getCollection('series');
 const seriesList = SERIES_ORDER.map((slug) => allSeries.find((entry) => entry.id === slug)).filter(Boolean);
@@ -28,30 +29,30 @@ const siteHost = (() => {
       <div>
         <h4>{UI.footer.content}</h4>
         <ul>
-          <li><a href="/writing/">{UI.nav.writing}</a></li>
+          <li><a href={withBase('/writing/')}>{UI.nav.writing}</a></li>
           {seriesList.map((entry) => entry && (
-            <li><a href={`/writing/${entry.id}/`}>{entry.data.title}</a></li>
+            <li><a href={withBase(`/writing/${entry.id}/`)}>{entry.data.title}</a></li>
           ))}
         </ul>
       </div>
       <div>
         <h4>{UI.footer.site}</h4>
         <ul>
-          <li><a href="/projects/">{UI.nav.projects}</a></li>
-          <li><a href="/about/">{UI.nav.about}</a></li>
-          <li><a href="/friends/">{UI.common.friends}</a></li>
-          <li><a href="/ask/">{UI.ask.button}</a></li>
-          <li><a href="/topics/">{UI.footer.topics}</a></li>
-          <li><a href="/answers/">{UI.footer.answers}</a></li>
+          <li><a href={withBase('/projects/')}>{UI.nav.projects}</a></li>
+          <li><a href={withBase('/about/')}>{UI.nav.about}</a></li>
+          <li><a href={withBase('/friends/')}>{UI.common.friends}</a></li>
+          <li><a href={withBase('/ask/')}>{UI.ask.button}</a></li>
+          <li><a href={withBase('/topics/')}>{UI.footer.topics}</a></li>
+          <li><a href={withBase('/answers/')}>{UI.footer.answers}</a></li>
         </ul>
       </div>
       <div>
         <h4>{UI.footer.agentFriendly}</h4>
         <ul>
-          <li><a href="/llms.txt" class="mono machine-link">/llms.txt</a></li>
-          <li><a href="/openapi.json" class="mono machine-link">/openapi.json</a></li>
-          <li><a href="/api/search-index.json" class="mono machine-link">/api/search-index.json</a></li>
-          <li><a href="/.well-known/about.json" class="mono machine-link">/.well-known/about.json</a></li>
+          <li><a href={withBase('/llms.txt')} class="mono machine-link">/llms.txt</a></li>
+          <li><a href={withBase('/openapi.json')} class="mono machine-link">/openapi.json</a></li>
+          <li><a href={withBase('/api/search-index.json')} class="mono machine-link">/api/search-index.json</a></li>
+          <li><a href={withBase('/.well-known/about.json')} class="mono machine-link">/.well-known/about.json</a></li>
         </ul>
       </div>
     </div>

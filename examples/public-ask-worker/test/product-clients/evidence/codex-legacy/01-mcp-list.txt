@@ -1,6 +1,6 @@
 stdout:
 Name           Url                         Bearer Token Env Var  Status   Auth       
-refined_x_ask  http://127.0.0.1:54027/mcp  -                     enabled  Unsupported
+refined_x_ask  http://127.0.0.1:53004/mcp  -                     enabled  Unsupported
 
 stderr:
 

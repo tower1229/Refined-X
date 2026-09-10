@@ -5,6 +5,7 @@ import ArticleFeed from '../../../components/ArticleFeed.astro';
 import Icon from '../../../components/Icon.astro';
 import WritingPagination from '../../../components/WritingPagination.astro';
 import { ARTICLE_PAGE_SIZE, getArticlePageCount } from '../../../lib/articles';
+import { withBase } from '../../../lib/paths';
 import { SITE_BRAND, UI, WRITING_LEDE } from '../../../lib/site-copy';
 
 interface Props {
@@ -49,8 +50,8 @@ const { articles, pageNumber, pageCount, totalArticles } = Astro.props;
 >
 	<div class="wrap page page-writing">
 		<div class="crumbs">
-			<a href="/">{UI.writing.homeCrumb}</a><span class="sep">/</span>
-			<a href="/writing/">{UI.writing.label}</a><span class="sep">/</span><span>{UI.writing.pageCrumb(pageNumber)}</span>
+			<a href={withBase('/')}>{UI.writing.homeCrumb}</a><span class="sep">/</span>
+			<a href={withBase('/writing/')}>{UI.writing.label}</a><span class="sep">/</span><span>{UI.writing.pageCrumb(pageNumber)}</span>
 		</div>
 		<h1 id="_top" class="display page-heading">{UI.writing.label}</h1>
 		<p class="lede page-lede">
@@ -59,7 +60,7 @@ const { articles, pageNumber, pageCount, totalArticles } = Astro.props;
 
 		<div class="section-head section-head-spaced" aria-labelledby="writing-archive-heading">
 			<h2 id="writing-archive-heading" class="section-title">{UI.writing.archiveHeading}</h2>
-			<a class="more-link" href="/topics/">{UI.writing.browseByTopic} <Icon name="arrow-right" size={14} /></a>
+			<a class="more-link" href={withBase('/topics/')}>{UI.writing.browseByTopic} <Icon name="arrow-right" size={14} /></a>
 		</div>
 
 		<ArticleFeed articles={articles} />

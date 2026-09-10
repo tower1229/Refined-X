@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import { withBase } from '../lib/paths';
 import {
 	MCP_AGENT_PROMPT,
 	MCP_GUIDE_FOLLOWUP,
@@ -36,11 +37,11 @@ const mcpUi = {
 				<p class="mcp-resources-label">{UI.mcp.resourcesLabel}</p>
 				<ul class="mcp-resources-list">
 					<li>
-						<a href="/llms.txt" class="mono machine-link">/llms.txt</a>
+						<a href={withBase('/llms.txt')} class="mono machine-link">/llms.txt</a>
 						<span>{UI.mcp.llmsBlurb}</span>
 					</li>
 					<li>
-						<a href="/openapi.json" class="mono machine-link">/openapi.json</a>
+						<a href={withBase('/openapi.json')} class="mono machine-link">/openapi.json</a>
 						<span>{UI.mcp.openapiBlurb}</span>
 					</li>
 					<li>
