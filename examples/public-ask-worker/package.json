@@ -28,7 +28,7 @@
     "@modelcontextprotocol/client": "2.0.0",
     "@types/node": "24.3.0",
     "typescript": "5.9.3",
-    "wrangler": "4.106.0"
+    "wrangler": "4.131.0"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "2.0.0"
