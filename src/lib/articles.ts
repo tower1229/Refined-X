@@ -1,4 +1,4 @@
-import { sitePath } from './paths';
+import { sitePath, withBase } from './paths';
 import { SERIES_ORDER, seriesTitle } from './series.mjs';
 
 export const ARTICLE_PAGE_SIZE = 10;
@@ -25,7 +25,7 @@ export function getArticlePageCount(total: number) {
 }
 
 export function pageHref(pageNumber: number) {
-	return pageNumber === 1 ? '/writing/' : sitePath(`/writing/page/${pageNumber}`);
+	return withBase(pageNumber === 1 ? '/writing/' : sitePath(`/writing/page/${pageNumber}`));
 }
 
 /** Rough reading time from markdown body length (Chinese + code mixed). */

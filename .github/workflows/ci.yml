@@ -67,3 +67,12 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: MCP protocol integration
+        run: npm run test:mcp-protocol
+
+      - name: Product-client record schema
+        run: npm run test:product-client-records
+
+      - name: Bundle check
+        run: npm run bundle:check

@@ -1,0 +1,61 @@
+{
+  "issue": "#16",
+  "updatedAt": "2026-09-10",
+  "offlineIntegration": {
+    "command": "npm run test:mcp-protocol",
+    "ciJob": "worker / MCP protocol integration",
+    "status": "passed",
+    "gitSha": "d89bb29442b568de8d2b0e53bde16f5a6f7a0af4",
+    "testedAt": "2026-09-10T07:09:08.111Z"
+  },
+  "rows": [
+    {
+      "id": "claude-code-modern",
+      "client": "Claude Code",
+      "path": "modern",
+      "role": "core",
+      "recordFile": "records/claude-code-modern.json",
+      "marketingClaimAllowed": true
+    },
+    {
+      "id": "codex-legacy",
+      "client": "Codex CLI",
+      "path": "legacy",
+      "role": "core",
+      "recordFile": "records/codex-legacy.json",
+      "marketingClaimAllowed": true
+    },
+    {
+      "id": "gemini-legacy",
+      "client": "Gemini CLI",
+      "path": "legacy",
+      "role": "extended",
+      "recordFile": "records/gemini-legacy.json",
+      "marketingClaimAllowed": false
+    },
+    {
+      "id": "cursor",
+      "client": "Cursor",
+      "path": "unknown",
+      "role": "extended",
+      "recordFile": "records/cursor.json",
+      "marketingClaimAllowed": false
+    },
+    {
+      "id": "openai-responses-api",
+      "client": "OpenAI Responses API remote MCP",
+      "path": "unknown",
+      "role": "extended",
+      "recordFile": "records/openai-responses-api.json",
+      "marketingClaimAllowed": false
+    },
+    {
+      "id": "claude-platform-exceptions",
+      "client": "Claude Code platform exceptions",
+      "path": "legacy",
+      "role": "extended",
+      "recordFile": "records/claude-platform-exceptions.json",
+      "marketingClaimAllowed": false
+    }
+  ]
+}

@@ -1,3 +1,8 @@
+import {
+	ASK_ENTRY_DEFAULT_MODE,
+	NLWEB_VERSION,
+} from '../../shared/public-ask-contract.ts';
+
 export class PublicAskError extends Error {
 	code: string;
 	status: number;
@@ -120,10 +125,10 @@ export async function askPublicAgent(question: string, options: AskOptions) {
 				prefer: {
 					streaming: true,
 					response_format: 'conversational_search',
-					mode: 'list, summarize',
+					mode: ASK_ENTRY_DEFAULT_MODE.http,
 					'accept-language': options.language ?? 'en',
 				},
-				meta: { version: '0.55' },
+				meta: { version: NLWEB_VERSION },
 			}),
 			signal: options.signal,
 		});

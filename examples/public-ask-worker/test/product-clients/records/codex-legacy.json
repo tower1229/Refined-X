@@ -1,0 +1,22 @@
+{
+  "client": "Codex CLI",
+  "clientVersion": "0.153.4",
+  "platform": "darwin/arm64",
+  "runtime": "v1/legacy-default",
+  "negotiation": "legacy (mcp_2026_07_28=false)",
+  "observedProtocolVersion": "2025-06-18",
+  "protocolPathOk": true,
+  "expectedProtocolPath": "legacy",
+  "toolDiscovery": "passed",
+  "anonymousList": "passed",
+  "authenticatedSummarize": "passed",
+  "errorHandling": "passed",
+  "testedAt": "2026-09-10T07:11:44.983Z",
+  "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/codex-legacy/",
+  "businessBackend": "synthetic_mock",
+  "gitSha": "d89bb29442b568de8d2b0e53bde16f5a6f7a0af4",
+  "featureFlags": {
+    "mcp_2026_07_28": false
+  },
+  "notes": "Legacy product path: Codex with features.mcp_2026_07_28 left disabled. Synthetic mock Worker. Gates require allowed 2025-* protocol on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI status 0 on success phases, and final tool results."
+}

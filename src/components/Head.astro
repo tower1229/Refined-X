@@ -1,12 +1,13 @@
 ---
 import { SITE_LOCALE, UI } from '../lib/site-copy';
 import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
-import { sitePath } from '../lib/paths';
+import { sitePath, stripBase, withBase } from '../lib/paths';
 import { seriesName } from '../lib/articles';
 import { DEFAULT_SEO_IMAGE, normalizeSeoHead, type SeoHeadTag } from '../lib/seo';
 
 const { entry, head } = Astro.locals.starlightRoute;
-const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '';
+const logicalPath = stripBase(Astro.url.pathname);
+const isHome = logicalPath === '/' || logicalPath === '';
 const contentType = entry.data.contentType;
 const structuredData: Record<string, unknown>[] = [];
 const normalizedHead = normalizeSeoHead({ head, entry, pathname: Astro.url.pathname });
@@ -118,8 +119,8 @@ if (contentType === 'article') {
 <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
 {isHome && (
 	<>
-		<link rel="preload" as="image" href="/asset/hero-light.png" fetchpriority="high" />
-		<link rel="preload" as="image" href="/asset/hero-dark.png" fetchpriority="high" />
+		<link rel="preload" as="image" href={withBase('/asset/hero-light.png')} fetchpriority="high" />
+		<link rel="preload" as="image" href={withBase('/asset/hero-dark.png')} fetchpriority="high" />
 	</>
 )}
 {structuredData.map((value) => (

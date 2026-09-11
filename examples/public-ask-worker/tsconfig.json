@@ -12,10 +12,12 @@
   },
   "include": [
     "src/**/*.ts",
+    "../../shared/**/*.ts",
     "spike/mcp-dual-era/ask-tool.ts",
     "spike/mcp-dual-era/factory.ts",
     "spike/mcp-dual-era/http-boundary.ts",
     "spike/mcp-dual-era/worker.ts",
+    "test/mcp-protocol/**/*.ts",
     "types/**/*.d.ts",
     "worker-configuration.d.ts"
   ]

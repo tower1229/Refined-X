@@ -7,6 +7,7 @@ import SeriesGrid from '../../components/SeriesGrid.astro';
 import WritingPagination from '../../components/WritingPagination.astro';
 import { ARTICLE_PAGE_SIZE, getArticlePageCount } from '../../lib/articles';
 import { absoluteUrl, breadcrumbJsonLd } from '../../lib/public-data';
+import { withBase } from '../../lib/paths';
 import { SITE_BRAND, SITE_LOCALE, UI, WRITING_LEDE } from '../../lib/site-copy';
 
 const articles = (await getCollection('docs', ({ data }) => data.contentType === 'article'))
@@ -64,7 +65,7 @@ const structuredData = [
     <script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />
   ))}
   <div class="wrap page page-writing">
-    <div class="crumbs"><a href="/">{UI.writing.homeCrumb}</a><span class="sep">/</span><span>{UI.writing.label}</span></div>
+    <div class="crumbs"><a href={withBase('/')}>{UI.writing.homeCrumb}</a><span class="sep">/</span><span>{UI.writing.label}</span></div>
     <h1 id="_top" class="display page-heading">{UI.writing.label}</h1>
     <p class="lede page-lede">{WRITING_LEDE} {UI.writing.articleCountSuffix(articles.length)}</p>
 
@@ -75,7 +76,7 @@ const structuredData = [
 
     <div class="section-head section-head-large" aria-labelledby="writing-archive-heading">
       <h2 id="writing-archive-heading" class="section-title">{UI.writing.archiveHeading}</h2>
-      <a class="more-link" href="/topics/">{UI.writing.browseByTopic} <Icon name="arrow-right" size={14} /></a>
+      <a class="more-link" href={withBase('/topics/')}>{UI.writing.browseByTopic} <Icon name="arrow-right" size={14} /></a>
     </div>
 
     {years.map((y) => (

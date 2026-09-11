@@ -29,7 +29,9 @@ npm install
 cp wrangler.jsonc wrangler.jsonc.local   # optional; or edit in place carefully
 ```
 
-Replace every `YOUR_*` placeholder in `wrangler.jsonc` (account-related IDs, D1 `database_id`, AI Search instance name, rate-limit binding IDs, `SITE_URL`, `ALLOWED_ORIGIN`, routes/custom domains).
+Replace every `YOUR_*` placeholder in `wrangler.jsonc` (account-related IDs, D1 `database_id`, AI Search instance name, rate-limit binding IDs, `SITE_URL`, `ALLOWED_ORIGIN`, `PUBLIC_MCP_ORIGIN`, routes/custom domains).
+
+`PUBLIC_MCP_ORIGIN` must be the **Worker’s absolute origin** (scheme + host, no path/query/fragment) used for `/mcp` Host allowlist. Do **not** set it to the static site `SITE_URL`. Missing or illegal values make `/mcp` fail closed (HTTP 503) without running tools; other routes are unaffected.
 
 Do **not** commit real account IDs or secrets.
 
@@ -85,10 +87,13 @@ export default {
     askUrl: "https://ask.example.com/ask",
     mcpUrl: "https://ask.example.com/mcp",
     healthUrl: "https://ask.example.com/health",
+    // Default undeclared — do not claim modern dual-era until the Worker + static docs combo is accepted.
+    // protocolProfile: "dual-era",
   },
 };
 ```
 
+`ask.protocolProfile` controls public discovery/OpenAPI claims only (not Worker auth). Leave it at the default `undeclared` until dual-era MCP acceptance is recorded for that deployment.
 At **Astro build** time, set the public Turnstile site key:
 
 ```sh
@@ -110,9 +115,14 @@ From the worker package (with credentials / staging URLs configured):
 ```sh
 npm test
 npm run typecheck
+npm run test:mcp-protocol
 # optional remote:
 # npm run test:staging
 ```
+
+`test:mcp-protocol` boots a synthetic workerd Worker over local HTTP and exercises dual-era MCP discover/list/call, version rejects, cancel, and security traverse cases (anonymous list, bad Key, unauthorized summarize, pre-auth rate limit).
+
+Product-client acceptance (Claude Code modern + Codex CLI legacy on the same synthetic mock) is recorded in [`docs/mcp-client-support-matrix.md`](mcp-client-support-matrix.md). Extended clients (Cursor, Responses API, Claude platform exceptions, Gemini, …) remain `not_run` and must not be marketed as verified. Controlled staging / real-model smoke is a separate authorized step.
 
 ## Troubleshooting
 

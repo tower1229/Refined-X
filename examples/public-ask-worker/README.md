@@ -9,7 +9,7 @@ This is **not** required for the static Astro template. Without it, `/ask` still
 ## What it implements
 
 - `POST /ask` — restricted NLWeb v0.55-compatible subset (`conversational_search`, `list`, `summarize`, SSE)
-- `POST /mcp` — Streamable HTTP MCP with an `ask` tool
+- `POST /mcp` — dual-era Streamable HTTP MCP (`@modelcontextprotocol/server@2.0.0`) with one shared `ask` tool (modern `2026-07-28` + legacy 2025 versions)
 - `GET /health` — liveness
 - Cloudflare AI Search + AI Gateway (DeepSeek) + D1 quotas + Turnstile for browser summarize modes
 
@@ -28,7 +28,13 @@ cd examples/public-ask-worker
 npm install
 npm test
 npm run typecheck
+npm run test:mcp-protocol
+npm run test:product-client-records
 ```
+
+Optional product-client acceptance (needs local Claude Code + Codex CLIs): see [`docs/mcp-client-support-matrix.md`](../../docs/mcp-client-support-matrix.md).
+
+Set `PUBLIC_MCP_ORIGIN` in `wrangler.jsonc` to the Worker’s absolute origin (not the static site URL). Example: `https://ask.example.com`.
 
 ## Deploy sketch
 

@@ -6,6 +6,8 @@ type Env = Omit<GeneratedEnv, "LEARNING_QUEUE"> & {
   TURNSTILE_SECRET_KEY: string;
   TURNSTILE_EXPECTED_HOSTNAME?: string;
   TURNSTILE_EXPECTED_ACTION?: string;
+  /** Absolute Worker origin for /mcp Host allowlist (not the static SITE_URL). */
+  PUBLIC_MCP_ORIGIN?: string;
   DEFAULT_LANGUAGE?: string;
   PUBLIC_ASK_PERSONA?: string;
   PERSIST_INTERACTIONS?: string;

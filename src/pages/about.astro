@@ -3,6 +3,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getCollection, render } from 'astro:content';
 import Icon from '../components/Icon.astro';
 import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
+import { withBase } from '../lib/paths';
 import { SITE_PERSONA, UI } from '../lib/site-copy';
 import { siteConfig } from '../../site.config.mjs';
 
@@ -49,12 +50,12 @@ const aboutStructuredData = {
   <script is:inline type="application/ld+json" set:html={JSON.stringify(aboutStructuredData)} />
 
   <div class="wrap page about-page">
-    <div class="crumbs"><a href="/">{UI.common.home}</a><span class="sep">/</span><span>{aboutCopy.crumb}</span></div>
+    <div class="crumbs"><a href={withBase('/')}>{UI.common.home}</a><span class="sep">/</span><span>{aboutCopy.crumb}</span></div>
     <div class="about-grid">
       <aside class="about-aside" aria-label={UI.about.profileAria}>
         <img
           class="portrait about-avatar"
-          src="/asset/avatar.jpg"
+          src={withBase('/asset/avatar.jpg')}
           alt={person.name}
           width="112"
           height="112"
@@ -83,7 +84,7 @@ const aboutStructuredData = {
               {UI.about.wechat(person.wechat)}
             </span>
           )}
-          <a class="about-link" href="/projects/">
+          <a class="about-link" href={withBase('/projects/')}>
             <Icon name="grid" size={16} />
             {UI.about.allProjects}
           </a>

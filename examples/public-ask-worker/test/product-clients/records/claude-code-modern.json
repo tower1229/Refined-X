@@ -1,0 +1,23 @@
+{
+  "client": "Claude Code",
+  "clientVersion": "2.1.228",
+  "platform": "darwin/arm64",
+  "runtime": "v2",
+  "negotiation": "auto",
+  "observedProtocolVersion": "2026-07-28",
+  "protocolPathOk": true,
+  "expectedProtocolPath": "modern",
+  "toolDiscovery": "passed",
+  "anonymousList": "passed",
+  "authenticatedSummarize": "passed",
+  "errorHandling": "passed",
+  "testedAt": "2026-09-10T07:10:35.753Z",
+  "evidencePath": "examples/public-ask-worker/test/product-clients/evidence/claude-code-modern/",
+  "businessBackend": "synthetic_mock",
+  "gitSha": "d89bb29442b568de8d2b0e53bde16f5a6f7a0af4",
+  "featureFlags": {
+    "MCP_SDK_GENERATION": "v2",
+    "MCP_PROTOCOL_NEGOTIATION": "auto"
+  },
+  "notes": "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker (empty retrieval / no-reference summarize). Gates require expected protocol 2026-07-28 on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI status 0 on success phases, and final (not incomplete) tool results."
+}

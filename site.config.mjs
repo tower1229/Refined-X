@@ -2,6 +2,8 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveCommentsConfig } from './src/lib/comments.mjs';
+import { assertPublicCapabilitiesConfig } from './src/lib/public-capabilities.ts';
+import { omitRetiredSiteOverlayKeys } from './src/lib/site-config-overlay.mjs';
 
 function findPackageRoot() {
 	let dir = process.cwd();
@@ -39,6 +41,12 @@ const defaults = {
 		askUrl: '',
 		mcpUrl: '',
 		healthUrl: '',
+		/**
+		 * Public protocol declaration for discovery/OpenAPI.
+		 * Default `undeclared` does not claim modern dual-era until a deployment has passed acceptance.
+		 * Set `dual-era` only after the accepted Worker + static docs combo is verified.
+		 */
+		protocolProfile: 'undeclared',
 		/** Must match the Worker PERSIST_INTERACTIONS setting when Live Ask is enabled. */
 		persistInteractions: true,
 	},
@@ -77,12 +85,12 @@ const defaults = {
 			pageName: 'About',
 		},
 	},
-	mcp: {
-		serverName: 'refined-x-public-ask',
-		packageIdentifier: 'com.example/refined-x-public-ask',
-		airIdentifier: 'urn:air:example.com:public-ask',
-		/** Optional override for Server Card `_meta` namespace; default `${packageIdentifier}/discovery`. */
-		discoveryMetaKey: undefined,
+	/**
+	 * Optional discovery experiments. AWP manifests (`/agent.json`, `/.well-known/agent.json`)
+	 * are off by default — enable only after the #17 start gate (consumer + draft pin + acceptance case).
+	 */
+	discovery: {
+		awp: false,
 	},
 };
 
@@ -108,29 +116,40 @@ function resolvePath(value) {
 }
 
 const overlay = await loadOverlay();
+const stripped = omitRetiredSiteOverlayKeys(overlay);
+if (stripped.ignoredRetiredMcp) {
+	console.warn(
+		'instance config key "mcp" was removed in #18 (legacy discovery retirement); ignoring overlay.mcp',
+	);
+}
+/** Keep overlay shape loose for siteConfig inference (helper return is untyped object). */
+const overlayRest = /** @type {typeof overlay} */ (stripped.overlay);
 const mergedBrand = {
 	...defaults.brand,
-	...(overlay.brand ?? {}),
-	projects: { ...defaults.brand.projects, ...(overlay.brand?.projects ?? {}) },
-	about: { ...defaults.brand.about, ...(overlay.brand?.about ?? {}) },
-	askChips: overlay.brand?.askChips ?? defaults.brand.askChips,
-	alternateNames: overlay.brand?.alternateNames ?? defaults.brand.alternateNames,
+	...(overlayRest.brand ?? {}),
+	projects: { ...defaults.brand.projects, ...(overlayRest.brand?.projects ?? {}) },
+	about: { ...defaults.brand.about, ...(overlayRest.brand?.about ?? {}) },
+	askChips: overlayRest.brand?.askChips ?? defaults.brand.askChips,
+	alternateNames: overlayRest.brand?.alternateNames ?? defaults.brand.alternateNames,
 };
 const merged = {
 	...defaults,
-	...overlay,
-	social: { ...defaults.social, ...(overlay.social ?? {}) },
-	ask: { ...defaults.ask, ...(overlay.ask ?? {}) },
-	comments: resolveCommentsConfig({ ...defaults.comments, ...(overlay.comments ?? {}) }),
+	...overlayRest,
+	social: { ...defaults.social, ...(overlayRest.social ?? {}) },
+	ask: { ...defaults.ask, ...(overlayRest.ask ?? {}) },
+	comments: resolveCommentsConfig({ ...defaults.comments, ...(overlayRest.comments ?? {}) }),
 	brand: mergedBrand,
-	mcp: { ...defaults.mcp, ...(overlay.mcp ?? {}) },
-	redirects: overlay.redirects ?? defaults.redirects,
+	discovery: { ...defaults.discovery, ...(overlayRest.discovery ?? {}) },
+	redirects: overlayRest.redirects ?? defaults.redirects,
 };
 
 const contentRoot = resolvePath(merged.contentRoot);
 const publicDir = resolvePath(merged.publicDir);
 const outDir = resolvePath(merged.outDir);
 const assetSource = resolvePath(merged.assetSource);
+
+/** Fail fast on illegal ask/mcp URLs, protocolProfile, or OpenAPI path collisions. */
+assertPublicCapabilitiesConfig(merged);
 
 /** Resolved site configuration (paths are absolute). */
 export const siteConfig = {

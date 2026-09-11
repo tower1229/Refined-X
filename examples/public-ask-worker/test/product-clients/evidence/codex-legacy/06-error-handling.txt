@@ -1,0 +1,46 @@
+stdout:
+```text
+tool call error: tool call failed for `refined_x_ask/ask`
+
+Caused by:
+    Transport send error: Transport [codex_rmcp_client::event_notification_transport::EventNotificationTransport<rmcp::transport::worker::WorkerTransport<rmcp::transport::streamable_http_client::StreamableHttpClientWorker<codex_rmcp_client::http_client_adapter::StreamableHttpClientAdapter>>>] error: Auth required
+```
+
+DONE
+
+stderr:
+Reading additional input from stdin...
+OpenAI Codex v0.153.4
+--------
+workdir: /Users/zangtao/Workspace/tower1229/Refined-X/examples/public-ask-worker/test/product-clients
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: none
+reasoning summaries: none
+session id: 01a08a28-1bd6-7f30-b42f-d9ea0513a721
+--------
+user
+Call MCP tool refined_x_ask.ask with arguments {"query":{"text":"should fail auth"},"prefer":{"mode":"summarize"}}. Report the error text, then DONE.
+codex
+I’ll locate the MCP tool and call it with those arguments.
+mcp: refined_x_ask/ask started
+mcp: refined_x_ask/ask (failed)
+tool call error: tool call failed for `refined_x_ask/ask`
+
+Caused by:
+    Transport send error: Transport [codex_rmcp_client::event_notification_transport::EventNotificationTransport<rmcp::transport::worker::WorkerTransport<rmcp::transport::streamable_http_client::StreamableHttpClientWorker<codex_rmcp_client::http_client_adapter::StreamableHttpClientAdapter>>>] error: Auth required
+codex
+```text
+tool call error: tool call failed for `refined_x_ask/ask`
+
+Caused by:
+    Transport send error: Transport [codex_rmcp_client::event_notification_transport::EventNotificationTransport<rmcp::transport::worker::WorkerTransport<rmcp::transport::streamable_http_client::StreamableHttpClientWorker<codex_rmcp_client::http_client_adapter::StreamableHttpClientAdapter>>>] error: Auth required
+```
+
+DONE
+tokens used
+7,402
+
+status:0

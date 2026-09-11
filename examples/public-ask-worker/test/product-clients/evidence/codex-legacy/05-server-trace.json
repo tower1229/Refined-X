@@ -1,0 +1,65 @@
+{
+  "searchCalls": 1,
+  "trace": [
+    {
+      "at": "2026-09-10T07:11:00.363Z",
+      "method": "POST",
+      "mcpProtocolVersion": null,
+      "mcpMethod": null,
+      "mcpName": null,
+      "jsonRpcMethod": "initialize",
+      "authorizationPresent": true,
+      "status": 200,
+      "toolIsError": null,
+      "toolName": null,
+      "askMode": null,
+      "resultKind": null,
+      "hasSearchSummary": null
+    },
+    {
+      "at": "2026-09-10T07:11:00.377Z",
+      "method": "POST",
+      "mcpProtocolVersion": "2025-06-18",
+      "mcpMethod": null,
+      "mcpName": null,
+      "jsonRpcMethod": "notifications/initialized",
+      "authorizationPresent": true,
+      "status": 202,
+      "toolIsError": null,
+      "toolName": null,
+      "askMode": null,
+      "resultKind": null,
+      "hasSearchSummary": null
+    },
+    {
+      "at": "2026-09-10T07:11:00.382Z",
+      "method": "POST",
+      "mcpProtocolVersion": "2025-06-18",
+      "mcpMethod": null,
+      "mcpName": null,
+      "jsonRpcMethod": "tools/list",
+      "authorizationPresent": true,
+      "status": 200,
+      "toolIsError": null,
+      "toolName": null,
+      "askMode": null,
+      "resultKind": null,
+      "hasSearchSummary": null
+    },
+    {
+      "at": "2026-09-10T07:11:12.547Z",
+      "method": "POST",
+      "mcpProtocolVersion": "2025-06-18",
+      "mcpMethod": null,
+      "mcpName": null,
+      "jsonRpcMethod": "tools/call",
+      "authorizationPresent": true,
+      "status": 200,
+      "toolIsError": false,
+      "toolName": "ask",
+      "askMode": "summarize",
+      "resultKind": "final",
+      "hasSearchSummary": true
+    }
+  ]
+}

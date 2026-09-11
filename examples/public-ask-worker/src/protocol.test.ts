@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  normalizeAskRequest,
   parseNlWebRequest,
   RequestProblem,
   streamResponse,
@@ -54,6 +55,13 @@ test("rejects unsupported response formats and modes", () => {
     () => parseNlWebRequest({ query: { text: "x" }, prefer: { mode: "generate" } }),
     (error: unknown) => error instanceof RequestProblem && error.code === "UNSUPPORTED_MODE",
   );
+});
+
+test("MCP entry defaults empty prefer.mode to list without changing HTTP defaults", () => {
+  const mcp = normalizeAskRequest({ query: { text: "x" }, prefer: { mode: "" } }, "mcp");
+  assert.equal(mcp.prefer?.mode, "list");
+  const http = normalizeAskRequest({ query: { text: "x" } }, "http");
+  assert.equal(http.prefer, undefined);
 });
 
 test("emits NLWeb start result complete SSE events", async () => {

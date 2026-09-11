@@ -3,6 +3,7 @@ import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import Icon from '../components/Icon.astro';
 import AskForm from '../components/AskForm.astro';
 import { breadcrumbJsonLd, webPageJsonLd } from '../lib/public-data';
+import { withBase } from '../lib/paths';
 import {
   ASK_PAGE_LEDE,
   ASK_PAGE_PLACEHOLDER,
@@ -51,7 +52,7 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
     data-site-locale={SITE_LOCALE}
     data-site-origin={SITE_ORIGIN}
   >
-    <div class="crumbs"><a href="/">{UI.common.home}</a><span class="sep">/</span><span>{UI.ask.button}</span></div>
+    <div class="crumbs"><a href={withBase('/')}>{UI.common.home}</a><span class="sep">/</span><span>{UI.ask.button}</span></div>
 
     <section class="ask-stage" aria-labelledby="ask-page-heading">
       <h1 id="ask-page-heading" class="visually-hidden">{ASK_PAGE_TITLE}</h1>
@@ -112,7 +113,7 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 
       <div class="ask-page-foot">
         <span class="agent-note"><Icon name="spark" size={12} /> {UI.ask.relatedPublic}</span>
-        <span class="mono">{UI.ask.dataSource} <a href="/api/search-index.json" class="machine-link">/api/search-index.json</a></span>
+        <span class="mono">{UI.ask.dataSource} <a href={withBase('/api/search-index.json')} class="machine-link">/api/search-index.json</a></span>
       </div>
     </div>
   </div>

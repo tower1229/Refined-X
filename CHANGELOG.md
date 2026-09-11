@@ -5,6 +5,46 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+
+- Legacy draft MCP discovery paths `/.well-known/mcp.json`, `/.well-known/mcp/catalog.json`, and `/.well-known/mcp/server-card.json` (builders, fixtures, verify must-exist rules, and llms/about pointers) — **breaking** for clients that still probed those URLs ([#18](https://github.com/tower1229/Refined-X/issues/18); time-boxed early-retirement exception recorded on the issue)
+- Site config keys used only by those shapes: `mcp.serverName`, `mcp.packageIdentifier`, `mcp.airIdentifier`, `mcp.discoveryMetaKey` (and the whole `mcp` config object). Static identity for remaining surfaces is `title` / brand only
+
+### Migration
+
+- Prefer configured `ask.mcpUrl` (primary), `/openapi.json`, and `/.well-known/about.json`
+- Last **tagged** release that still emitted the legacy discovery files: **1.1.0**
+- #14 marked them `legacy-draft-compatibility` on Unreleased/dev only (never tagged); this change removes them under the time-boxed exception on [#18](https://github.com/tower1229/Refined-X/issues/18)
+- No `/.well-known/ai-catalog.json` / SEP-2127 path is added in this change
+- Core dual-era Worker `POST /mcp` and NLWeb `POST /ask` are unchanged
+
+### Added
+
+- Build-time `public-capabilities` model and `ask.protocolProfile` (`undeclared` default; opt-in `dual-era` after deployment acceptance)
+- Capability-aware OpenAPI (conditional Ask/MCP POSTs, full URL reconstruction including path prefixes) and verify helpers (including AWP must-not-exist checks and retired legacy MCP must-not-exist checks)
+- Dual-era MCP adapter on Public Ask Worker `POST /mcp` via pinned `@modelcontextprotocol/server@2.0.0` (modern + legacy on one handler / one `ask` tool)
+- Worker `PUBLIC_MCP_ORIGIN` Host allowlist for `/mcp`, offline workerd protocol integration (`npm run test:mcp-protocol`)
+- MCP request body stream-capped at 16 KiB; final HTTP body bound with cancel/timeout and §6.2/§7.1 protocol coverage in unit + workerd tests
+- Product-client support matrix and acceptance records ([#16](https://github.com/tower1229/Refined-X/issues/16)): Claude Code modern + Codex CLI legacy on synthetic mock; extended clients stay `not_run`
+- Optional AWP discovery experiment ([#17](https://github.com/tower1229/Refined-X/issues/17)): `discovery.awp` (default off) builds byte-identical `/agent.json` and `/.well-known/agent.json` from shared capabilities (static read actions only; MCP via `protocols.mcp` when dual-era profile is set)
+
+### Changed
+
+- Product-client acceptance final gates: expected protocol path (`modern`/`legacy`) must match all successful business calls; summarize requires `askMode=summarize` + `SearchSummary`; error handling requires `tools/call` 401/403; incomplete/`input_required` results are not success; success phases require CLI exit `0` with no kill signal or spawn error (`null` status fails); truncated SSE bodies are not keyword-guessed as final success
+- Site-relative navigation, Ask search (`/api/search-index.json`), and page links use `withBase()` / Astro `BASE_URL` so subpath deploys stay under the configured prefix; SEO canonical/`og:url` strip the deploy base before `absoluteUrl` so the prefix is not doubled
+- Product-client acceptance harness hardened: bind gates to `tools/call` + `toolIsError`, require HTTP 401/403 for error handling (no CLI-text false positives), record `gitSha`, run `test:mcp-protocol` for `offlineIntegration`, fail the script on core gate failure; stop defaulting Claude acceptance to a third-party Anthropic-compatible base URL
+- OpenAPI Ask documents buffered SSE (`text/event-stream`) alongside JSON; MCP documents conditional protocol headers and `202`/`401` without making modern headers globally required
+- Site absolute URLs and Astro `base` derive from `site` pathname so subpath deployments keep Profile / Markdown / OpenAPI / AWP prefixes consistent
+- AWP #17 follow-up: plan/README sync for `discovery.awp`, shared phase-1 action allowlist, drop unused `search_index` entity, and tighten static-API output-key fixture contract
+- Instance overlays that still set retired `mcp` keys are ignored with a console warning (#18 follow-up)
+- Verify forbids `/.well-known/ai-catalog.json` in dist alongside retired legacy MCP discovery paths
+- `/.well-known/about.json` no longer exposes retired catalog/server-card/`mcp.json` URL fields
+- Illegal `ask.*` URLs, unknown `protocolProfile`, and Ask/MCP pathnames that collide with static OpenAPI paths fail during site config load
+- Hand-rolled MCP initialize/tools dispatcher removed; domain auth/quota codes live in tool error content with HTTP status remapping (no string JSON-RPC business codes)
+- README ZH/EN and deploy docs distinguish CI-verified dual-era MCP from product-client matrix statuses (`passed` vs `not_run`)
+
 ## [1.1.0] - 2026-09-01
 
 ### Added

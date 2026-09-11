@@ -1,3 +1,5 @@
+import { sitePath, withBase, askPageUrl } from "../lib/paths.ts";
+
 export type AnswerResult = { url: string; q: string; a: string; full?: string };
 export type ArticleResult = {
   url: string;
@@ -60,7 +62,6 @@ const defaultLabels: AskSearchLabels = {
 	indexFailed: 'Failed to load search index. Check your network and retry.',
 };
 
-import { sitePath } from "../lib/paths.ts";
 
 const element = <K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -120,7 +121,7 @@ export function createAskSearch(
 
   const articleNode = (article: ArticleResult) => {
     const link = element("a", "res");
-    link.href = sitePath(article.url);
+    link.href = article.url.startsWith("http") ? article.url : withBase(sitePath(article.url));
     const row = element("div", "res-art");
     const title = element("span", "t");
     title.textContent = article.title;
@@ -160,7 +161,7 @@ export function createAskSearch(
     
     if (config.showAskFallback && query.trim()) {
       const askLink = element("a", "res-ask");
-      askLink.href = `/ask/?q=${encodeURIComponent(query.trim())}`;
+      askLink.href = askPageUrl(query.trim());
       askLink.textContent = labels.aiFallback;
       results.appendChild(askLink);
     }
@@ -174,7 +175,7 @@ export function createAskSearch(
     renderMessage(labels.loadingIndex);
     onResultsRendered?.();
     try {
-      const response = await fetch("/api/search-index.json", {
+      const response = await fetch(withBase("/api/search-index.json"), {
         cache: "no-store",
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

@@ -1,5 +1,6 @@
 import type { CollectionEntry } from 'astro:content';
 import { SITE_BRAND, SITE_HOME_TITLE } from './site-copy';
+import { seoLogicalPath } from './paths';
 import { absoluteUrl } from './public-data';
 
 export const DEFAULT_SEO_IMAGE = '/asset/og-default.png';
@@ -10,12 +11,6 @@ export type SeoHeadTag = {
 	content?: string;
 };
 type SeoHead = SeoHeadTag[];
-
-function pagePath(pathname: string) {
-	if (pathname === '/') return '/';
-	return pathname.endsWith('/') ? pathname : `${pathname}/`;
-}
-
 
 function pageTitle(entry: CollectionEntry<'docs'>, pathname: string) {
 	if (pathname === '/') return SITE_HOME_TITLE;
@@ -42,10 +37,11 @@ export function normalizeSeoHead({
 	entry: CollectionEntry<'docs'>;
 	pathname: string;
 }): SeoHead {
-	const isNotFound = pathname === '/404' || pathname === '/404/';
-	const title = pageTitle(entry, pathname);
+	const logical = seoLogicalPath(pathname);
+	const isNotFound = logical === '/404/';
+	const title = pageTitle(entry, logical);
 	const description = entry.data.description;
-	const canonical = isNotFound ? undefined : absoluteUrl(pagePath(pathname));
+	const canonical = isNotFound ? undefined : absoluteUrl(logical);
 	const image = absoluteUrl(entry.data.seoImage ?? DEFAULT_SEO_IMAGE);
 	const contentType = entry.data.contentType;
 	const preservedRobots = head.find(

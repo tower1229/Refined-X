@@ -68,8 +68,11 @@ articles without a model, database, or runtime bill.
 ### Live Q&A when you want it
 
 The optional Public Ask Worker adds grounded retrieval and summarization through
-a restricted NLWeb v0.55-compatible `/ask` endpoint and a Streamable HTTP MCP
-server. It includes quotas, rate limits, browser verification, source links,
+a restricted NLWeb v0.55-compatible `/ask` endpoint and a dual-era Streamable HTTP MCP
+server (one `ask` tool on `/mcp` for modern `2026-07-28` and legacy 2025 clients).
+Offline dual-era integration runs in CI; product-client verification is recorded in
+[`docs/mcp-client-support-matrix.md`](docs/mcp-client-support-matrix.md) (core: Claude Code modern + Codex CLI legacy on a synthetic mock backend; other clients stay `not_run`).
+It includes quotas, rate limits, browser verification, source links,
 and explicit capability boundaries.
 
 ### Designed for reading
@@ -195,7 +198,8 @@ Common options:
 | `outDir`      | `./dist`    | Build output                              |
 | `assetSource` | unset       | Optional external image library           |
 | `brand.*`     | demo values | Public identity and home-page copy        |
-| `ask.*`       | empty       | Optional Public Ask, MCP, and health URLs |
+| `ask.*`       | empty       | Optional Public Ask / MCP / health URLs; `protocolProfile` defaults to `undeclared` (set `dual-era` only after deployment acceptance) |
+| `discovery.awp` | `false`   | Optional AWP 0.2 manifests; when `true`, emits byte-identical `/agent.json` and `/.well-known/agent.json` (phase-1 static reads only); llms does not auto-recommend them; subpath deploy limits — see plan §8.3 |
 | `comments.*`  | empty       | Optional giscus repository and category   |
 
 Relative paths resolve from the Refined-X package root.
@@ -237,13 +241,16 @@ Every build exposes a predictable public interface:
 | `/api/articles.json`                | Article catalog                                 |
 | `/api/topics.json`                  | Topic catalog                                   |
 | `/api/search-index.json`            | Static Ask/search corpus                        |
-| `/openapi.json`                     | API and optional Ask/MCP contract               |
+| `/openapi.json`                     | API and optional Ask/MCP contract (only declares configured remotes) |
 | `/.well-known/about.json`           | Site capability summary                         |
-| `/.well-known/mcp/catalog.json`     | MCP discovery catalog                           |
-| `/.well-known/mcp/server-card.json` | MCP server metadata                             |
 
 These endpoints make the site easier to ingest and connect. They do not assume
 that every agent automatically discovers or invokes them.
+
+Legacy draft MCP discovery paths (`/.well-known/mcp.json`,
+`/.well-known/mcp/catalog.json`, `/.well-known/mcp/server-card.json`) were
+**removed** in a breaking change. Prefer the configured MCP endpoint URL,
+OpenAPI, and `about.json`. Do not expect `/.well-known/ai-catalog.json`.
 
 ## Enable Live Ask
 
@@ -260,6 +267,8 @@ export default {
     askUrl: "https://ask.example.com/ask",
     mcpUrl: "https://ask.example.com/mcp",
     healthUrl: "https://ask.example.com/health",
+    // Optional. Default undeclared — do not claim modern dual-era until accepted.
+    // protocolProfile: "dual-era",
   },
 };
 ```
@@ -314,7 +323,8 @@ Refined-X is not:
 - a hosted CMS;
 - a private personal agent;
 - a long-term memory service;
-- a promise of automatic MCP discovery in every client.
+- a promise of automatic MCP discovery in every client;
+- a claim that every MCP client in the extended matrix has been product-verified (see [`docs/mcp-client-support-matrix.md`](docs/mcp-client-support-matrix.md)).
 
 ## Contributing
 

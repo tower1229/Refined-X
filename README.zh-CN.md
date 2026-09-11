@@ -67,7 +67,11 @@ flowchart LR
 ### 需要时再启用实时问答
 
 可选的 Public Ask Worker 提供基于公开内容的检索和摘要，
-暴露受限的 NLWeb v0.55 兼容 `/ask` 接口与 Streamable HTTP MCP 服务，
+暴露受限的 NLWeb v0.55 兼容 `/ask` 接口与双代 Streamable HTTP MCP 服务
+（同一 `/mcp` 上一个 `ask` 工具，覆盖 modern `2026-07-28` 与 legacy 2025）。
+离线双代集成由 CI 跑通；产品客户端验收见
+[`docs/mcp-client-support-matrix.md`](docs/mcp-client-support-matrix.md)
+（核心：Claude Code modern + Codex CLI legacy，合成 mock 后端；其余客户端保持 `not_run`）。
 并内置配额、限流、浏览器验证、来源链接和明确的能力边界。
 
 ### 为阅读而设计
@@ -193,7 +197,8 @@ export default {
 | `outDir`      | `./dist`    | 构建输出目录                          |
 | `assetSource` | 未设置      | 可选的外部图片资源库                  |
 | `brand.*`     | Demo 数据   | 公开身份与首页文案                    |
-| `ask.*`       | 空          | 可选的 Public Ask、MCP 与健康检查地址 |
+| `ask.*`       | 空          | 可选 Public Ask / MCP / 健康检查 URL；`protocolProfile` 默认 `undeclared`（仅在部署验收后设为 `dual-era`） |
+| `discovery.awp` | `false`   | 可选 AWP 0.2；`true` 时生成字节一致的 `/agent.json` 与 `/.well-known/agent.json`（一期仅静态读）；llms 不自动推荐；子路径部署限制见计划 §8.3 |
 | `comments.*`  | 空          | 可选的 giscus 仓库与讨论分类          |
 
 相对路径均从 Refined-X 包根目录解析。
@@ -232,13 +237,15 @@ iframe 会懒加载。访客参与评论需要 GitHub 账号。
 | `/api/articles.json`                | 文章目录                            |
 | `/api/topics.json`                  | 主题目录                            |
 | `/api/search-index.json`            | 静态 Ask 与搜索语料                 |
-| `/openapi.json`                     | API 以及可选 Ask/MCP 契约           |
+| `/openapi.json`                     | API 以及可选 Ask/MCP 契约（仅声明已配置的远程端点） |
 | `/.well-known/about.json`           | 站点能力摘要                        |
-| `/.well-known/mcp/catalog.json`     | MCP 发现目录                        |
-| `/.well-known/mcp/server-card.json` | MCP 服务元数据                      |
 
 这些接口可以降低网站被检索、摄取和连接的成本，
 但不承诺所有 Agent 都会自动发现或主动调用它们。
+
+历史草案 MCP 发现路径（`/.well-known/mcp.json`、
+`/.well-known/mcp/catalog.json`、`/.well-known/mcp/server-card.json`）已在破坏性变更中**移除**。
+请优先使用已配置的 MCP 端点 URL、OpenAPI 与 `about.json`；不要期望 `/.well-known/ai-catalog.json`。
 
 ## 启用 Live Ask
 
@@ -255,6 +262,8 @@ export default {
     askUrl: "https://ask.example.com/ask",
     mcpUrl: "https://ask.example.com/mcp",
     healthUrl: "https://ask.example.com/health",
+    // 可选。默认 undeclared —— 部署验收前不要宣称 modern dual-era。
+    // protocolProfile: "dual-era",
   },
 };
 ```
@@ -309,7 +318,8 @@ Refined-X 不是：
 - 托管式 CMS；
 - 私人 Agent；
 - 长期记忆服务；
-- 对所有 MCP 客户端自动发现能力的承诺。
+- 对所有 MCP 客户端自动发现能力的承诺；
+- 把扩展矩阵里未跑过的客户端写成“已验证支持”（见 [`docs/mcp-client-support-matrix.md`](docs/mcp-client-support-matrix.md)）。
 
 它服务的是“个人愿意公开表达和被外部读取的部分”，
 而不是替个人保存全部私人数据或代表个人执行任意行动。

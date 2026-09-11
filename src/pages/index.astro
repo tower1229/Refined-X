@@ -6,7 +6,7 @@ import AskForm from '../components/AskForm.astro';
 import Icon from '../components/Icon.astro';
 import SeriesGrid from '../components/SeriesGrid.astro';
 import { absoluteUrl, getPublicProfile, personJsonLd } from '../lib/public-data';
-import { askPageUrl } from '../lib/paths';
+import { askPageUrl, withBase } from '../lib/paths';
 import {
   ASK_PLACEHOLDER,
   SITE_ALTERNATE_NAMES,
@@ -85,7 +85,7 @@ const homeStructuredData = {
           <div class="hero-glass-identity">
             <img
               class="portrait hero-avatar"
-              src="/asset/avatar.jpg"
+              src={withBase('/asset/avatar.jpg')}
               alt={publicProfile.name}
               width={130}
               height={130}
@@ -112,7 +112,7 @@ const homeStructuredData = {
   <section class="wrap section" aria-labelledby="home-series-heading">
     <div class="section-head">
       <h2 id="home-series-heading" class="section-title">{UI.home.seriesHeading}</h2>
-      <a class="more-link" href="/writing/">{UI.home.allWriting} <Icon name="arrow-right" size={14} /></a>
+      <a class="more-link" href={withBase('/writing/')}>{UI.home.allWriting} <Icon name="arrow-right" size={14} /></a>
     </div>
     <SeriesGrid />
   </section>
@@ -120,7 +120,7 @@ const homeStructuredData = {
   <section class="wrap section section-compact-top section-home-end" aria-labelledby="home-writing-heading">
     <div class="section-head">
       <h2 id="home-writing-heading" class="section-title">{UI.home.latestHeading}</h2>
-      <a class="more-link" href="/writing/">{UI.writing.archiveHeading} <Icon name="arrow-right" size={14} /></a>
+      <a class="more-link" href={withBase('/writing/')}>{UI.writing.archiveHeading} <Icon name="arrow-right" size={14} /></a>
     </div>
     <ArticleFeed articles={featuredArticles} />
   </section>

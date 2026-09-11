@@ -1,0 +1,17 @@
+{
+  "client": "OpenAI Responses API remote MCP",
+  "clientVersion": null,
+  "platform": null,
+  "runtime": null,
+  "negotiation": null,
+  "observedProtocolVersion": null,
+  "toolDiscovery": "not_run",
+  "anonymousList": "not_run",
+  "authenticatedSummarize": "not_run",
+  "errorHandling": "not_run",
+  "testedAt": null,
+  "evidencePath": null,
+  "businessBackend": null,
+  "gitSha": null,
+  "notes": "Extended matrix — not run; do not market as verified."
+}

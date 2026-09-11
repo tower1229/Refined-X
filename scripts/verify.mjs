@@ -2,23 +2,33 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { siteConfig } from '../site.config.mjs';
 import { builtPageExists, builtResourceExists } from './dist-path.mjs';
+import {
+	awpPathsMustExist,
+	awpPathsMustNotExist,
+	requiredDiscoveryFilesForStage,
+	discoveryPathsMustNotExist,
+	verifyAwpManifestPair,
+	verifyLlmsAgainstCapabilities,
+	verifyLlmsHasNoAwpWhenDisabled,
+	verifyOpenApiAgainstCapabilities,
+} from './verify-capabilities.mjs';
+import { isAwpDiscoveryEnabled } from '../src/lib/awp-manifest.ts';
+import { resolvePublicCapabilities, siteConfigToCapabilitiesInput } from '../src/lib/public-capabilities.ts';
 
 const distRoot = siteConfig.outDir;
 const requiredPages = ['/', '/about/', '/projects/', '/writing/', '/ask/', '/answers/', '/friends/'];
 const requiredFiles = [
 	'/.nojekyll',
-	'/.well-known/about.json',
-	'/.well-known/mcp.json',
-	'/.well-known/mcp/catalog.json',
-	'/.well-known/mcp/server-card.json',
-	'/llms.txt',
-	'/openapi.json',
 	'/api/profile.json',
 	'/api/articles.json',
 	'/api/search-index.json',
+	...requiredDiscoveryFilesForStage(),
 ];
 
 const failures = [];
+
+const caps = resolvePublicCapabilities(siteConfigToCapabilitiesInput(siteConfig));
+const awpEnabled = isAwpDiscoveryEnabled(siteConfig);
 
 async function listHtmlFiles(directory) {
 	const files = [];
@@ -36,6 +46,21 @@ for (const page of requiredPages) {
 for (const file of requiredFiles) {
 	if (!(await builtResourceExists(distRoot, file))) failures.push(`Missing file: ${file}`);
 }
+for (const file of awpPathsMustNotExist(awpEnabled)) {
+	if (await builtResourceExists(distRoot, file)) {
+		failures.push(`File must not exist when discovery.awp is off: ${file}`);
+	}
+}
+for (const file of discoveryPathsMustNotExist()) {
+	if (await builtResourceExists(distRoot, file)) {
+		failures.push(`Forbidden discovery file must not exist: ${file}`);
+	}
+}
+for (const file of awpPathsMustExist(awpEnabled)) {
+	if (!(await builtResourceExists(distRoot, file))) {
+		failures.push(`Missing AWP file when discovery.awp is on: ${file}`);
+	}
+}
 
 try {
 	const profile = JSON.parse(await readFile(path.join(distRoot, 'api/profile.json'), 'utf8'));
@@ -46,15 +71,30 @@ try {
 
 try {
 	const llms = await readFile(path.join(distRoot, 'llms.txt'), 'utf8');
-	if (!llms.includes('# ')) failures.push('llms.txt looks empty');
-	if (siteConfig.ask.mcpUrl && !llms.includes(siteConfig.ask.mcpUrl)) {
-		failures.push('llms.txt missing configured MCP URL');
-	}
+	failures.push(...verifyLlmsAgainstCapabilities(caps, llms));
+	failures.push(...verifyLlmsHasNoAwpWhenDisabled(llms, awpEnabled));
 } catch (error) {
 	failures.push(`llms.txt unreadable: ${error.message}`);
 }
 
-if (siteConfig.ask.askUrl) {
+try {
+	const openapi = JSON.parse(await readFile(path.join(distRoot, 'openapi.json'), 'utf8'));
+	failures.push(...verifyOpenApiAgainstCapabilities(caps, openapi));
+} catch (error) {
+	failures.push(`openapi.json integration verification failed: ${error.message}`);
+}
+
+if (awpEnabled) {
+	try {
+		const rootBody = await readFile(path.join(distRoot, 'agent.json'), 'utf8');
+		const wellKnownBody = await readFile(path.join(distRoot, '.well-known/agent.json'), 'utf8');
+		failures.push(...verifyAwpManifestPair(rootBody, wellKnownBody));
+	} catch (error) {
+		failures.push(`AWP manifest verification failed: ${error.message}`);
+	}
+}
+
+if (caps.ask) {
 	try {
 		const askHtml = await readFile(path.join(distRoot, 'ask', 'index.html'), 'utf8');
 		if (!askHtml.includes('challenges.cloudflare.com/turnstile/')) {
@@ -65,17 +105,6 @@ if (siteConfig.ask.askUrl) {
 		}
 	} catch (error) {
 		failures.push(`Ask integration verification failed: ${error.message}`);
-	}
-
-	try {
-		const openapi = JSON.parse(await readFile(path.join(distRoot, 'openapi.json'), 'utf8'));
-		const askServers = openapi?.paths?.['/ask']?.post?.servers;
-		const askOrigin = new URL(siteConfig.ask.askUrl).origin;
-		if (!Array.isArray(askServers) || !askServers.some((server) => server?.url === askOrigin)) {
-			failures.push('openapi.json missing configured Ask server');
-		}
-	} catch (error) {
-		failures.push(`openapi.json integration verification failed: ${error.message}`);
 	}
 }
 
@@ -123,4 +152,6 @@ if (failures.length > 0) {
 	process.exit(1);
 }
 
-console.log(`verify ok (dist=${distRoot})`);
+console.log(
+	`verify ok (dist=${distRoot}, mode=${caps.mode}, protocolProfile=${caps.protocolProfile.id}, awp=${awpEnabled})`,
+);

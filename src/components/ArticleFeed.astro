@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { formatArticleDate, seriesName } from '../lib/articles';
+import { withBase } from '../lib/paths';
 
 interface Props {
 	articles: CollectionEntry<'docs'>[];
@@ -13,7 +14,7 @@ const { articles, showSeries = true } = Astro.props;
 <div class="feed">
 	{
 		articles.map((a) => (
-			<a class="entry" href={`/${a.id}/`}>
+			<a class="entry" href={withBase(`/${a.id}/`)}>
 				<div class="entry-date">{formatArticleDate(a.data.pubDate!)}</div>
 				<div class="entry-main">
 					<div class="entry-title">{a.data.title || a.id}</div>

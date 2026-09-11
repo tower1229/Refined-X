@@ -1,6 +1,7 @@
 ---
 import Icon from './Icon.astro';
 import { render, type CollectionEntry } from 'astro:content';
+import { withBase } from '../lib/paths';
 import { getPublicProfile } from '../lib/public-data';
 import { UI } from '../lib/site-copy';
 
@@ -16,8 +17,8 @@ const { question, shortAnswer, title } = entry.data;
 
 <div class="wrap page page-article">
 	<div class="crumbs">
-		<a href="/">{UI.answers.homeCrumb}</a><span class="sep">/</span>
-		<a href="/answers/">{UI.answers.label}</a><span class="sep">/</span>
+		<a href={withBase('/')}>{UI.answers.homeCrumb}</a><span class="sep">/</span>
+		<a href={withBase('/answers/')}>{UI.answers.label}</a><span class="sep">/</span>
 		<span>{UI.answers.answerCrumb}</span>
 	</div>
 
@@ -33,11 +34,11 @@ const { question, shortAnswer, title } = entry.data;
 	</div>
 
 	<div class="article-return answer-return">
-		<a class="btn btn-ghost" href="/ask/">
+		<a class="btn btn-ghost" href={withBase('/ask/')}>
 			<Icon name="return" size={15} />
 			{UI.answers.askAgain}
 		</a>
-		<a class="btn btn-ghost" href="/about/">
+		<a class="btn btn-ghost" href={withBase('/about/')}>
 			{UI.answers.aboutPerson(publicProfile.name)}
 		</a>
 	</div>
