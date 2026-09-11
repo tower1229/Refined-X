@@ -159,6 +159,7 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 		temporarilyUnavailable: string;
 		invalidStream: string;
 		invalidStreamEmpty: string;
+		incompleteStream: string;
 		serviceUnavailable: string;
 	};
 	const searchLabels = JSON.parse((pageRoot instanceof HTMLElement && pageRoot.dataset.askSearchLabels) || '{}');
@@ -389,6 +390,7 @@ const askSearchLabelsJson = JSON.stringify(UI.askSearch);
 				messages: {
 					invalidStream: rt.invalidStream,
 					invalidStreamEmpty: rt.invalidStreamEmpty,
+					incompleteStream: rt.incompleteStream,
 					serviceUnavailable: rt.serviceUnavailable,
 				},
 				onDelta(delta) {

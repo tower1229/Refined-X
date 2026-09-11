@@ -18,12 +18,14 @@ export class PublicAskError extends Error {
 export type AskErrorMessages = {
 	invalidStream: string;
 	invalidStreamEmpty: string;
+	incompleteStream: string;
 	serviceUnavailable: string;
 };
 
 const DEFAULT_MESSAGES: AskErrorMessages = {
 	invalidStream: 'The service returned an unparseable NLWeb stream.',
 	invalidStreamEmpty: 'The service did not return a valid NLWeb stream.',
+	incompleteStream: 'The service ended the answer before it was complete.',
 	serviceUnavailable: 'Public Ask is temporarily unavailable.',
 };
 
@@ -89,21 +91,35 @@ export async function consumeNlWebSse(
 	const decoder = new TextDecoder();
 	let buffer = '';
 	let complete = false;
+	let sawBytes = false;
 
-	while (!complete) {
-		const { done, value } = await reader.read();
-		buffer += decoder.decode(value, { stream: !done }).replaceAll('\r\n', '\n');
-		let boundary = buffer.indexOf('\n\n');
-		while (boundary >= 0) {
-			const event = buffer.slice(0, boundary);
-			buffer = buffer.slice(boundary + 2);
-			complete = consumeEvent(event, onDelta, messages);
-			if (complete) break;
-			boundary = buffer.indexOf('\n\n');
+	try {
+		while (!complete) {
+			const { done, value } = await reader.read();
+			if (value?.byteLength) sawBytes = true;
+			buffer += decoder.decode(value, { stream: !done }).replaceAll('\r\n', '\n');
+			let boundary = buffer.indexOf('\n\n');
+			while (boundary >= 0) {
+				const event = buffer.slice(0, boundary);
+				buffer = buffer.slice(boundary + 2);
+				complete = consumeEvent(event, onDelta, messages);
+				if (complete) break;
+				boundary = buffer.indexOf('\n\n');
+			}
+			if (done) break;
 		}
-		if (done) break;
+		if (!complete && buffer.trim()) {
+			complete = consumeEvent(buffer, onDelta, messages);
+		}
+		if (!complete) {
+			throw new PublicAskError(
+				sawBytes || buffer.trim() ? 'incomplete_stream' : 'invalid_stream',
+				sawBytes || buffer.trim() ? messages.incompleteStream : messages.invalidStreamEmpty,
+			);
+		}
+	} finally {
+		reader.releaseLock();
 	}
-	if (!complete && buffer.trim()) consumeEvent(buffer, onDelta, messages);
 }
 
 export async function askPublicAgent(question: string, options: AskOptions) {

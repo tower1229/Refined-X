@@ -211,6 +211,7 @@ export const zhCN: UiCopy = {
 		turnstileAria: '人机验证',
 		invalidStream: '服务返回了无法解析的 NLWeb 流。',
 		invalidStreamEmpty: '服务没有返回有效的 NLWeb 流。',
+		incompleteStream: '服务在回答完成前结束了流。',
 		serviceUnavailable: '公开问答服务暂时不可用。',
 	},
 	askSearch: {

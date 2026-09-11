@@ -200,6 +200,7 @@ export type UiCopy = {
 		turnstileAria: string;
 		invalidStream: string;
 		invalidStreamEmpty: string;
+		incompleteStream: string;
 		serviceUnavailable: string;
 	};
 	askSearch: {

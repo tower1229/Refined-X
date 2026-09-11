@@ -25,6 +25,7 @@ import {
 import { authenticateMachineCredential, type TrustedMachineKey } from "./api-keys.ts";
 import { redactValue, type CredentialCategory } from "./content-policy.ts";
 import { buildBoundedModelContext } from "./model-context.ts";
+import { messageText } from "./model-response.ts";
 import { DeadlineExceeded, RequestCancelled, RequestDeadline } from "./deadline.ts";
 import {
   buildCacheRequest,
@@ -52,13 +53,8 @@ import {
   type InstancePolicy,
 } from "./instance-policy.ts";
 
-type ChatCompletionMessage = {
-  content?: unknown;
-  reasoning_content?: unknown;
-};
-
 type ChatCompletionResponse = {
-  choices?: Array<{ message?: ChatCompletionMessage }>;
+  choices?: Array<{ message?: { content?: unknown; reasoning_content?: unknown } }>;
   usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
 };
 
@@ -115,25 +111,6 @@ type CachedAnswer = {
   usage: TokenUsage;
   redactionCategories: CredentialCategory[];
 };
-
-function messageText(message: ChatCompletionMessage | undefined): string {
-  if (typeof message?.content === "string" && message.content.trim()) return message.content.trim();
-  if (Array.isArray(message?.content)) {
-    const joined = message.content
-      .map((part) =>
-        part && typeof part === "object" && "text" in part && typeof part.text === "string"
-          ? part.text
-          : "",
-      )
-      .join("")
-      .trim();
-    if (joined) return joined;
-  }
-  if (typeof message?.reasoning_content === "string" && message.reasoning_content.trim()) {
-    return message.reasoning_content.trim();
-  }
-  return "";
-}
 
 async function generateSummary(
   request: NlWebRequest,

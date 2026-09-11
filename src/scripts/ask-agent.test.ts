@@ -40,6 +40,81 @@ test('parses fragmented NLWeb v0.55 SSE events', async () => {
 	assert.equal(answer, '你好');
 });
 
+test('rejects an empty NLWeb stream as invalid', async () => {
+	await assert.rejects(
+		() => consumeNlWebSse(chunkedStream([]), () => {}),
+		(error: unknown) =>
+			error instanceof PublicAskError && error.code === 'invalid_stream',
+	);
+});
+
+test('rejects a stream that ends without a complete event', async () => {
+	let answer = '';
+	await assert.rejects(
+		() =>
+			consumeNlWebSse(
+				chunkedStream([
+					'event: start\ndata: {"_meta":{"response_type":"answer","version":"0.55"}}\n\n',
+					'event: result\ndata: {"index":0,"item":{"@type":"SearchSummary","text":"部分回答"}}\n\n',
+				]),
+				(delta) => {
+					answer += delta;
+				},
+			),
+		(error: unknown) =>
+			error instanceof PublicAskError && error.code === 'incomplete_stream',
+	);
+	assert.equal(answer, '部分回答');
+});
+
+test('rejects an explicit error event from the stream', async () => {
+	await assert.rejects(
+		() =>
+			consumeNlWebSse(
+				chunkedStream([
+					'event: error\ndata: {"error":{"code":"RATE_LIMITED","message":"稍后再试。"}}\n\n',
+				]),
+				() => {},
+			),
+		(error: unknown) =>
+			error instanceof PublicAskError &&
+			error.code === 'RATE_LIMITED' &&
+			error.message === '稍后再试。',
+	);
+});
+
+test('askPublicAgent rejects HTTP 200 SSE with an empty body', async () => {
+	await assert.rejects(
+		askPublicAgent('问题', {
+			onDelta() {},
+			fetchImpl: async () =>
+				new Response(chunkedStream([]), {
+					status: 200,
+					headers: { 'content-type': 'text/event-stream' },
+				}),
+		}),
+		(error: unknown) =>
+			error instanceof PublicAskError && error.code === 'invalid_stream',
+	);
+});
+
+test('askPublicAgent rejects a truncated stream without complete', async () => {
+	await assert.rejects(
+		askPublicAgent('问题', {
+			onDelta() {},
+			fetchImpl: async () =>
+				new Response(
+					chunkedStream([
+						'event: result\ndata: {"index":0,"item":{"@type":"SearchSummary","text":"截断"}}\n\n',
+					]),
+					{ headers: { 'content-type': 'text/event-stream' } },
+				),
+		}),
+		(error: unknown) =>
+			error instanceof PublicAskError && error.code === 'incomplete_stream',
+	);
+});
+
 test('sends the structured NLWeb request with a Turnstile token', async () => {
 	let captured: RequestInit | undefined;
 	let answer = '';

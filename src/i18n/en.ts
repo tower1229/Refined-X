@@ -212,6 +212,7 @@ export const en: UiCopy = {
 		turnstileAria: 'Human verification',
 		invalidStream: 'The service returned an unparseable NLWeb stream.',
 		invalidStreamEmpty: 'The service did not return a valid NLWeb stream.',
+		incompleteStream: 'The service ended the answer before it was complete.',
 		serviceUnavailable: 'Public Ask is temporarily unavailable.',
 	},
 	askSearch: {
