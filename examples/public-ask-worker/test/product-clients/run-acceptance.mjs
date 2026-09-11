@@ -187,9 +187,10 @@ function runCapture(cmd, args, env, cwd, options = {}) {
   });
   return {
     status: result.status,
+    signal: result.signal,
     stdout: result.stdout || "",
     stderr: result.stderr || "",
-    error: result.error ? String(result.error) : null,
+    error: result.error ? String(result.error.message || result.error) : null,
   };
 }
 
@@ -338,9 +339,21 @@ async function runClaudeModern(baseUrl) {
       observedProtocolVersion: protocol.observedProtocolVersion,
       protocolPathOk: protocol.protocolPathOk,
       expectedProtocolPath: "modern",
-      toolDiscovery: judgeModernDiscovery(listTrace, { cliStatus: listRun.status }),
-      anonymousList: judgeAnonymousList(listTrace, { cliStatus: listRun.status }),
-      authenticatedSummarize: judgeSummarize(summarizeTrace, { cliStatus: summarizeRun.status }),
+      toolDiscovery: judgeModernDiscovery(listTrace, {
+        cliStatus: listRun.status,
+        cliSignal: listRun.signal,
+        cliError: listRun.error,
+      }),
+      anonymousList: judgeAnonymousList(listTrace, {
+        cliStatus: listRun.status,
+        cliSignal: listRun.signal,
+        cliError: listRun.error,
+      }),
+      authenticatedSummarize: judgeSummarize(summarizeTrace, {
+        cliStatus: summarizeRun.status,
+        cliSignal: summarizeRun.signal,
+        cliError: summarizeRun.error,
+      }),
       errorHandling: judgeErrorHandling(errorTrace),
       testedAt: new Date().toISOString(),
       evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
@@ -351,7 +364,7 @@ async function runClaudeModern(baseUrl) {
         MCP_PROTOCOL_NEGOTIATION: "auto",
       },
       notes:
-        "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker (empty retrieval / no-reference summarize). Gates require expected protocol 2026-07-28 on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI status 0 on success phases, and final (not incomplete) tool results.",
+        "Modern path forced via MCP_SDK_GENERATION=v2 and MCP_PROTOCOL_NEGOTIATION=auto. Synthetic mock Worker (empty retrieval / no-reference summarize). Gates require expected protocol 2026-07-28 on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI exit 0 with no signal/error on success phases, and final (not incomplete) tool results.",
     };
 
     writeRecord("claude-code-modern.json", record);
@@ -493,9 +506,19 @@ http_headers = { Authorization = "${badBearer()}" }
         getServerText: getServer.stdout + getServer.stderr,
         listTrace,
         cliStatus: listResult.status,
+        cliSignal: listResult.signal,
+        cliError: listResult.error,
       }),
-      anonymousList: judgeAnonymousList(listTrace, { cliStatus: listResult.status }),
-      authenticatedSummarize: judgeSummarize(summarizeTrace, { cliStatus: summarizeRun.status }),
+      anonymousList: judgeAnonymousList(listTrace, {
+        cliStatus: listResult.status,
+        cliSignal: listResult.signal,
+        cliError: listResult.error,
+      }),
+      authenticatedSummarize: judgeSummarize(summarizeTrace, {
+        cliStatus: summarizeRun.status,
+        cliSignal: summarizeRun.signal,
+        cliError: summarizeRun.error,
+      }),
       errorHandling: judgeErrorHandling(errorTrace),
       testedAt: new Date().toISOString(),
       evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
@@ -505,7 +528,7 @@ http_headers = { Authorization = "${badBearer()}" }
         mcp_2026_07_28: false,
       },
       notes:
-        "Legacy product path: Codex with features.mcp_2026_07_28 left disabled. Synthetic mock Worker. Gates require allowed 2025-* protocol on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI status 0 on success phases, and final tool results.",
+        "Legacy product path: Codex with features.mcp_2026_07_28 left disabled. Synthetic mock Worker. Gates require allowed 2025-* protocol on successful business calls, summarize mode + SearchSummary, tools/call auth rejection, CLI exit 0 with no signal/error on success phases, and final tool results.",
     };
 
     writeRecord("codex-legacy.json", record);

@@ -1,12 +1,13 @@
 ---
 import { SITE_LOCALE, UI } from '../lib/site-copy';
 import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
-import { sitePath, withBase } from '../lib/paths';
+import { sitePath, stripBase, withBase } from '../lib/paths';
 import { seriesName } from '../lib/articles';
 import { DEFAULT_SEO_IMAGE, normalizeSeoHead, type SeoHeadTag } from '../lib/seo';
 
 const { entry, head } = Astro.locals.starlightRoute;
-const isHome = Astro.url.pathname === '/' || Astro.url.pathname === '';
+const logicalPath = stripBase(Astro.url.pathname);
+const isHome = logicalPath === '/' || logicalPath === '';
 const contentType = entry.data.contentType;
 const structuredData: Record<string, unknown>[] = [];
 const normalizedHead = normalizeSeoHead({ head, entry, pathname: Astro.url.pathname });

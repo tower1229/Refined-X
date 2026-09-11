@@ -146,18 +146,8 @@ export function interpretToolsCallBody(
         const judged = tryObject(JSON.parse(payload) as unknown);
         if (judged) return judged;
       } catch {
-        // continue
+        // Truncated or invalid JSON must stay unparsed — never keyword-guess success.
       }
-    }
-    if (/"error"\s*:/.test(trimmed) && !/"result"\s*:/.test(trimmed)) {
-      return { toolIsError: true, resultKind: "error", hasSearchSummary: null };
-    }
-    if (/"result"\s*:/.test(trimmed)) {
-      return {
-        toolIsError: false,
-        resultKind: "final",
-        hasSearchSummary: /SearchSummary/.test(trimmed),
-      };
     }
     return empty;
   }

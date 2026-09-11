@@ -70,6 +70,18 @@ export function stripBase(pathname: string, base?: string) {
 	return pathname;
 }
 
+/** Strip deploy base then normalize trailing slash for SEO/canonical paths. */
+export function seoLogicalPath(pathname: string, base?: string) {
+	const stripped = stripBase(pathname, base);
+	if (stripped === '/' || stripped === '') return '/';
+	return stripped.endsWith('/') ? stripped : `${stripped}/`;
+}
+
+/** Absolute SEO URL without double-joining the site base prefix. */
+export function seoAbsoluteUrl(site: string, requestPathname: string, base?: string) {
+	return absoluteUrlFromSite(site, seoLogicalPath(requestPathname, base));
+}
+
 /** Link to the ask page, optionally prefilled (includes deploy base). */
 export function askPageUrl(query = '', base?: string) {
 	const q = query.trim();

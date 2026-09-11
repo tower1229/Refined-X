@@ -85,14 +85,23 @@ export function judgeObservedProtocol(listTrace, summarizeTrace) {
 }
 
 /**
+ * Success-phase CLI must exit 0 with no kill signal or spawn error.
+ * `status === null` (signal/timeout) is failure — never treat as “status omitted”.
+ * @param {{ cliStatus?: number|null, cliSignal?: string|null, cliError?: string|null }} [opts]
+ */
+export function requireSuccessfulCli(opts = {}) {
+  if (opts.cliSignal) return false;
+  if (opts.cliError) return false;
+  return opts.cliStatus === 0;
+}
+
+/**
  * Anonymous list: unauthenticated final tools/call in list mode + retrieval.
  * @param {TracePayload} listTrace
- * @param {{ cliStatus?: number|null }} [opts]
+ * @param {{ cliStatus?: number|null, cliSignal?: string|null, cliError?: string|null }} [opts]
  */
 export function judgeAnonymousList(listTrace, opts = {}) {
-  if (opts.cliStatus !== undefined && opts.cliStatus !== null && opts.cliStatus !== 0) {
-    return "failed";
-  }
+  if (!requireSuccessfulCli(opts)) return "failed";
   const searchCalls = listTrace.searchCalls ?? 0;
   const ok =
     searchCalls >= 1 &&
@@ -109,12 +118,10 @@ export function judgeAnonymousList(listTrace, opts = {}) {
 /**
  * Authenticated summarize: Authorization + summarize mode + final result with SearchSummary.
  * @param {TracePayload} summarizeTrace
- * @param {{ cliStatus?: number|null }} [opts]
+ * @param {{ cliStatus?: number|null, cliSignal?: string|null, cliError?: string|null }} [opts]
  */
 export function judgeSummarize(summarizeTrace, opts = {}) {
-  if (opts.cliStatus !== undefined && opts.cliStatus !== null && opts.cliStatus !== 0) {
-    return "failed";
-  }
+  if (!requireSuccessfulCli(opts)) return "failed";
   const ok = (summarizeTrace.trace || []).some(
     (e) =>
       isSuccessfulToolsCall(e) &&
@@ -145,12 +152,10 @@ export function judgeErrorHandling(errorTrace) {
 /**
  * Modern discovery: successful server/discover and tools/list (HTTP 200).
  * @param {TracePayload} listTrace
- * @param {{ cliStatus?: number|null }} [opts]
+ * @param {{ cliStatus?: number|null, cliSignal?: string|null, cliError?: string|null }} [opts]
  */
 export function judgeModernDiscovery(listTrace, opts = {}) {
-  if (opts.cliStatus !== undefined && opts.cliStatus !== null && opts.cliStatus !== 0) {
-    return "failed";
-  }
+  if (!requireSuccessfulCli(opts)) return "failed";
   const trace = listTrace.trace || [];
   const ok =
     trace.some((e) => e.jsonRpcMethod === "server/discover" && e.status === 200) &&
@@ -159,12 +164,10 @@ export function judgeModernDiscovery(listTrace, opts = {}) {
 }
 
 /**
- * @param {{ listServersStatus: number|null, listServersText: string, getServerText: string, listTrace: TracePayload, cliStatus?: number|null }} input
+ * @param {{ listServersStatus: number|null, listServersText: string, getServerText: string, listTrace: TracePayload, cliStatus?: number|null, cliSignal?: string|null, cliError?: string|null }} input
  */
 export function judgeLegacyDiscovery(input) {
-  if (input.cliStatus !== undefined && input.cliStatus !== null && input.cliStatus !== 0) {
-    return "failed";
-  }
+  if (!requireSuccessfulCli(input)) return "failed";
   const ok =
     input.listServersStatus === 0 &&
     /refined_x_ask/i.test(input.listServersText + input.getServerText) &&

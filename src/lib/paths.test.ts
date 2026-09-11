@@ -5,6 +5,8 @@ import {
 	askPageUrl,
 	astroBaseFromSite,
 	resolveDeployBase,
+	seoAbsoluteUrl,
+	seoLogicalPath,
 	stripBase,
 	withBase,
 } from './paths.ts';
@@ -50,6 +52,18 @@ test('withBase prefixes once and askPageUrl includes base', () => {
 	assert.equal(askPageUrl('', '/'), '/ask/');
 	assert.equal(stripBase('/blog/writing/', '/blog/'), '/writing/');
 	assert.equal(stripBase('/blog/', '/blog/'), '/');
+});
+
+test('seoLogicalPath and seoAbsoluteUrl avoid double base on request pathnames', () => {
+	assert.equal(seoLogicalPath('/blog/writing/', '/blog/'), '/writing/');
+	assert.equal(seoLogicalPath('/blog/', '/blog/'), '/');
+	assert.equal(seoLogicalPath('/blog/404/', '/blog/'), '/404/');
+	assert.equal(
+		seoAbsoluteUrl('https://example.com/blog/', '/blog/writing/', '/blog/'),
+		'https://example.com/blog/writing/',
+	);
+	assert.equal(seoAbsoluteUrl('https://example.com/blog/', '/blog/', '/blog/'), 'https://example.com/blog/');
+	assert.equal(seoAbsoluteUrl('https://example.com/', '/writing/'), 'https://example.com/writing/');
 });
 
 test('absoluteUrlFromSite aligns with OpenAPI static server and AWP-style api prefix', () => {
