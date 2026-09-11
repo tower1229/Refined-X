@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-09-11
+
 ### Removed
 
 - Legacy draft MCP discovery paths `/.well-known/mcp.json`, `/.well-known/mcp/catalog.json`, and `/.well-known/mcp/server-card.json` (builders, fixtures, verify must-exist rules, and llms/about pointers) — **breaking** for clients that still probed those URLs ([#18](https://github.com/tower1229/Refined-X/issues/18); time-boxed early-retirement exception recorded on the issue)
@@ -18,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Last **tagged** release that still emitted the legacy discovery files: **1.1.0**
 - #14 marked them `legacy-draft-compatibility` on Unreleased/dev only (never tagged); this change removes them under the time-boxed exception on [#18](https://github.com/tower1229/Refined-X/issues/18)
 - No `/.well-known/ai-catalog.json` / SEP-2127 path is added in this change
-- Core dual-era Worker `POST /mcp` and NLWeb `POST /ask` are unchanged
+- Core dual-era Worker `POST /mcp` and NLWeb `POST /ask` remain; upgrade the Worker alongside the site when Live Ask is enabled
+- Instance overlays that still set retired `mcp` keys are ignored with a console warning
+- Do not set `ask.protocolProfile: dual-era` until that instance’s deployment acceptance is recorded; default stays `undeclared`
 
 ### Added
 
@@ -38,12 +42,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenAPI Ask documents buffered SSE (`text/event-stream`) alongside JSON; MCP documents conditional protocol headers and `202`/`401` without making modern headers globally required
 - Site absolute URLs and Astro `base` derive from `site` pathname so subpath deployments keep Profile / Markdown / OpenAPI / AWP prefixes consistent
 - AWP #17 follow-up: plan/README sync for `discovery.awp`, shared phase-1 action allowlist, drop unused `search_index` entity, and tighten static-API output-key fixture contract
-- Instance overlays that still set retired `mcp` keys are ignored with a console warning (#18 follow-up)
 - Verify forbids `/.well-known/ai-catalog.json` in dist alongside retired legacy MCP discovery paths
 - `/.well-known/about.json` no longer exposes retired catalog/server-card/`mcp.json` URL fields
 - Illegal `ask.*` URLs, unknown `protocolProfile`, and Ask/MCP pathnames that collide with static OpenAPI paths fail during site config load
 - Hand-rolled MCP initialize/tools dispatcher removed; domain auth/quota codes live in tool error content with HTTP status remapping (no string JSON-RPC business codes)
 - README ZH/EN and deploy docs distinguish CI-verified dual-era MCP from product-client matrix statuses (`passed` vs `not_run`)
+- Ask UI treats incomplete NLWeb SSE (stream ended without a complete event) as an explicit `incomplete_stream` error with locale copy
+
+### Dependencies
+
+- Site: Astro 7.3.x / Starlight 0.42.x and related lockfile bumps merged on `main` before this tag
+- Worker: wrangler / undici / sharp lockfile bumps for `examples/public-ask-worker`
 
 ## [1.1.0] - 2026-09-01
 
@@ -80,3 +89,4 @@ First stable release of Refined-X as an agent-ready personal publishing starter.
 
 [1.0.0]: https://github.com/tower1229/Refined-X/releases/tag/v1.0.0
 [1.1.0]: https://github.com/tower1229/Refined-X/releases/tag/v1.1.0
+[2.0.0]: https://github.com/tower1229/Refined-X/releases/tag/v2.0.0
