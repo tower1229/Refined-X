@@ -31,6 +31,6 @@
     "wrangler": "4.131.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/server": "2.0.0"
+    "@modelcontextprotocol/server": "2.3.0"
   }
 }
