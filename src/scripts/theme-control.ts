@@ -74,6 +74,8 @@ export function initThemeControl({
 
 	const setThemePreference = (preference: ThemePreference) => {
 		const resolvedTheme = resolveThemePreference(preference, now);
+		const previous = documentElement.dataset.theme;
+		if (previous === 'light' || previous === 'dark') documentElement.dataset[previous === 'light' ? 'heroLightLoaded' : 'heroDarkLoaded'] = 'true';
 		applyResolvedTheme(documentElement, { preference, resolvedTheme });
 		writeThemePreference(storage, preference, resolvedTheme);
 		updateControl(preference);

@@ -30,6 +30,7 @@ const siteHost = (() => {
         <h4>{UI.footer.content}</h4>
         <ul>
           <li><a href={withBase('/writing/')}>{UI.nav.writing}</a></li>
+          <li><a href={withBase('/rss.xml')}>{UI.footer.rss}</a></li>
           {seriesList.map((entry) => entry && (
             <li><a href={withBase(`/writing/${entry.id}/`)}>{entry.data.title}</a></li>
           ))}

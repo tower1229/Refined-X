@@ -26,7 +26,7 @@ const structuredData = [
     '@id': absoluteUrl(`${topicPath}#collection`),
     url: absoluteUrl(topicPath),
     name: UI.topics.topicTitle(name),
-    description: UI.topics.topicDescription(name),
+    description: UI.topics.topicDescription(name, articles.length),
     inLanguage: SITE_LOCALE,
     isPartOf: { '@id': absoluteUrl('/#website') },
     mainEntity: {
@@ -51,11 +51,11 @@ const structuredData = [
 <StarlightPage
   frontmatter={{
     title: UI.topics.topicTitle(name),
-    description: UI.topics.topicDescription(name),
+    description: UI.topics.topicDescription(name, articles.length),
     template: 'splash',
     contentType: 'page',
     slug: `topics/${Astro.params.tag}`,
-    llmSummary: UI.topics.topicDescription(name),
+    llmSummary: UI.topics.topicDescription(name, articles.length),
     head: articles.length < 3 ? [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex, follow' } }] : []
   }}
 >

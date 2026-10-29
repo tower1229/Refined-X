@@ -57,6 +57,8 @@ export const en: UiCopy = {
 		latestHeading: 'Latest writing',
 	},
 	writing: {
+		archiveTitle: 'Writing and professional practice',
+		archivePageTitle: (n) => `Writing and professional practice Page ${n}`,
 		label: 'Writing',
 		seriesHeading: 'Series',
 		archiveHeading: 'Archive',
@@ -114,7 +116,7 @@ export const en: UiCopy = {
 		indexDescription: 'Browse public articles by topic on Refined-X.',
 		indexLede: 'Discover articles grouped by topic.',
 		topicTitle: (name) => `Topic: ${name}`,
-		topicDescription: (name) => `Public articles about “${name}” on Refined-X.`,
+		topicDescription: (name, count) => `${count === undefined ? "Public articles" : `${count} public articles`} about “${name}”. Browse practice notes and reflections by publication date, and use the summaries to find relevant reading.`,
 		articlesCollected: (n) => `${n} articles collected.`,
 	},
 	answers: {
@@ -159,6 +161,7 @@ export const en: UiCopy = {
 		readingMinutes: (n) => `${n} min read`,
 	},
 	footer: {
+		rss: 'Subscribe via RSS',
 		content: 'Content',
 		site: 'Site',
 		agentFriendly: 'Agent-friendly',

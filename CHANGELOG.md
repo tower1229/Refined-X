@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-29
+
+### Added
+
+- Site-output audit for internal links, image ALT, inline CSS/data-src resources and page metadata, with deployment-adapter redirect support; editorial length hints stay nonblocking.
+- Content-addressed responsive WebP assets, original-URL retention, checksummed publication-history snapshots, EXIF-aware dimensions and versioned image caching. Animated images and SVG retain their format.
+- Optional `seoTitle`, authored `feedUpdatedDate` and `pageUpdatedDates`, RSS autodiscovery and a visible subscription link. Collection dates track the newer of member changes and authored dates.
+- Self-hosted Spectral Latin fonts with bundled license, active-theme-only hero image loading, and deployment-base rewriting for generated and copied HTML.
+- Pagefind integrity manifests and build/verify gates covering file inventory, lengths, SHA-256, entry JSON, language references and compressed payloads; real native and actual-build fault-injection tests in CI.
+
+### Fixed
+
+- Intermittent zero-byte Pagefind entry after the native `writeFiles()`/`close()` sequence. Export through pinned Pagefind 1.5.2 `getFiles()`, then await Node writes and readback verification before accepting a bundle. No delays, retries or patched dependencies.
+- Metadata-name case handling in copied legacy HTML, duplicate EXIF-rotated image widths, and a nonexistent default demo project URL.
+
+### Upgrade notes
+
+- Deploy the complete `pagefind/` output including `refined-x-manifest.json`; keep the search artifact gate last when extending Astro integrations. Ask still uses its own JSON search corpus.
+- Run `npm ci`, `npm run test:site`, `npm run test:search`, `npm run test:search-build`, `npm run build` and `npm run verify`. The stricter audit may expose existing broken instance links or assets.
+- Original image retention and historical optimized-asset snapshots are explicit configuration inputs; generated preview leftovers are not history. Large sites should measure memory usage of the complete Pagefind export.
+- Local validation and diagnosis are recorded in [search integrity notes](docs/pagefind-integrity.md). Instance content, hosting redirects, analytics and downstream deployments remain instance-owned.
+
 ## [2.0.0] - 2026-09-11
 
 ### Removed
@@ -90,3 +112,4 @@ First stable release of Refined-X as an agent-ready personal publishing starter.
 [1.0.0]: https://github.com/tower1229/Refined-X/releases/tag/v1.0.0
 [1.1.0]: https://github.com/tower1229/Refined-X/releases/tag/v1.1.0
 [2.0.0]: https://github.com/tower1229/Refined-X/releases/tag/v2.0.0
+[2.1.0]: https://github.com/tower1229/Refined-X/releases/tag/v2.1.0

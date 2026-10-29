@@ -1,6 +1,7 @@
 ---
 import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
 import { getCollection } from 'astro:content';
+import { optimizedAssetUrl } from '../lib/assets.mjs';
 import ArticleFeed from '../components/ArticleFeed.astro';
 import AskForm from '../components/AskForm.astro';
 import Icon from '../components/Icon.astro';
@@ -75,7 +76,7 @@ const homeStructuredData = {
   <script is:inline type="application/ld+json" set:html={JSON.stringify(homeStructuredData)} />
 
   <section class="heroB" aria-label={UI.home.sectionAria}>
-    <div class="heroB-theme-stack" aria-hidden="true">
+    <div class="heroB-theme-stack" aria-hidden="true" style={{ "--hero-light-image": `url("${withBase(optimizedAssetUrl('/asset/hero-light.png'))}")`, "--hero-light-small-image": `url("${withBase(optimizedAssetUrl('/asset/hero-light.png', 960))}")`, "--hero-dark-small-image": `url("${withBase(optimizedAssetUrl('/asset/hero-dark.png', 960))}")`, "--hero-dark-image": `url("${withBase(optimizedAssetUrl('/asset/hero-dark.png'))}")` }}>
       <div class="heroB-theme-layer heroB-theme-layer--light"></div>
       <div class="heroB-theme-layer heroB-theme-layer--dark"></div>
     </div>
@@ -85,7 +86,7 @@ const homeStructuredData = {
           <div class="hero-glass-identity">
             <img
               class="portrait hero-avatar"
-              src={withBase('/asset/avatar.jpg')}
+              src={withBase(optimizedAssetUrl('/asset/avatar.jpg', 260))}
               alt={publicProfile.name}
               width={130}
               height={130}

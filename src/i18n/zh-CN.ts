@@ -56,6 +56,8 @@ export const zhCN: UiCopy = {
 		latestHeading: '最新写作',
 	},
 	writing: {
+		archiveTitle: '技术写作与职业思考',
+		archivePageTitle: (n) => `技术写作与职业思考 第 ${n} 页`,
 		label: '写作',
 		seriesHeading: '写作专栏',
 		archiveHeading: '全部归档',
@@ -113,7 +115,7 @@ export const zhCN: UiCopy = {
 		indexDescription: '按主题浏览 Refined-X 的公开文章。',
 		indexLede: '按主题聚合的文章发现层。',
 		topicTitle: (name) => `主题：${name}`,
-		topicDescription: (name) => `Refined-X 中关于“${name}”的公开文章。`,
+		topicDescription: (name, count) => `关于“${name}”的${count === undefined ? "" : `${count} 篇`}公开文章，涵盖相关实践与思考。按发布时间浏览，结合摘要选择与你的问题相关的内容。`,
 		articlesCollected: (n) => `共收录 ${n} 篇文章。`,
 	},
 	answers: {
@@ -158,6 +160,7 @@ export const zhCN: UiCopy = {
 		readingMinutes: (n) => `${n} 分钟阅读`,
 	},
 	footer: {
+		rss: 'RSS 订阅',
 		content: '内容',
 		site: '站点',
 		agentFriendly: 'Agent 友好',

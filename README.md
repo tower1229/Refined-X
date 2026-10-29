@@ -166,6 +166,48 @@ llmSummary: A concise, evidence-grounded summary for machine-readable outputs.
 The schema validates required dates, slugs, summaries, answer fields, and
 content types during the build.
 
+Optional `seoTitle` overrides browser and sharing titles without changing the article H1.
+Use `seoImage` for a deliberate sharing image and `updatedDate` for actual content changes;
+the latter must not precede `pubDate`.
+
+With `assetSource` configured, asset collection preserves original URLs and generates
+content-addressed WebP variants and dimensions. Markdown images use this manifest for
+responsive sources and lazy loading. GIF, animated images, and SVG retain their format.
+JPEG candidates use dimensions after EXIF orientation, so width descriptors are unique
+and reflect the encoded pixels. Image cache v2 bypasses older dimension calculations.
+List previously public originals in `retainedAssets` when retiring content so a clean
+checkout can still rebuild those URLs. Spectral Latin subsets are self-hosted; their
+license is in `src/assets/fonts/Spectral-OFL.txt`.
+
+Each collection rebuilds the generated asset directory; public and dist preview leftovers
+are not history. Set `REFINED_X_ASSET_HISTORY` to an explicit publication snapshot to retain
+old derived URLs. Its `asset-history.json` declares `version: 1`, `sourceRevision`, and
+`files: [{ file, sha256 }]`; blobs reside in `optimized/` and are verified before restoration.
+Hosting adapters obtain snapshots from pushed artifacts, separately from build caches.
+
+Maintain `feedUpdatedDate` and `pageUpdatedDates` when feed, listing, or static-page content
+changes cannot be represented by article dates alone. Never refresh them merely because
+a build ran. Collections, including archive pagination, use the newer of their computed
+member date and authored date. RSS discovery is available in the shared head and the footer.
+
+Run `npm run test:site` for image, link, deployment-base, and date regressions, then
+`npm run verify` against the built output. Hosting adapters can pass `resolveRoute` to
+`auditSite` in `scripts/site-audit.mjs` to check deployment redirects before filesystem
+fallback. Inline CSS static URLs and data-src resources are checked as well. Hosting
+adapters maintain concrete examples for historical dynamic routes. Length heuristics and empty ALT are editorial warnings, not fixed SEO limits.
+Metadata names and canonical relation tokens are compared case-insensitively, including copied legacy HTML.
+
+Pagefind output uses its pinned public `getFiles()` API followed by awaited Node writes
+and SHA-256 readback. Both `build` and `verify` reject empty or malformed entries,
+missing language metadata/WASM, invalid compressed payloads, and missing or changed
+bundle files. Deploy the entire `pagefind/` directory, including `refined-x-manifest.json`.
+The built-in Ask UI still searches `/api/search-index.json`; Pagefind is a separate
+static index for integrations. `npm run test:search` exercises 100 real native exports;
+`npm run test:search-build` injects corrupt artifacts into actual Astro builds and
+checks both gates. See [search integrity notes](docs/pagefind-integrity.md) for the
+failure diagnosis and validation limits. The memory export temporarily holds the
+whole search bundle in RAM; large sites should measure build memory before upgrading.
+
 ## Configure your site
 
 For most installations, create an `instance.config.mjs` overlay. You can also

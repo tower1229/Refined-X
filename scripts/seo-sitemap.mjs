@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import YAML from 'yaml';
+import { articleModifiedDate, contentDate } from '../src/lib/content-dates.mjs';
 
 function walkMarkdown(directory) {
 	return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -29,10 +30,11 @@ function topicSlug(tag) {
 }
 
 function pageUrl(site, pathname) {
-	return new URL(pathname.endsWith('/') ? pathname : `${pathname}/`, site).href;
+	const base = new URL(site.endsWith('/') ? site : `${site}/`);
+	return new URL(`${pathname.replace(/^\/+|\/+$/g, '')}/`.replace(/^\/$/, ''), base).href;
 }
 
-export function createSeoSitemapOptions({ contentRoot, site }) {
+export function createSeoSitemapOptions({ contentRoot, site, pageUpdatedDates = {} }) {
 	const articles = walkMarkdown(path.join(contentRoot, 'articles')).map(frontmatter);
 	const tagCounts = new Map();
 	const lastModified = new Map();
@@ -42,7 +44,7 @@ export function createSeoSitemapOptions({ contentRoot, site }) {
 	for (const article of articles) {
 		const dateMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(article.pubDate));
 		if (!dateMatch) throw new Error(`文章缺少有效 pubDate：${article.slug}`);
-		const articleDate = new Date(article.updatedDate ?? article.pubDate);
+		const articleDate = articleModifiedDate(article);
 		const articlePath = `/${dateMatch[1]}/${dateMatch[2]}/${dateMatch[3]}/${article.slug}/`;
 		lastModified.set(pageUrl(site, articlePath), articleDate);
 		if (!latest || articleDate > latest) latest = articleDate;
@@ -62,18 +64,29 @@ export function createSeoSitemapOptions({ contentRoot, site }) {
 	for (const [series, date] of seriesDates) lastModified.set(pageUrl(site, `/writing/${series}/`), date);
 	for (const [slug, data] of tagCounts) lastModified.set(pageUrl(site, `/topics/${slug}/`), data.latest);
 	for (const route of ['/', '/writing/', '/topics/']) lastModified.set(pageUrl(site, route), latest);
+	for (const [route, value] of Object.entries(pageUpdatedDates)) {
+		const url = pageUrl(site, route);
+		const authored = contentDate(value, `pageUpdatedDates[${route}]`);
+		const automatic = lastModified.get(url);
+		if (authored && (!automatic || authored > automatic)) lastModified.set(url, authored);
+	}
+	const base = new URL(site).pathname.replace(/\/$/, '');
 
 	return {
 		filter(page) {
 			const url = new URL(page);
-			if (url.pathname === '/404/' || url.pathname === '/404') return false;
-			const topic = /^\/topics\/([^/]+)\/$/.exec(url.pathname);
+			const pathname = url.pathname.slice(base.length);
+			if (pathname === '/404/' || pathname === '/404') return false;
+			const topic = /^\/topics\/([^/]+)\/$/.exec(pathname);
 			if (topic && (tagCounts.get(decodeURIComponent(topic[1]))?.count ?? 0) < 3) return false;
 			return true;
 		},
 		serialize(item) {
-			const normalized = pageUrl(site, new URL(item.url).pathname);
-			const lastmod = lastModified.get(normalized);
+			const normalized = pageUrl(site, new URL(item.url).pathname.slice(base.length));
+			const recorded = lastModified.get(normalized);
+			// Every archive page represents the same changing collection/order.
+			const collectionDate = /^\/writing\/page\/\d+\/$/.test(new URL(normalized).pathname.slice(base.length)) ? latest : undefined;
+			const lastmod = collectionDate && (!recorded || collectionDate > recorded) ? collectionDate : recorded;
 			return { url: normalized, ...(lastmod ? { lastmod } : {}) };
 		},
 	};

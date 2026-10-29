@@ -7,6 +7,10 @@ import { siteConfig } from './site.config.mjs';
 import { createSeoSitemapOptions } from './scripts/seo-sitemap.mjs';
 import { awpDiscoveryGate } from './scripts/awp-discovery-gate.mjs';
 import { remarkObsidianAssets } from './src/markdown/remark-obsidian-assets.mjs';
+import { rehypeImageAssets } from './src/markdown/rehype-image-assets.mjs';
+import rehypeRaw from 'rehype-raw';
+import { deploymentBase } from './scripts/deployment-base.mjs';
+import { verifiedPagefind, searchArtifactGate } from './scripts/search-index.mjs';
 import { astroBaseFromSite } from './src/lib/paths.ts';
 
 // https://astro.build/config
@@ -21,7 +25,10 @@ export default defineConfig({
 	publicDir: siteConfig.publicDir,
 	redirects: siteConfig.redirects ?? {},
 	markdown: {
-		processor: unified({ remarkPlugins: [remarkObsidianAssets] }),
+		processor: unified({
+			remarkPlugins: [remarkObsidianAssets],
+			rehypePlugins: [rehypeRaw, [rehypeImageAssets, { publicDir: siteConfig.publicDir, base: astroBaseFromSite(siteConfig.site) }]],
+		}),
 	},
 	vite: {
 		build: { emptyOutDir: true },
@@ -32,13 +39,16 @@ export default defineConfig({
 		},
 	},
 	integrations: [
+		deploymentBase(),
 		awpDiscoveryGate(siteConfig),
-		sitemap(createSeoSitemapOptions({ contentRoot: siteConfig.contentRoot, site: siteConfig.site })),
+		sitemap(createSeoSitemapOptions({ contentRoot: siteConfig.contentRoot, site: siteConfig.site, pageUpdatedDates: siteConfig.pageUpdatedDates })),
 		starlight({
+			pagefind: false,
 			title: siteConfig.title,
 			description: siteConfig.description,
 			disable404Route: true,
 			customCss: [
+				'./src/styles/fonts.css',
 				'./src/styles/refined-x.css',
 				'./src/styles/hero-theme-crossfade.css',
 				'./src/styles/hero-glass-react.css',
@@ -67,5 +77,7 @@ export default defineConfig({
 				},
 			],
 		}),
+		verifiedPagefind(),
+		searchArtifactGate(),
 	],
 });

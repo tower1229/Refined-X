@@ -43,7 +43,7 @@
 }
 
 .heroB-theme-layer--light {
-  background-image: url("/asset/hero-light.png");
+  background-image: none;
 }
 
 .heroB-theme-layer--light::before {
@@ -64,7 +64,7 @@
 }
 
 .heroB-theme-layer--dark {
-  background-image: url("/asset/hero-dark.png");
+  background-image: none;
 }
 
 .heroB-theme-layer--dark::before {
@@ -91,4 +91,21 @@
   [data-hero-theme-crossfade-ready="true"] .heroB-theme-layer {
     transition: none;
   }
+}
+
+/* Load the inactive image only once its theme has actually been shown. */
+[data-theme="light"] .heroB-theme-layer--light,
+[data-hero-light-loaded="true"] .heroB-theme-layer--light {
+  background-image: var(--hero-light-image);
+}
+[data-theme="dark"] .heroB-theme-layer--dark,
+[data-hero-dark-loaded="true"] .heroB-theme-layer--dark {
+  background-image: var(--hero-dark-image);
+}
+
+@media (max-width: 720px) {
+  [data-theme="light"] .heroB-theme-layer--light,
+  [data-hero-light-loaded="true"] .heroB-theme-layer--light { background-image: var(--hero-light-small-image); }
+  [data-theme="dark"] .heroB-theme-layer--dark,
+  [data-hero-dark-loaded="true"] .heroB-theme-layer--dark { background-image: var(--hero-dark-small-image); }
 }

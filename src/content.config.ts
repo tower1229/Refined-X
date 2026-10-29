@@ -49,6 +49,7 @@ const publicDocFields = z
 		series: z.enum(SERIES_IDS).optional(),
 		tags: z.array(z.string()).default([]),
 		llmSummary: z.string().min(1),
+		seoTitle: z.string().trim().min(1).optional(),
 		seoImage: z.union([z.string().startsWith('/'), z.url()]).optional(),
 		question: z.string().min(1).optional(),
 		shortAnswer: z.string().min(1).optional(),
@@ -58,6 +59,9 @@ const publicDocFields = z
 	.superRefine((data, context) => {
 		if (data.contentType === 'article' && !data.pubDate) {
 			context.addIssue({ code: 'custom', path: ['pubDate'], message: 'article 必须提供 pubDate' });
+		}
+		if (data.updatedDate && data.pubDate && data.updatedDate < data.pubDate) {
+			context.addIssue({ code: 'custom', path: ['updatedDate'], message: 'updatedDate 不得早于 pubDate' });
 		}
 		if (data.contentType === 'profile' && data.slug !== 'about') {
 			context.addIssue({ code: 'custom', path: ['slug'], message: 'profile 的 slug 必须是 about' });
@@ -109,6 +113,7 @@ const projectSchema = z.object({
 });
 
 const resumeSchema = z.object({
+	seoTitle: z.string().trim().min(1).optional(),
 	title: z.string(),
 	description: z.string(),
 	contentType: z.literal('profile'),

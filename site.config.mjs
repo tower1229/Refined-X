@@ -34,6 +34,11 @@ const defaults = {
 	outDir: './dist',
 	/** Optional image library root; when unset, collect-assets is a no-op. */
 	assetSource: undefined,
+	/** Already-public original asset URLs to retain after content retirement. */
+	retainedAssets: [],
+	/** Authored content-change dates, never derived from the current build time. */
+	feedUpdatedDate: undefined,
+	pageUpdatedDates: {},
 	social: {
 		github: 'https://github.com/tower1229/Refined-X',
 	},

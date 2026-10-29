@@ -6,7 +6,7 @@ import Icon from '../../../components/Icon.astro';
 import WritingPagination from '../../../components/WritingPagination.astro';
 import { ARTICLE_PAGE_SIZE, getArticlePageCount } from '../../../lib/articles';
 import { withBase } from '../../../lib/paths';
-import { SITE_BRAND, UI, WRITING_LEDE } from '../../../lib/site-copy';
+import { UI, WRITING_LEDE } from '../../../lib/site-copy';
 
 interface Props {
 	articles: CollectionEntry<'docs'>[];
@@ -39,7 +39,7 @@ const { articles, pageNumber, pageCount, totalArticles } = Astro.props;
 
 <StarlightPage
 	frontmatter={{
-		title: `技术写作与职业思考归档（第 ${pageNumber} 页）：专注前端架构、工程化与 AI 协作模式｜${SITE_BRAND}`,
+		title: UI.writing.archivePageTitle(pageNumber),
 		description: `${WRITING_LEDE}共 ${totalArticles} 篇，第 ${pageNumber} / ${pageCount} 页。`,
 		template: 'splash',
 		contentType: 'page',

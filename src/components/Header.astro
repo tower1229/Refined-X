@@ -1,4 +1,5 @@
 ---
+import { optimizedAssetUrl } from '../lib/assets.mjs';
 import Icon from './Icon.astro';
 import { SITE_BRAND, UI } from '../lib/site-copy';
 import { stripBase, withBase } from '../lib/paths';
@@ -21,7 +22,7 @@ const themeLabelsJson = JSON.stringify({
 ---
 
 <header class:list={['topbar', { 'topbar--home': isHome, 'topbar--anchored': !isHome }]} data-theme-labels={themeLabelsJson}>
-	<div class="topbar-hero-bg" aria-hidden="true"></div>
+	<div class="topbar-hero-bg" aria-hidden="true" style={{ "--hero-light-image": `url("${withBase(optimizedAssetUrl('/asset/hero-light.png'))}")`, "--hero-dark-image": `url("${withBase(optimizedAssetUrl('/asset/hero-dark.png'))}")` }}></div>
 	<div class="topbar-glass">
 		<div class="wrap topbar-in">
 			<a href={withBase('/')} class="brand" aria-label={UI.nav.homeAria(SITE_BRAND)}>
@@ -39,13 +40,13 @@ const themeLabelsJson = JSON.stringify({
 				</button>
 				<div class="theme-menu">
 					<button class="icon-btn" type="button" id="theme-menu-trigger" aria-label={UI.theme.openMenuAria} title={UI.theme.menuTitle} aria-haspopup="true" aria-expanded="false" aria-controls="theme-menu-panel">
-						<img src={withBase('/asset/auto_theme.png')} alt="" class="theme-icon theme-icon-auto theme-icon-image" aria-hidden="true" />
+						<img src={withBase(optimizedAssetUrl('/asset/auto_theme.png', 32))} width={24} height={24} decoding="async" alt="" class="theme-icon theme-icon-auto theme-icon-image" aria-hidden="true" />
 						<Icon name="sun" size={20} class="theme-icon theme-icon-sun" />
 						<Icon name="moon" size={20} class="theme-icon theme-icon-moon" />
 					</button>
 					<div class="theme-menu-panel" id="theme-menu-panel" role="group" aria-label={UI.theme.preferenceAria} hidden>
 						<button type="button" data-theme-preference-option="auto">
-							<img src={withBase('/asset/auto_theme.png')} alt="" class="theme-menu-icon-image" aria-hidden="true" />
+							<img src={withBase(optimizedAssetUrl('/asset/auto_theme.png', 32))} width={24} height={24} decoding="async" alt="" class="theme-menu-icon-image" aria-hidden="true" />
 							<span>{UI.theme.auto}</span>
 						</button>
 						<button type="button" data-theme-preference-option="light">

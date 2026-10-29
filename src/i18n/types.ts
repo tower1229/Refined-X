@@ -52,6 +52,8 @@ export type UiCopy = {
 		latestHeading: string;
 	};
 	writing: {
+		archiveTitle: string;
+		archivePageTitle: (n: number) => string;
 		label: string;
 		seriesHeading: string;
 		archiveHeading: string;
@@ -109,7 +111,7 @@ export type UiCopy = {
 		indexDescription: string;
 		indexLede: string;
 		topicTitle: (name: string) => string;
-		topicDescription: (name: string) => string;
+		topicDescription: (name: string, count?: number) => string;
 		articlesCollected: (n: number) => string;
 	};
 	answers: {
@@ -154,6 +156,7 @@ export type UiCopy = {
 		readingMinutes: (n: number) => string;
 	};
 	footer: {
+		rss: string;
 		content: string;
 		site: string;
 		agentFriendly: string;

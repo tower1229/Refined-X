@@ -1,11 +1,13 @@
 import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { siteConfig } from '../site.config.mjs';
+import { siteConfig, siteRoot } from '../site.config.mjs';
+import { optimizeAsset, retainOptimizedAssets } from './image-assets.mjs';
 
 const publishRoot = siteConfig.contentRoot;
 const assetRoot = siteConfig.assetSource;
 const outputRoot = path.join(siteConfig.publicDir, 'asset');
+const cacheRoot = path.join(siteRoot, '.astro/refined-x-images');
 const imageExtension = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 
 if (!assetRoot) {
@@ -49,6 +51,7 @@ function findReferences(markdown) {
 	for (const match of scannable.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)) {
 		addReference(match[1]);
 	}
+	for (const match of scannable.matchAll(/^seoImage:\s*["']?([^\r\n"']+)/gm)) addReference(match[1]);
 	for (const tag of scannable.matchAll(/<img\b[^>]*>/gi)) {
 		const src = /\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/i.exec(tag[0]);
 		if (src) addReference(src[1] ?? src[2] ?? src[3]);
@@ -80,6 +83,11 @@ for (const file of assetFiles.sort()) {
 }
 
 const references = new Set();
+// Explicit compatibility list keeps clean-checkout builds independent of prior outputs.
+for (const file of siteConfig.retainedAssets ?? []) {
+	if (path.basename(file) !== file) throw new Error(`retainedAssets must contain flat filenames: ${file}`);
+	references.add(file);
+}
 references.add('avatar.jpg');
 references.add('auto_theme.png');
 references.add('og-default.png');
@@ -115,13 +123,18 @@ if (resolutionErrors.length > 0) throw new Error(resolutionErrors.join('\n'));
 
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(outputRoot, { recursive: true });
+await retainOptimizedAssets(process.env.REFINED_X_ASSET_HISTORY, outputRoot);
 await writeFile(path.join(outputRoot, '.gitkeep'), '');
 for (const asset of resolved) await copyFile(asset.source, path.join(outputRoot, asset.reference));
 
-const manifest = resolved.map(({ reference, source, sha256 }) => ({
-	file: reference,
-	source: path.relative(siteConfig.contentRoot, source).replaceAll('\\', '/') || source,
-	sha256,
-}));
+const manifest = [];
+for (const { reference, source, sha256 } of resolved) {
+	manifest.push({
+		file: reference,
+		source: path.relative(siteConfig.contentRoot, source).replaceAll('\\', '/') || source,
+		sha256,
+		...(await optimizeAsset(source, outputRoot, { cacheRoot })),
+	});
+}
 await writeFile(path.join(outputRoot, 'asset-manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 console.log(`Collected ${resolved.length} public assets (scanned ${markdownFiles.length} content files).`);

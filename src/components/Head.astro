@@ -1,8 +1,9 @@
 ---
-import { SITE_LOCALE, UI } from '../lib/site-copy';
+import { SITE_LOCALE, SITE_BRAND, UI } from '../lib/site-copy';
 import { absoluteUrl, breadcrumbJsonLd, getPublicProfile, personJsonLd } from '../lib/public-data';
 import { sitePath, stripBase, withBase } from '../lib/paths';
 import { seriesName } from '../lib/articles';
+import { optimizedAssetUrl } from '../lib/assets.mjs';
 import { DEFAULT_SEO_IMAGE, normalizeSeoHead, type SeoHeadTag } from '../lib/seo';
 
 const { entry, head } = Astro.locals.starlightRoute;
@@ -34,7 +35,7 @@ if (contentType === 'article') {
 		mainEntityOfPage: articleUrl,
 		headline: entry.data.title,
 		description: entry.data.description,
-		image: absoluteUrl(entry.data.seoImage ?? DEFAULT_SEO_IMAGE),
+		image: absoluteUrl(optimizedAssetUrl(entry.data.seoImage ?? DEFAULT_SEO_IMAGE)),
 		datePublished: entry.data.pubDate?.toISOString(),
 		dateModified: entry.data.updatedDate?.toISOString() ?? entry.data.pubDate?.toISOString(),
 		author: personJsonLd(profile),
@@ -114,14 +115,19 @@ if (contentType === 'article') {
 	})();
 </script>
 {normalizedHead.map(({ tag: Tag, attrs, content }: SeoHeadTag) => <Tag {...attrs} set:html={content} />)}
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<link rel="alternate" type="application/rss+xml" title={SITE_BRAND} href={absoluteUrl('/rss.xml')} />
 {isHome && (
-	<>
-		<link rel="preload" as="image" href={withBase('/asset/hero-light.png')} fetchpriority="high" />
-		<link rel="preload" as="image" href={withBase('/asset/hero-dark.png')} fetchpriority="high" />
-	</>
+ <script is:inline define:vars={{ lightHero: withBase(optimizedAssetUrl('/asset/hero-light.png')), darkHero: withBase(optimizedAssetUrl('/asset/hero-dark.png')), lightHeroSmall: withBase(optimizedAssetUrl('/asset/hero-light.png', 960)), darkHeroSmall: withBase(optimizedAssetUrl('/asset/hero-dark.png', 960)) }}>
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const desktopHero = isDark ? darkHero : lightHero;
+  const smallHero = isDark ? darkHeroSmall : lightHeroSmall;
+  const preload = document.createElement('link');
+  preload.rel = 'preload';
+  preload.as = 'image';
+  preload.href = window.matchMedia('(max-width: 720px)').matches ? smallHero : desktopHero;
+  preload.fetchPriority = 'high';
+  document.head.append(preload);
+ </script>
 )}
 {structuredData.map((value) => (
 	<script is:inline type="application/ld+json" set:html={JSON.stringify(value)} />

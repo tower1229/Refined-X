@@ -210,14 +210,14 @@ h4 {
   position: absolute;
   inset: 0;
   z-index: -2;
-  background-image: url("/asset/hero-light.png");
+  background-image: var(--hero-light-image);
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
   pointer-events: none;
 }
 [data-theme="dark"] .topbar-hero-bg {
-  background-image: url("/asset/hero-dark.png");
+  background-image: var(--hero-dark-image);
 }
 .topbar--home .topbar-hero-bg {
   display: none;
@@ -2649,7 +2649,7 @@ body:has(.overlay[open]) {
   padding: calc(var(--topbar-h) + clamp(28px, 4vh, 48px)) 0
     clamp(28px, 4vh, 48px);
   background-color: var(--bg);
-  background-image: url("/asset/hero-light.png");
+  background-image: var(--hero-light-image);
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
@@ -2676,7 +2676,7 @@ body:has(.overlay[open]) {
     );
 }
 [data-theme="dark"] .heroB {
-  background-image: url("/asset/hero-dark.png");
+  background-image: var(--hero-dark-image);
 }
 [data-theme="dark"] .heroB::before {
   background:

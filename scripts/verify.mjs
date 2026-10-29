@@ -1,6 +1,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { siteConfig } from '../site.config.mjs';
+import { auditSite } from './site-audit.mjs';
+import { verifySearchIndex } from './search-index.mjs';
 import { builtPageExists, builtResourceExists } from './dist-path.mjs';
 import {
 	awpPathsMustExist,
@@ -26,6 +28,12 @@ const requiredFiles = [
 ];
 
 const failures = [];
+
+try {
+	await verifySearchIndex(path.join(distRoot, 'pagefind'));
+} catch (error) {
+	failures.push(error.message);
+}
 
 const caps = resolvePublicCapabilities(siteConfigToCapabilitiesInput(siteConfig));
 const awpEnabled = isAwpDiscoveryEnabled(siteConfig);
@@ -146,6 +154,10 @@ try {
 } catch (error) {
 	failures.push(`HTML integration verification failed: ${error.message}`);
 }
+
+const audit = await auditSite({ distRoot, site: siteConfig.site });
+failures.push(...audit.failures);
+console.log(`Site audit: ${audit.pages.length} HTML pages, ${audit.warnings.length} editorial warnings`);
 
 if (failures.length > 0) {
 	console.error('verify failed:\n' + failures.map((line) => `- ${line}`).join('\n'));

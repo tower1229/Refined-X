@@ -1,3 +1,4 @@
+import { optimizedAssetUrl } from './assets.mjs';
 import type { CollectionEntry } from 'astro:content';
 import { SITE_BRAND, SITE_HOME_TITLE } from './site-copy';
 import { seoLogicalPath } from './paths';
@@ -14,7 +15,7 @@ type SeoHead = SeoHeadTag[];
 
 function pageTitle(entry: CollectionEntry<'docs'>, pathname: string) {
 	if (pathname === '/') return SITE_HOME_TITLE;
-	return `${entry.data.title}｜${SITE_BRAND}`;
+	return `${entry.data.seoTitle ?? entry.data.title}｜${SITE_BRAND}`;
 }
 
 function tagKey(tag: SeoHeadTag) {
@@ -42,7 +43,7 @@ export function normalizeSeoHead({
 	const title = pageTitle(entry, logical);
 	const description = entry.data.description;
 	const canonical = isNotFound ? undefined : absoluteUrl(logical);
-	const image = absoluteUrl(entry.data.seoImage ?? DEFAULT_SEO_IMAGE);
+	const image = absoluteUrl(optimizedAssetUrl(entry.data.seoImage ?? DEFAULT_SEO_IMAGE));
 	const contentType = entry.data.contentType;
 	const preservedRobots = head.find(
 		(tag) => tag.tag === 'meta' && tag.attrs?.name === 'robots',

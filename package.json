@@ -2,7 +2,7 @@
   "name": "refined-x",
   "private": true,
   "type": "module",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Agent-ready personal publish starter for Astro + Starlight",
   "repository": {
     "type": "git",
@@ -26,6 +26,7 @@
     "collect-assets": "node scripts/collect-assets.mjs",
     "verify": "node scripts/verify.mjs",
     "test:public-ask": "node --test shared/public-ask-contract.test.ts shared/import-boundary.test.ts src/lib/ask-persistence.test.ts src/lib/public-capabilities.test.ts src/lib/openapi-document.test.ts src/lib/mcp-discovery.test.ts src/lib/awp-manifest.test.ts src/lib/verify-capabilities.test.ts src/lib/paths.test.ts src/lib/site-config-overlay.test.mjs src/scripts/ask-agent.test.ts src/scripts/ask-pending.test.ts src/scripts/source-link.test.ts src/scripts/turnstile-client.test.ts src/scripts/theme-control.test.ts src/scripts/theme-preference.test.ts src/scripts/hero-theme-bg.test.ts src/scripts/typewriter.test.ts",
+    "test:site": "node --test scripts/site-audit.test.mjs scripts/image-assets.test.mjs scripts/seo-sitemap.test.mjs scripts/deployment-base.test.mjs scripts/collect-assets.test.mjs",
     "test:related": "node --test src/lib/related-articles.test.ts",
     "test:comments": "node --test src/lib/comments.test.mjs src/scripts/giscus-comments.test.ts",
     "sync-content": "astro sync --force",
@@ -37,7 +38,9 @@
     "start": "astro dev --host 127.0.0.1",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test:search": "node --test scripts/search-index.test.mjs",
+    "test:search-build": "node --test scripts/search-build.test.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.0",
@@ -46,14 +49,17 @@
     "@astrojs/starlight": "^0.42.0",
     "astro": "^7.3.2",
     "github-slugger": "^2.0.0",
+    "pagefind": "1.5.2",
+    "parse5": "^7.3.0",
+    "rehype-raw": "^7.0.0",
     "sharp": "^0.35.3",
     "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "typescript": "^6.0.3",
-    "yaml": "^2.9.0",
+    "sharp": ">=0.35.0",
     "svgo": ">=4.1.0",
-    "sharp": ">=0.35.0"
+    "typescript": "^6.0.3",
+    "yaml": "^2.9.0"
   }
 }

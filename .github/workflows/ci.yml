@@ -37,6 +37,15 @@ jobs:
       - name: Test comments
         run: npm run test:comments
 
+      - name: Test site assets and audits
+        run: npm run test:site
+
+      - name: Test search integrity
+        run: npm run test:search
+
+      - name: Test search build gates
+        run: npm run test:search-build
+
       - name: Build
         run: npm run build
 

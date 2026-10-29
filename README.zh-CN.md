@@ -165,6 +165,39 @@ llmSummary: 一段供机器读取、忠于正文事实的简明摘要。
 构建时会校验必要日期、slug、摘要、回答字段和内容类型，
 使公开语料保持稳定且可被程序处理。
 
+可选的 `seoTitle` 只覆盖浏览器和分享标题，不改变正文 H1；`seoImage` 指定分享图片；
+`updatedDate` 表示实际内容更新时间，不得早于 `pubDate`。页面日期未知时可以不填。
+
+配置 `assetSource` 后，收集流程保留原图 URL，并为静态位图生成带内容哈希的 WebP 和尺寸清单。
+Markdown 图片使用该清单输出宽高、响应式候选和懒加载；GIF、动画与 SVG 保留原格式。
+JPEG 按 EXIF 方向转换后的尺寸生成候选，宽度描述符唯一且与编码后的像素一致；图片缓存 v2 跳过旧尺寸算法的结果。
+`retainedAssets` 可显式保留下线文章曾经公开的原图文件名，保证干净检出也能重建兼容 URL。
+字体使用仓库内的 Spectral 拉丁子集，许可见 `src/assets/fonts/Spectral-OFL.txt`。
+
+资源目录每次从引用原图重建，不保留 public 或 dist 中的预览残留。需要保留旧衍生 URL 时，
+通过 `REFINED_X_ASSET_HISTORY` 提供历史快照目录：`asset-history.json` 包含 `version: 1`、
+`sourceRevision`、`files: [{ file, sha256 }]`，文件位于 `optimized/`，恢复时校验哈希。
+快照由托管适配层从已推送产物生成；普通构建缓存不充当历史输入。
+
+`feedUpdatedDate` 与 `pageUpdatedDates` 是作者维护的频道、列表或静态页更新日期，
+适用于下线文章、调整列表等仅靠文章日期无法表达的变更；不应在每次构建时刷新。集合页（含归档分页）采用显式日期与自动成员日期的较新值。
+RSS 自动发现位于公共 head，页脚同时提供订阅入口。
+
+执行 `npm run test:site` 验证图片、链接、部署 base 和日期逻辑；`npm run verify` 检查构建产物。
+通用审计入口 `scripts/site-audit.mjs` 返回页面元数据、图片、失败项与编辑警告。
+托管平台适配层可向 `auditSite` 传入 `resolveRoute`，把实际重定向优先级纳入链接检查。
+审计同时检查内联 CSS 静态 URL 和 `data-src`。历史动态路由的具体样本由托管适配层维护。
+标题、描述长度和空 ALT 只提示人工复核，不作为统一字数门槛。
+元数据名称和 canonical 关系标记按不区分大小写解析，包括复制的历史 HTML。
+
+Pagefind 使用固定版本的公开 `getFiles()` API 导出字节，再由 Node 等待写入并读回校验 SHA-256。
+`build` 和 `verify` 都会拒绝空或损坏的入口、缺失的语言元数据／WASM、损坏的压缩内容，
+以及文件清单不一致或哈希不匹配的产物。部署时保留完整 `pagefind/`，包括 `refined-x-manifest.json`。
+现有 Ask 页面仍使用 `/api/search-index.json`；Pagefind 是供集成使用的独立静态索引。
+`npm run test:search` 执行 100 次真实原生索引导出；`npm run test:search-build` 在实际 Astro 构建中
+注入故障并验证两道门禁。诊断依据与验收边界见[搜索完整性说明](docs/pagefind-integrity.md)。
+内存导出会暂存整个索引包，大型站点升级前应测量构建内存。
+
 ## 配置站点
 
 多数情况下，建议创建一个 `instance.config.mjs` 覆盖实例配置。
