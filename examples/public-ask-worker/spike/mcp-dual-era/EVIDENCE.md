@@ -2,7 +2,7 @@
 
 **Issue:** [#12](https://github.com/tower1229/Refined-X/issues/12)  
 **Date:** 2026-09-08  
-**Result:** **PASS** — pin `@modelcontextprotocol/server@2.0.0` and proceed to batches A/B.
+**Historical result:** **PASS** — the spike selected `@modelcontextprotocol/server@2.0.0` for batches A/B. Current dependencies use SDK 2.3.0 after the [security upgrade](../../../../docs/security-upgrade-2026-10-29.md); the measurements below remain historical and are not new product-client acceptance.
 
 ## Pinned packages (Worker package only)
 

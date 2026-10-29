@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-10-29
+
+### Security
+
+- Update the site to Astro 7.3.3 and Sharp 0.35.5, with safe compatible Vite, devalue, PostCSS, URI/TOML/YAML parsers, Undici and Zod lockfile versions. Keep Pagefind and Starlight unchanged.
+- Update the optional Worker to MCP client/server 2.3.0 and Wrangler 4.153.0, bringing patched Sharp 0.35.5, Undici 7.30.1 and Zod. Preserve current Worker APIs and compatibility date.
+- Audit both complete dependency trees in CI, including development dependencies. Fresh local audits report zero known vulnerabilities; exact advisory inventory, version decisions and validation boundaries are in [security upgrade notes](docs/security-upgrade-2026-10-29.md).
+
+### Fixed
+
+- Prevent asset collection from deleting declared source, content or history inputs when paths overlap the generated output, including directory/file symlink aliases. Reject dangerous configurations before cleanup while retaining supported content-root ancestor layouts.
+- Include the platform and Sharp/native-codec fingerprint in image cache v3, so an encoder upgrade cannot silently reuse legacy cache results. Public derived URLs remain content-addressed.
+
+### Upgrade notes
+
+- Run `npm ci` and `npm audit` separately for the site and Worker. Regenerate Worker types and rerun offline MCP protocol checks before an instance updates; this release does not deploy an existing Worker.
+- Historical product-client/spike records are retained as historical evidence. No new real-model or external product-client acceptance is claimed.
+
 ## [2.1.0] - 2026-10-29
 
 ### Added
@@ -113,3 +131,4 @@ First stable release of Refined-X as an agent-ready personal publishing starter.
 [1.1.0]: https://github.com/tower1229/Refined-X/releases/tag/v1.1.0
 [2.0.0]: https://github.com/tower1229/Refined-X/releases/tag/v2.0.0
 [2.1.0]: https://github.com/tower1229/Refined-X/releases/tag/v2.1.0
+[2.1.1]: https://github.com/tower1229/Refined-X/releases/tag/v2.1.1

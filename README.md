@@ -174,10 +174,12 @@ With `assetSource` configured, asset collection preserves original URLs and gene
 content-addressed WebP variants and dimensions. Markdown images use this manifest for
 responsive sources and lazy loading. GIF, animated images, and SVG retain their format.
 JPEG candidates use dimensions after EXIF orientation, so width descriptors are unique
-and reflect the encoded pixels. Image cache v2 bypasses older dimension calculations.
+and reflect the encoded pixels. Image cache v3 includes platform, architecture, and Sharp/native-codec versions; it bypasses older caches after encoder upgrades.
 List previously public originals in `retainedAssets` when retiring content so a clean
 checkout can still rebuild those URLs. Spectral Latin subsets are self-hosted; their
 license is in `src/assets/fonts/Spectral-OFL.txt`.
+
+Before cleanup, collection rejects source/output overlap (including symlinks) and protects declared content and history inputs from deletion. A content root may contain the public directory, but cannot reside inside the generated asset directory.
 
 Each collection rebuilds the generated asset directory; public and dist preview leftovers
 are not history. Set `REFINED_X_ASSET_HISTORY` to an explicit publication snapshot to retain
@@ -209,6 +211,15 @@ failure diagnosis and validation limits. The memory export temporarily holds the
 whole search bundle in RAM; large sites should measure build memory before upgrading.
 
 ## Configure your site
+
+Security maintenance: v2.1.1 updates both the site and optional Worker lockfiles.
+Run `npm ci` separately in this directory and `examples/public-ask-worker`, then
+run `npm audit` in each; CI audits production and development dependencies at all
+severity levels. Registry availability and newly disclosed advisories can fail that gate.
+The Worker pins MCP SDK 2.3.0 and Wrangler 4.153.0; regenerate Worker types and run
+the offline protocol suite before updating an instance. Updating the template does
+not deploy an existing Worker. See [security upgrade notes](docs/security-upgrade-2026-10-29.md)
+for exact versions, advisory sources and acceptance boundaries.
 
 For most installations, create an `instance.config.mjs` overlay. You can also
 edit the defaults in [`site.config.mjs`](site.config.mjs):

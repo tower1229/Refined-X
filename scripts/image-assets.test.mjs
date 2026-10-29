@@ -1,12 +1,37 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile, rm, readdir } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
 import { createHash } from 'node:crypto';
 import { optimizeAsset, retainOptimizedAssets } from './image-assets.mjs';
 import { rehypeImageAssets } from '../src/markdown/rehype-image-assets.mjs';
+
+test('an encoder upgrade ignores legacy cache and keeps current cold/warm outputs identical', async (t) => {
+	const root = await mkdtemp(path.join(os.tmpdir(), 'image-encoder-cache-'));
+	t.after(() => rm(root, { recursive: true, force: true }));
+	const input = path.join(root, 'image.png');
+	await sharp({ create: { width: 640, height: 320, channels: 3, background: '#578' } }).png().toFile(input);
+	const cacheRoot = path.join(root, 'cache');
+	await mkdir(cacheRoot);
+	const sourceHash = createHash('sha256').update(await readFile(input)).digest('hex');
+	const legacyKey = `${sourceHash}-q82-w1920-v2.json`;
+	// Old encoder output must never be reused, even when the source/options match.
+	await writeFile(path.join(cacheRoot, legacyKey), JSON.stringify({ width: 1, height: 1, variants: [] }));
+	const cold = await optimizeAsset(input, path.join(root, 'cold'));
+	const upgraded = await optimizeAsset(input, path.join(root, 'upgraded'), { cacheRoot });
+	const warm = await optimizeAsset(input, path.join(root, 'warm'), { cacheRoot });
+	assert.deepEqual(upgraded, cold);
+	assert.deepEqual(warm, cold);
+	assert.equal((await readdir(cacheRoot)).filter(file => file.endsWith('.json') && file !== legacyKey).length, 1);
+	for (const variant of cold.variants) {
+		const relative = path.join('optimized', path.basename(variant.src));
+		const bytes = await readFile(path.join(root, 'cold', relative));
+		assert.deepEqual(await readFile(path.join(root, 'upgraded', relative)), bytes);
+		assert.deepEqual(await readFile(path.join(root, 'warm', relative)), bytes);
+	}
+});
 
 test('derived URLs change with content, retain originals and intrinsic size, and rewrite Markdown under a base', async (t) => {
 	const root = await mkdtemp(path.join(os.tmpdir(), 'image-assets-'));

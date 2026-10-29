@@ -170,9 +170,11 @@ llmSummary: 一段供机器读取、忠于正文事实的简明摘要。
 
 配置 `assetSource` 后，收集流程保留原图 URL，并为静态位图生成带内容哈希的 WebP 和尺寸清单。
 Markdown 图片使用该清单输出宽高、响应式候选和懒加载；GIF、动画与 SVG 保留原格式。
-JPEG 按 EXIF 方向转换后的尺寸生成候选，宽度描述符唯一且与编码后的像素一致；图片缓存 v2 跳过旧尺寸算法的结果。
+JPEG 按 EXIF 方向转换后的尺寸生成候选，宽度描述符唯一且与编码后的像素一致；图片缓存 v3 包含平台、架构及 Sharp／原生编码库版本，编码器升级后不会复用旧缓存。
 `retainedAssets` 可显式保留下线文章曾经公开的原图文件名，保证干净检出也能重建兼容 URL。
 字体使用仓库内的 Spectral 拉丁子集，许可见 `src/assets/fonts/Spectral-OFL.txt`。
+
+清理前会拒绝资源源目录与输出目录的包含关系及危险符号链接，并保护内容和历史快照输入。内容根目录可以包含 public，但不能位于将被删除的 asset 目录内。
 
 资源目录每次从引用原图重建，不保留 public 或 dist 中的预览残留。需要保留旧衍生 URL 时，
 通过 `REFINED_X_ASSET_HISTORY` 提供历史快照目录：`asset-history.json` 包含 `version: 1`、
@@ -199,6 +201,13 @@ Pagefind 使用固定版本的公开 `getFiles()` API 导出字节，再由 Node
 内存导出会暂存整个索引包，大型站点升级前应测量构建内存。
 
 ## 配置站点
+
+v2.1.1 同时更新站点和可选 Worker 的安全依赖。分别在根目录与
+`examples/public-ask-worker` 执行 `npm ci`、`npm audit`；CI 会检查生产及开发依赖的所有严重级别。
+注册表不可用或新增安全公告也会使该门禁失败。
+Worker 固定 MCP SDK 2.3.0、Wrangler 4.153.0；实例同步后应重新生成类型并运行离线协议测试。
+模板更新不会自动部署已有 Worker。具体版本、公告来源和验收边界见
+[安全升级说明](docs/security-upgrade-2026-10-29.md)。
 
 多数情况下，建议创建一个 `instance.config.mjs` 覆盖实例配置。
 你也可以直接修改 [`site.config.mjs`](site.config.mjs) 中的默认值：

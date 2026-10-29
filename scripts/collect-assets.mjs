@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { siteConfig, siteRoot } from '../site.config.mjs';
 import { optimizeAsset, retainOptimizedAssets } from './image-assets.mjs';
@@ -8,11 +8,54 @@ const publishRoot = siteConfig.contentRoot;
 const assetRoot = siteConfig.assetSource;
 const outputRoot = path.join(siteConfig.publicDir, 'asset');
 const cacheRoot = path.join(siteRoot, '.astro/refined-x-images');
+const historyRoot = process.env.REFINED_X_ASSET_HISTORY;
 const imageExtension = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 
 if (!assetRoot) {
 	console.log('collect-assets: assetSource unset; keeping existing public/asset files.');
 	process.exit(0);
+}
+
+// Resolve existing ancestors too, so an output that has not been created yet is
+// checked against symlink aliases before any destructive directory cleanup.
+async function canonicalPath(target) {
+	try { return await realpath(target); } catch (error) {
+		if (error.code !== 'ENOENT') throw error;
+		const parent = path.dirname(target);
+		if (parent === target) throw error;
+		return path.join(await canonicalPath(parent), path.basename(target));
+	}
+}
+
+function containsPath(parent, child) {
+	const relative = path.relative(parent, child);
+	return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+}
+
+const sourcePath = await realpath(assetRoot);
+const outputPath = await canonicalPath(outputRoot);
+if (containsPath(sourcePath, outputPath) || containsPath(outputPath, sourcePath)) {
+	throw new Error(`assetSource must not overlap publicDir/asset: ${sourcePath} / ${outputPath}`);
+}
+
+async function assertInputOutsideOutput(label, input) {
+	if (containsPath(outputPath, await canonicalPath(input))) {
+		throw new Error(`${label} must not overlap publicDir/asset: ${input}`);
+	}
+}
+
+// Content may contain public/asset, but must not itself be deleted with it.
+await assertInputOutsideOutput('contentRoot', publishRoot);
+if (historyRoot) {
+	await assertInputOutsideOutput('REFINED_X_ASSET_HISTORY', historyRoot);
+	await assertInputOutsideOutput('REFINED_X_ASSET_HISTORY manifest', path.join(historyRoot, 'asset-history.json'));
+	const blobs = path.join(historyRoot, 'optimized');
+	await assertInputOutsideOutput('REFINED_X_ASSET_HISTORY blobs', blobs);
+	try {
+		for (const name of await readdir(blobs)) {
+			await assertInputOutsideOutput('REFINED_X_ASSET_HISTORY blob', path.join(blobs, name));
+		}
+	} catch (error) { if (error.code !== 'ENOENT') throw error; }
 }
 
 async function walk(root, accept) {
@@ -94,6 +137,7 @@ references.add('og-default.png');
 references.add('hero-light.png');
 references.add('hero-dark.png');
 for (const file of markdownFiles) {
+	await assertInputOutsideOutput('contentRoot file', file);
 	for (const reference of findReferences(await readFile(file, 'utf8'))) references.add(reference);
 }
 
@@ -112,6 +156,9 @@ for (const reference of [...references].sort()) {
 		continue;
 	}
 	const hashes = await Promise.all(candidates.map(digest));
+	for (const candidate of candidates) {
+		await assertInputOutsideOutput('assetSource file', candidate);
+	}
 	if (new Set(hashes).size > 1) {
 		resolutionErrors.push(`Duplicate asset name with different contents: ${reference}\n${candidates.join('\n')}`);
 		continue;
@@ -123,7 +170,7 @@ if (resolutionErrors.length > 0) throw new Error(resolutionErrors.join('\n'));
 
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(outputRoot, { recursive: true });
-await retainOptimizedAssets(process.env.REFINED_X_ASSET_HISTORY, outputRoot);
+await retainOptimizedAssets(historyRoot, outputRoot);
 await writeFile(path.join(outputRoot, '.gitkeep'), '');
 for (const asset of resolved) await copyFile(asset.source, path.join(outputRoot, asset.reference));
 

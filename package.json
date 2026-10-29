@@ -2,7 +2,7 @@
   "name": "refined-x",
   "private": true,
   "type": "module",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Agent-ready personal publish starter for Astro + Starlight",
   "repository": {
     "type": "git",
@@ -47,17 +47,17 @@
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "@astrojs/starlight": "^0.42.0",
-    "astro": "^7.3.2",
+    "astro": "^7.3.3",
     "github-slugger": "^2.0.0",
     "pagefind": "1.5.2",
     "parse5": "^7.3.0",
     "rehype-raw": "^7.0.0",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.5",
     "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.9",
-    "sharp": ">=0.35.0",
+    "sharp": "^0.35.5",
     "svgo": ">=4.1.0",
     "typescript": "^6.0.3",
     "yaml": "^2.9.0"

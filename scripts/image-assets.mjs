@@ -3,6 +3,15 @@ import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 
+// Native codec updates can change bytes even when the source/options do not.
+const encoderFingerprint = createHash('sha256')
+	.update(JSON.stringify({
+		platform: process.platform,
+		arch: process.arch,
+		versions: Object.keys(sharp.versions).sort().map(name => [name, sharp.versions[name]]),
+	}))
+	.digest('hex').slice(0, 16);
+
 /** Only an explicit, checksummed publication snapshot is compatibility history. */
 export async function retainOptimizedAssets(historyRoot, outputRoot) {
 	if (!historyRoot) return;
@@ -20,7 +29,7 @@ export async function retainOptimizedAssets(historyRoot, outputRoot) {
 /** Keep originals public; only derived, content-addressed files are immutable. */
 export async function optimizeAsset(source, outputRoot, { cacheRoot } = {}) {
 	const input = await readFile(source);
-	const cacheKey = `${createHash('sha256').update(input).digest('hex')}-q82-w1920-v2`;
+	const cacheKey = `${createHash('sha256').update(input).digest('hex')}-q82-w1920-v3-${encoderFingerprint}`;
 	if (cacheRoot) {
 		try {
 			const cached = JSON.parse(await readFile(path.join(cacheRoot, `${cacheKey}.json`), 'utf8'));
