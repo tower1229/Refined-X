@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 import Icon from '../components/Icon.astro';
 import { breadcrumbJsonLd, collectionPageJsonLd, getPublicProfile } from '../lib/public-data';
 import { withBase } from '../lib/paths';
-import { SITE_BRAND, SITE_PERSONA, UI } from '../lib/site-copy';
+import { SITE_PERSONA, UI } from '../lib/site-copy';
 import { siteConfig } from '../../site.config.mjs';
 
 const COURSE_CABINET_SIZE = 3;
@@ -51,7 +51,7 @@ const structuredData = [
 
 <StarlightPage
   frontmatter={{
-    title: `${copy.titleSuffix}｜${SITE_BRAND}`,
+    title: copy.titleSuffix,
     description: projectsDescription,
     template: 'splash',
     contentType: 'page',

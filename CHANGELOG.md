@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.2] - 2026-10-30
+
+### Fixed
+
+- Stop the projects page from adding the site brand before the shared SEO layer adds it. The HTML, Open Graph and Twitter titles now have one brand suffix, including custom brands; page headings, content and article titles are unchanged.
+- Add real-build regression coverage for default and custom brands to the existing site test suite. See the [acceptance notes](docs/projects-title-fix-2026-10-30.md).
+
 ## [2.1.1] - 2026-10-29
 
 ### Security
@@ -132,3 +139,4 @@ First stable release of Refined-X as an agent-ready personal publishing starter.
 [2.0.0]: https://github.com/tower1229/Refined-X/releases/tag/v2.0.0
 [2.1.0]: https://github.com/tower1229/Refined-X/releases/tag/v2.1.0
 [2.1.1]: https://github.com/tower1229/Refined-X/releases/tag/v2.1.1
+[2.1.2]: https://github.com/tower1229/Refined-X/releases/tag/v2.1.2
