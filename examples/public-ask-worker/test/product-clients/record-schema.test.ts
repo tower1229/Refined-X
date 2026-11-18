@@ -129,6 +129,11 @@ test("checked-in matrix and core records validate", () => {
     assert.deepEqual(validateProductClientRecord(record), [], row.id);
     if (row.role === "extended") {
       assert.equal(row.marketingClaimAllowed, false);
+      if (row.id === "codex-modern") {
+        assert.equal(row.path, "modern");
+        assert.equal(record.featureFlags?.mcp_2026_07_28, true);
+        continue;
+      }
       for (const gate of [
         "toolDiscovery",
         "anonymousList",

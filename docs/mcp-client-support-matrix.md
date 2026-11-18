@@ -57,8 +57,10 @@ Re-run for the SDK 2.4.0 release with Claude Code 2.1.322 and Codex CLI 0.169.1.
 ```sh
 cd examples/public-ask-worker
 npm run serve:product-clients   # terminal A
-npm run test:product-clients    # terminal B (also re-runs test:mcp-protocol and writes gitSha)
+MCP_ACCEPTANCE_OUTPUT_DIR="$(mktemp -d)" npm run test:product-clients  # terminal B
 ```
+
+The runner also re-runs `test:mcp-protocol` and records the tested commit SHA. Set `MCP_ACCEPTANCE_OUTPUT_DIR` for candidate runs to keep their evidence alongside the existing records. Review the candidate transcripts before publishing them.
 
 Optional third-party Anthropic-compatible endpoint (explicit only):
 

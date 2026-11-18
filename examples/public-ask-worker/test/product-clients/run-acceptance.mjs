@@ -18,7 +18,7 @@ import {
   rmSync,
   chmodSync,
 } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { trustedBearer, badBearer } from "../mcp-protocol/fixtures.ts";
@@ -37,8 +37,11 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const workerRoot = join(dir, "../..");
 const repoRoot = join(workerRoot, "../..");
 const urlFile = join(dir, ".acceptance-base-url");
-const evidenceRoot = join(dir, "evidence");
-const recordsDir = join(dir, "records");
+const outputDir = process.env.MCP_ACCEPTANCE_OUTPUT_DIR
+  ? resolve(process.env.MCP_ACCEPTANCE_OUTPUT_DIR)
+  : dir;
+const evidenceRoot = join(outputDir, "evidence");
+const recordsDir = join(outputDir, "records");
 
 const CODEX =
   process.env.CODEX_BIN ||
@@ -152,11 +155,18 @@ async function ensureServer() {
 }
 
 async function reset(baseUrl) {
-  await fetch(`${baseUrl}/reset`, { method: "POST" });
+  const response = await fetch(`${baseUrl}/reset`, {
+    method: "POST",
+    headers: { Connection: "close" },
+  });
+  await response.arrayBuffer();
+  if (!response.ok) throw new Error(`acceptance trace reset returned HTTP ${response.status}`);
 }
 
 async function readTrace(baseUrl) {
-  const res = await fetch(`${baseUrl}/trace`);
+  // A synchronous CLI run can outlive an idle HTTP connection to the Worker.
+  const res = await fetch(`${baseUrl}/trace`, { headers: { Connection: "close" } });
+  if (!res.ok) throw new Error(`acceptance trace returned HTTP ${res.status}`);
   return await res.json();
 }
 
@@ -173,6 +183,7 @@ function writeRecord(fileName, record) {
   if (errors.length) {
     throw new Error(`invalid record ${fileName}: ${errors.join("; ")}`);
   }
+  mkdirSync(recordsDir, { recursive: true });
   writeFileSync(join(recordsDir, fileName), JSON.stringify(record, null, 2) + "\n");
 }
 
@@ -359,7 +370,7 @@ async function runClaudeModern(baseUrl) {
       }),
       errorHandling: judgeErrorHandling(errorTrace),
       testedAt: new Date().toISOString(),
-      evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
+      evidencePath: relative(repoRoot, join(evidenceRoot, clientId)),
       businessBackend: "synthetic_mock",
       gitSha,
       featureFlags: {
@@ -499,7 +510,7 @@ ${headers}`);
       }),
       errorHandling: judgeErrorHandling(errorTrace),
       testedAt: new Date().toISOString(),
-      evidencePath: `examples/public-ask-worker/test/product-clients/evidence/${clientId}/`,
+      evidencePath: relative(repoRoot, join(evidenceRoot, clientId)),
       businessBackend: "synthetic_mock",
       gitSha,
       featureFlags: {
@@ -536,6 +547,17 @@ function notRunExtended(client, fileName, extra = {}) {
   });
 }
 
+async function recordClient(label, run) {
+  try {
+    const record = await run();
+    console.log(`${label}:`, JSON.stringify(record, null, 2));
+    return record;
+  } catch (error) {
+    console.error(`${label} did not produce a valid record:`, error.message);
+    return null;
+  }
+}
+
 const { baseUrl, child } = await ensureServer();
 console.log(`Using acceptance server ${baseUrl}`);
 
@@ -552,16 +574,12 @@ try {
     console.log("offlineIntegration: passed");
   }
 
-  const claude = await runClaudeModern(baseUrl);
-  console.log("Claude Code modern:", JSON.stringify(claude, null, 2));
-  const codex = await runCodex(baseUrl, "legacy");
-  console.log("Codex legacy:", JSON.stringify(codex, null, 2));
-  let codexModern;
-  try {
-    codexModern = await runCodex(baseUrl, "modern");
-    console.log("Codex opt-in modern:", JSON.stringify(codexModern, null, 2));
-  } catch (error) {
-    console.error("Codex opt-in modern did not produce a valid record:", error.message);
+  const claude = await recordClient("Claude Code modern", () => runClaudeModern(baseUrl));
+  const codex = await recordClient("Codex legacy", () => runCodex(baseUrl, "legacy"));
+  const codexModern = await recordClient("Codex opt-in modern", () => runCodex(baseUrl, "modern"));
+
+  if (!claude || !codex) {
+    throw new Error("Release acceptance requires both default-client records");
   }
 
   notRunExtended("Gemini CLI", "gemini-legacy.json", {
@@ -657,7 +675,7 @@ try {
   if (matrixErrors.length) {
     throw new Error(`invalid support matrix: ${matrixErrors.join("; ")}`);
   }
-  writeFileSync(join(dir, "support-matrix.json"), JSON.stringify(matrix, null, 2) + "\n");
+  writeFileSync(join(outputDir, "support-matrix.json"), JSON.stringify(matrix, null, 2) + "\n");
 } catch (err) {
   console.error(err);
   exitCode = 1;
