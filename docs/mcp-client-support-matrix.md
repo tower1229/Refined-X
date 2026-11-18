@@ -38,6 +38,8 @@ Clean checkout reproduction: root `npm ci` (site job) + Worker `npm ci` (worker 
 
 ## Core product-client gates
 
+For the SDK 2.4.0 release, the acceptance runner exercises Claude Code's default negotiation and Codex CLI's default negotiation as core gates. It also collects Codex CLI opt-in modern evidence when that run produces a valid record. `featureFlags` records `null` for an unset override. The tool call traces establish the actual protocol.
+
 | Client | Path | Record | toolDiscovery | anonymousList | authenticatedSummarize | errorHandling |
 | --- | --- | --- | --- | --- | --- | --- |
 | Claude Code `2.1.228` | modern (`MCP_SDK_GENERATION=v2`, `MCP_PROTOCOL_NEGOTIATION=auto`) → observed `2026-07-28` | [claude-code-modern.json](../examples/public-ask-worker/test/product-clients/records/claude-code-modern.json) | passed | passed | passed | passed |
@@ -50,7 +52,7 @@ Core records re-validated **2026-09-10** on `gitSha` `837ba03fe965958c451c5dbde2
 
 Do not treat a single merged `server-trace.json` as the current layout. Records include `gitSha` binding the tree under test.
 
-Re-run (requires local Claude Code + Codex CLIs and auth for their agent models):
+Re-run for the SDK 2.4.0 release with Claude Code 2.1.322 and Codex CLI 0.169.1. Set `CODEX_BIN` to the pinned binary and use the configured model credentials for each client.
 
 ```sh
 cd examples/public-ask-worker

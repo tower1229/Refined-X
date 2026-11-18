@@ -216,7 +216,7 @@ Security maintenance: v2.1.1 updates both the site and optional Worker lockfiles
 Run `npm ci` separately in this directory and `examples/public-ask-worker`, then
 run `npm audit` in each; CI audits production and development dependencies at all
 severity levels. Registry availability and newly disclosed advisories can fail that gate.
-The Worker pins MCP SDK 2.3.0 and Wrangler 4.153.0; regenerate Worker types and run
+The Worker pins MCP SDK 2.4.0 and Wrangler 4.153.0. Regenerate Worker types and run
 the offline protocol suite before updating an instance. Updating the template does
 not deploy an existing Worker. See [security upgrade notes](docs/security-upgrade-2026-10-29.md)
 for exact versions, advisory sources and acceptance boundaries.

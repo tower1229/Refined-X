@@ -66,13 +66,12 @@ async function postMcp(
   headers: HeadersInit,
   body: unknown,
   pathSuffix = "/mcp",
-): Promise<Response> {
-  const response = await worker.fetch(`${baseUrl}${pathSuffix}`, {
+) {
+  return worker.fetch(`${baseUrl}${pathSuffix}`, {
     method: "POST",
     headers: headers as Record<string, string>,
     body: typeof body === "string" ? body : JSON.stringify(body),
   });
-  return response as unknown as Response;
 }
 
 function parseSseFinalJson(text: string): unknown {
@@ -81,15 +80,18 @@ function parseSseFinalJson(text: string): unknown {
   return JSON.parse(matches.at(-1)!);
 }
 
-async function readRpc(response: Response) {
+async function readRpc(response: Awaited<ReturnType<Unstable_DevWorker["fetch"]>>) {
   const contentType = response.headers.get("content-type") ?? "";
   const text = await response.text();
   const body = (
     contentType.includes("text/event-stream") ? parseSseFinalJson(text) : JSON.parse(text || "null")
   ) as {
+    id?: number | string;
     result?: {
+      resultType?: string;
       supportedVersions?: string[];
       protocolVersion?: string;
+      capabilities?: { tools?: { listChanged?: boolean } };
       tools?: Array<{ name: string }>;
       isError?: boolean;
       content?: Array<{ text: string }>;
@@ -125,7 +127,9 @@ test("modern server/discover and tools/list do not invoke ask", async () => {
     await postMcp(modernHeaders("server/discover"), modernBody("server/discover", {})),
   );
   assert.equal(discover.status, 200);
+  assert.equal(discover.body.result?.resultType, "complete");
   assert.deepEqual(discover.body.result?.supportedVersions, [MODERN_VERSION]);
+  assert.equal(discover.body.result?.capabilities?.tools?.listChanged, false);
   assert.equal(
     discover.body.result?._meta?.["io.modelcontextprotocol/serverInfo"]?.name,
     "public-ask-worker",
@@ -133,6 +137,7 @@ test("modern server/discover and tools/list do not invoke ask", async () => {
 
   const list = await readRpc(await postMcp(modernHeaders("tools/list"), modernBody("tools/list", {})));
   assert.equal(list.status, 200);
+  assert.equal(list.body.result?.resultType, "complete");
   assert.equal(list.body.result?.tools?.[0]?.name, "ask");
   // Cache hints on discover and tools/list (SDK encodes ttlMs/cacheScope on result).
   assert.equal(discover.body.result?.ttlMs, 3_600_000);
@@ -168,6 +173,7 @@ test("modern tools/call anonymous list invokes retrieval once", async () => {
     ),
   );
   assert.equal(res.status, 200);
+  assert.equal(res.body.result?.resultType, "complete");
   assert.equal(res.body.result?.isError, undefined);
   assert.equal(res.body.result?.structuredContent?._meta?.response_type, "answer");
   assert.equal(await searchCalls(), before + 1);
@@ -198,6 +204,7 @@ test("legacy initialize/call/notification for three 2025 versions", async () => 
     );
     assert.equal(init.status, 200);
     assert.equal(init.body.result?.protocolVersion, version);
+    assert.equal(init.body.result?.capabilities?.tools?.listChanged, false);
 
     const notif = await postMcp(
       {
@@ -272,6 +279,24 @@ test("unsupported modern version and header/body mismatch reject without ask", a
   );
   assert.equal(mismatch.status, 400);
   assert.equal(mismatch.body.error?.code, -32020);
+  assert.equal(await searchCalls(), before);
+});
+
+test("modern requests require the tool name header and report unknown methods", async () => {
+  const before = await searchCalls();
+  const missingName = await readRpc(
+    await postMcp(modernHeaders("tools/call"), modernBody("tools/call", {
+      name: "ask",
+      arguments: { query: { text: "missing name header" } },
+    })),
+  );
+  assert.equal(missingName.status, 400);
+  assert.equal(missingName.body.error?.code, -32020);
+
+  const method = "example/unknown";
+  const unknown = await readRpc(await postMcp(modernHeaders(method), modernBody(method, {})));
+  assert.equal(unknown.status, 404);
+  assert.equal(unknown.body.error?.code, -32601);
   assert.equal(await searchCalls(), before);
 });
 
@@ -433,6 +458,49 @@ test("CORS allowlist and CLI without Origin are not falsely rejected", async () 
     ),
   );
   assert.equal(cli.status, 200);
+});
+
+test("MCP rejects invalid origins before returning method guidance", async () => {
+  const before = await searchCalls();
+
+  for (const method of ["GET", "HEAD", "DELETE"]) {
+    const denied = await worker.fetch(`${baseUrl}/mcp`, {
+      method,
+      headers: { origin: "https://other.example", host: PUBLIC_MCP_ORIGIN_HOST },
+    });
+    assert.equal(denied.status, 403, method);
+    await denied.text();
+
+    for (const origin of [undefined, ALLOWED_ORIGIN]) {
+      const headers: Record<string, string> = { host: PUBLIC_MCP_ORIGIN_HOST };
+      if (origin) headers.origin = origin;
+      const unsupported = await worker.fetch(`${baseUrl}/mcp`, { method, headers });
+      assert.equal(unsupported.status, 405, method);
+      assert.equal(unsupported.headers.get("allow"), "POST, OPTIONS", method);
+      await unsupported.text();
+    }
+  }
+
+  assert.equal(await searchCalls(), before);
+});
+
+test("MCP promptly rejects requests to subscribe to the static tool list", async () => {
+  const before = await searchCalls();
+  const method = "subscriptions/listen";
+  const id = "stale-tool-list";
+  const response = await worker.fetch(`${baseUrl}/mcp`, {
+    method: "POST",
+    headers: modernHeaders(method) as Record<string, string>,
+    body: JSON.stringify(modernBody(method, { notifications: { toolsListChanged: true } }, id)),
+    signal: AbortSignal.timeout(5_000),
+  });
+
+  assert.match(response.headers.get("content-type") ?? "", /^application\/json/);
+  const refused = await readRpc(response);
+  assert.equal(refused.status, 200);
+  assert.equal(refused.body.id, id);
+  assert.equal(refused.body.error?.code, -32603);
+  assert.equal(await searchCalls(), before);
 });
 
 test("concurrent requests with different keys do not cross outcomes", async () => {
