@@ -245,6 +245,26 @@ test("modern path gates fail when successful calls used legacy protocol", () => 
   );
 });
 
+test("discovery records the observed version when no business call succeeded", () => {
+  const protocol = judgeProtocolPath(
+    {
+      trace: [
+        {
+          jsonRpcMethod: "tools/list",
+          status: 200,
+          mcpProtocolVersion: "2026-07-28",
+        },
+      ],
+    },
+    {},
+    "modern",
+  );
+  assert.deepEqual(protocol, {
+    observedProtocolVersion: "2026-07-28",
+    protocolPathOk: false,
+  });
+});
+
 test("mixed list/summarize protocol versions fail protocol path", () => {
   const protocol = judgeProtocolPath(
     {

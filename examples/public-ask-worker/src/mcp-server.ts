@@ -81,6 +81,7 @@ function createAskServer(_ctx: McpRequestContext): McpServer {
 
   const server = new McpServer(MCP_SERVER_INFO, {
     jsonSchemaValidator,
+    capabilities: { tools: { listChanged: false } },
     cacheHints: {
       "tools/list": { ttlMs: PUBLIC_TOOL_CACHE_TTL_MS, cacheScope: "public" },
       "server/discover": { ttlMs: PUBLIC_TOOL_CACHE_TTL_MS, cacheScope: "public" },
@@ -108,6 +109,8 @@ function createAskServer(_ctx: McpRequestContext): McpServer {
 const sdkHandler = createMcpHandler(createAskServer, {
   legacy: "stateless",
   responseMode: "json",
+  // Clients with cached discovery may still try to open a stream for this static tool list.
+  maxSubscriptions: 0,
 });
 
 function toolError(code: string, message: string, detail?: Record<string, unknown>) {
@@ -318,10 +321,11 @@ export async function handleMcp(request: Request, env: Env, runtime: AskRuntime 
   const allowedOrigin = env.ALLOWED_ORIGIN;
   const requestId = crypto.randomUUID();
 
+  if (origin !== null && origin !== allowedOrigin) {
+    return withMcpHeaders(new Response("Forbidden origin", { status: 403 }), origin, allowedOrigin, requestId);
+  }
+
   if (request.method === "OPTIONS") {
-    if (origin && origin !== allowedOrigin) {
-      return new Response("Forbidden", { status: 403 });
-    }
     return withMcpHeaders(
       new Response(null, {
         status: 204,
@@ -338,7 +342,7 @@ export async function handleMcp(request: Request, env: Env, runtime: AskRuntime 
 
   if (request.method !== "POST") {
     return withMcpHeaders(
-      new Response("Method not allowed", { status: 405 }),
+      new Response("Method not allowed", { status: 405, headers: { allow: "POST, OPTIONS" } }),
       origin,
       allowedOrigin,
       requestId,
@@ -362,15 +366,6 @@ export async function handleMcp(request: Request, env: Env, runtime: AskRuntime 
   if (!hostAllowed(host, publicHostname)) {
     return withMcpHeaders(
       new Response("Forbidden host", { status: 403 }),
-      origin,
-      allowedOrigin,
-      requestId,
-    );
-  }
-
-  if (origin && origin !== allowedOrigin) {
-    return withMcpHeaders(
-      new Response("Forbidden origin", { status: 403 }),
       origin,
       allowedOrigin,
       requestId,

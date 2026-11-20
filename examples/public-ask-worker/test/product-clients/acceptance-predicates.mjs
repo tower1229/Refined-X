@@ -51,11 +51,19 @@ export function protocolMatchesPath(version, expectedPath) {
  * @param {AcceptancePath} expectedPath
  */
 export function judgeProtocolPath(listTrace, summarizeTrace, expectedPath) {
-  const successCalls = [...(listTrace.trace || []), ...(summarizeTrace.trace || [])].filter(
-    isSuccessfulToolsCall,
-  );
+  const trace = [...(listTrace.trace || []), ...(summarizeTrace.trace || [])];
+  const successCalls = trace.filter(isSuccessfulToolsCall);
   if (successCalls.length === 0) {
-    return { observedProtocolVersion: null, protocolPathOk: false };
+    const discoveryVersions = new Set(
+      trace
+        .filter((e) => e.jsonRpcMethod === "tools/list" && e.status === 200)
+        .map((e) => e.mcpProtocolVersion)
+        .filter((v) => typeof v === "string" && v),
+    );
+    return {
+      observedProtocolVersion: [...discoveryVersions].join(",") || null,
+      protocolPathOk: false,
+    };
   }
   const versions = successCalls
     .map((e) => e.mcpProtocolVersion)

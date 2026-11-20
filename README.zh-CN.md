@@ -205,7 +205,7 @@ Pagefind 使用固定版本的公开 `getFiles()` API 导出字节，再由 Node
 v2.1.1 同时更新站点和可选 Worker 的安全依赖。分别在根目录与
 `examples/public-ask-worker` 执行 `npm ci`、`npm audit`；CI 会检查生产及开发依赖的所有严重级别。
 注册表不可用或新增安全公告也会使该门禁失败。
-Worker 固定 MCP SDK 2.3.0、Wrangler 4.153.0；实例同步后应重新生成类型并运行离线协议测试。
+Worker 固定 MCP SDK 2.4.0、Wrangler 4.153.0。实例同步后应重新生成类型并运行离线协议测试。
 模板更新不会自动部署已有 Worker。具体版本、公告来源和验收边界见
 [安全升级说明](docs/security-upgrade-2026-10-29.md)。
 
